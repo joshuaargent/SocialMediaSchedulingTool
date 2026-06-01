@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -54,12 +54,37 @@ export default function AnalyticsPage() {
   const [activeSection, setActiveSection] = useState('analytics');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const analyticsStore = useAnalyticsStore();
-  const postsStore = usePostsStore();
-  const platformStore = usePlatformStore();
+  // Use selectors to get raw state
+  const metrics = useAnalyticsStore((state) => state.metrics);
+  const posts = usePostsStore((state) => state.posts);
+  const platformStats = usePlatformStore((state) => state.platformStats);
 
   const days = parseInt(dateRange);
-  const summary = analyticsStore.getSummary(days);
+
+  // Compute summary with useMemo
+  const summary = useMemo(() => {
+    const totalViews = metrics.reduce((sum, m) => sum + m.views, 0);
+    const totalEngagement = metrics.reduce(
+      (sum, m) => sum + m.likes + m.comments + m.shares,
+      0
+    );
+    const avgEngagementRate =
+      metrics.length > 0
+        ? metrics.reduce((sum, m) => sum + m.engagementRate, 0) / metrics.length
+        : 0;
+    const publishedPosts = posts.filter((p) => p.status === 'published');
+
+    const platformBreakdown = {
+      tiktok: { posts: publishedPosts.filter(p => p.platforms.includes('tiktok')).length, views: 0, engagement: 0, engagementRate: 0 },
+      facebook: { posts: publishedPosts.filter(p => p.platforms.includes('facebook')).length, views: 0, engagement: 0, engagementRate: 0 },
+      instagram: { posts: publishedPosts.filter(p => p.platforms.includes('instagram')).length, views: 0, engagement: 0, engagementRate: 0 },
+      youtube: { posts: publishedPosts.filter(p => p.platforms.includes('youtube')).length, views: 0, engagement: 0, engagementRate: 0 },
+    };
+
+    const topPerformingPost = publishedPosts.length > 0 ? publishedPosts[0] : null;
+
+    return { totalPosts: publishedPosts.length, totalViews, totalEngagement, averageEngagementRate: avgEngagementRate, platformBreakdown, topPerformingPost };
+  }, [metrics, posts]);
 
   const weeklyViewsData = [
     { label: 'Mon', value: 12400, color: '#0d9488' },
@@ -233,7 +258,7 @@ export default function AnalyticsPage() {
               <Section title="Platform Stats">
                 <div className="space-y-4">
                   {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
-                    const stats = platformStore.platformStats[platform];
+                    const stats = platformStats[platform];
                     const platformAnalytics = summary.platformBreakdown[platform];
                     
                     return (

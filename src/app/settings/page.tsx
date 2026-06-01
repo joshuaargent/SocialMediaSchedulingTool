@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Settings, 
   Link2, 
@@ -27,9 +27,6 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('settings');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'connections' | 'scheduling' | 'notifications' | 'appearance'>('connections');
-
-  const orgStore = useOrganizationStore();
-  const platformStore = usePlatformStore();
 
   const tabs = [
     { id: 'connections', label: 'Connections', icon: <Link2 className="w-4 h-4" /> },
@@ -110,7 +107,9 @@ export default function SettingsPage() {
 // ============================================
 
 function PlatformConnections() {
-  const platformStore = usePlatformStore();
+  // Use selectors
+  const connections = usePlatformStore((state) => state.connections);
+  const platformStats = usePlatformStore((state) => state.platformStats);
 
   const platforms: { id: SocialPlatform; name: string; color: string; description: string }[] = [
     { id: 'tiktok', name: 'TikTok', color: 'bg-black', description: 'Connect to post short-form videos' },
@@ -119,12 +118,17 @@ function PlatformConnections() {
     { id: 'youtube', name: 'YouTube', color: 'bg-[#FF0000]', description: 'Connect to upload videos to YouTube' },
   ];
 
+  // Compute connected platforms
+  const connectedPlatforms = useMemo(() => {
+    return connections.map((c) => c.platform);
+  }, [connections]);
+
   return (
     <Section title="Connected Platforms" description="Manage your social media connections">
       <div className="space-y-4">
         {platforms.map((platform) => {
-          const isConnected = platformStore.isPlatformConnected(platform.id);
-          const stats = platformStore.platformStats[platform.id];
+          const isConnected = connectedPlatforms.includes(platform.id);
+          const stats = platformStats[platform.id];
           
           return (
             <div 
@@ -195,8 +199,10 @@ function PlatformConnections() {
 // ============================================
 
 function SchedulingSettings() {
-  const orgStore = useOrganizationStore();
-  const cooldowns = orgStore.organization?.settings.cooldownSettings || { tiktok: 60, facebook: 30, instagram: 60, youtube: 120 };
+  const organization = useOrganizationStore((state) => state.organization);
+  const updateCooldownSettings = useOrganizationStore((state) => state.updateCooldownSettings);
+  
+  const cooldowns = organization?.settings.cooldownSettings || { tiktok: 60, facebook: 30, instagram: 60, youtube: 120 };
 
   const platforms: SocialPlatform[] = ['tiktok', 'facebook', 'instagram', 'youtube'];
   const platformNames: Record<SocialPlatform, string> = {
@@ -226,7 +232,7 @@ function SchedulingSettings() {
                 min="0"
                 max="480"
                 value={cooldowns[platform]}
-                onChange={(e) => orgStore.updateCooldownSettings({ [platform]: parseInt(e.target.value) || 0 })}
+                onChange={(e) => updateCooldownSettings({ [platform]: parseInt(e.target.value) || 0 })}
                 className="w-20 px-3 py-2 rounded-lg border border-[var(--color-border)] text-center"
               />
               <span className="text-[var(--color-text-muted)]">minutes</span>
