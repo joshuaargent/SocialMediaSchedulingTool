@@ -44,7 +44,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps) {
-  const connectedPlatforms = usePlatformStore((s) => s.getConnectedPlatforms());
+  const connections = usePlatformStore((s) => s.connections);
+  const connectedPlatforms = connections.map((c) => c.platform);
 
   return (
     <aside className="w-64 h-screen bg-[var(--color-bg-card)] border-r border-[var(--color-border)] flex flex-col">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { X, Image, Video, Calendar, Clock, RefreshCw, AlertCircle, Check } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -15,12 +15,34 @@ interface PostComposerProps {
 }
 
 export function PostComposer({ onClose, onPublish, initialDate }: PostComposerProps) {
-  const composeStore = useComposeStore();
+  // Use individual selectors to avoid infinite loop
+  const content = useComposeStore((s) => s.content);
+  const mediaUrls = useComposeStore((s) => s.mediaUrls);
+  const platforms = useComposeStore((s) => s.platforms);
+  const scheduledAt = useComposeStore((s) => s.scheduledAt);
+  const postType = useComposeStore((s) => s.postType);
+  const contentType = useComposeStore((s) => s.contentType);
+  const isEvergreen = useComposeStore((s) => s.isEvergreen);
+  const evergreenIntervalDays = useComposeStore((s) => s.evergreenIntervalDays);
+  const tags = useComposeStore((s) => s.tags);
+  
+  const setContent = useComposeStore((s) => s.setContent);
+  const setPlatforms = useComposeStore((s) => s.setPlatforms);
+  const setScheduledAt = useComposeStore((s) => s.setScheduledAt);
+  const setPostType = useComposeStore((s) => s.setPostType);
+  const setContentType = useComposeStore((s) => s.setContentType);
+  const setIsEvergreen = useComposeStore((s) => s.setIsEvergreen);
+  const setEvergreenIntervalDays = useComposeStore((s) => s.setEvergreenIntervalDays);
+  const setTags = useComposeStore((s) => s.setTags);
+  const removeMediaUrl = useComposeStore((s) => s.removeMediaUrl);
+  const createPost = useComposeStore((s) => s.createPost);
+  const reset = useComposeStore((s) => s.reset);
+  
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const platforms: SocialPlatform[] = ['tiktok', 'facebook', 'instagram', 'youtube'];
+  const platformList: SocialPlatform[] = ['tiktok', 'facebook', 'instagram', 'youtube'];
   
   const postTypes: { value: PostType; label: string }[] = [
     { value: 'social_post', label: 'Social Post' },
@@ -37,28 +59,27 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
   ];
 
   const handlePlatformToggle = (platform: SocialPlatform) => {
-    const current = composeStore.platforms;
-    if (current.includes(platform)) {
-      composeStore.setPlatforms(current.filter((p) => p !== platform));
+    if (platforms.includes(platform)) {
+      setPlatforms(platforms.filter((p) => p !== platform));
     } else {
-      composeStore.setPlatforms([...current, platform]);
+      setPlatforms([...platforms, platform]);
     }
   };
 
   const handleDateSelect = (date: Date) => {
-    composeStore.setScheduledAt(date);
+    setScheduledAt(date);
     setShowDatePicker(false);
   };
 
   const handleSubmit = async () => {
-    if (composeStore.platforms.length === 0) return;
-    if (!composeStore.content && composeStore.mediaUrls.length === 0) return;
+    if (platforms.length === 0) return;
+    if (!content && mediaUrls.length === 0) return;
 
     setIsSubmitting(true);
     try {
-      const post = composeStore.createPost();
+      const post = createPost();
       if (post) {
-        composeStore.reset();
+        reset();
         onPublish?.();
         onClose();
       }
@@ -95,7 +116,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <label className="block text-sm font-medium mb-3">Post to</label>
             <div className="flex flex-wrap gap-3">
               {platforms.map((platform) => {
-                const isSelected = composeStore.platforms.includes(platform);
+                const isSelected = platforms.includes(platform);
                 const optimalTimes = getOptimalTimes(platform);
                 
                 return (
@@ -137,8 +158,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <div>
               <label className="block text-sm font-medium mb-2">Post Type</label>
               <select
-                value={composeStore.postType}
-                onChange={(e) => composeStore.setPostType(e.target.value as PostType)}
+                value={postType}
+                onChange={(e) => setPostType(e.target.value as PostType)}
                 className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
               >
                 {postTypes.map((type) => (
@@ -149,8 +170,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <div>
               <label className="block text-sm font-medium mb-2">Content Type</label>
               <select
-                value={composeStore.contentType}
-                onChange={(e) => composeStore.setContentType(e.target.value as ContentType)}
+                value={contentType}
+                onChange={(e) => setContentType(e.target.value as ContentType)}
                 className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
               >
                 {contentTypes.map((type) => (
@@ -164,14 +185,14 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
           <div>
             <label className="block text-sm font-medium mb-2">Caption / Description</label>
             <textarea
-              value={composeStore.content}
-              onChange={(e) => composeStore.setContent(e.target.value)}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               placeholder="Write your caption..."
               rows={5}
               className="w-full px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
             />
             <div className="flex justify-between mt-1 text-xs text-[var(--color-text-muted)]">
-              <span>{composeStore.content.length} characters</span>
+              <span>{content.length} characters</span>
               <span>Recommended: 150-300 for captions</span>
             </div>
           </div>
@@ -190,13 +211,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             </div>
             
             {/* Media Preview */}
-            {composeStore.mediaUrls.length > 0 && (
+            {mediaUrls.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-3">
-                {composeStore.mediaUrls.map((url, idx) => (
+                {mediaUrls.map((url, idx) => (
                   <div key={idx} className="relative aspect-video rounded-lg overflow-hidden bg-[var(--color-bg-secondary)]">
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
-                      onClick={() => composeStore.removeMediaUrl(url)}
+                      onClick={() => removeMediaUrl(url)}
                       className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white hover:bg-red-500"
                     >
                       <X className="w-3 h-3" />
@@ -212,10 +233,10 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <label className="block text-sm font-medium mb-2">Schedule</label>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => composeStore.setScheduledAt(null)}
+                onClick={() => setScheduledAt(null)}
                 className={clsx(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
-                  !composeStore.scheduledAt
+                  !scheduledAt
                     ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30 text-[var(--color-accent)]'
                     : 'border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]'
                 )}
@@ -228,18 +249,18 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                   const tomorrow = new Date();
                   tomorrow.setDate(tomorrow.getDate() + 1);
                   tomorrow.setHours(9, 0, 0, 0);
-                  composeStore.setScheduledAt(tomorrow);
+                  setScheduledAt(tomorrow);
                 }}
                 className={clsx(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
-                  composeStore.scheduledAt && composeStore.scheduledAt > new Date()
+                  scheduledAt && scheduledAt > new Date()
                     ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30 text-[var(--color-accent)]'
                     : 'border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]'
                 )}
               >
                 <Calendar className="w-4 h-4" />
-                {composeStore.scheduledAt 
-                  ? format(composeStore.scheduledAt, 'MMM d, h:mm a')
+                {scheduledAt 
+                  ? format(scheduledAt, 'MMM d, h:mm a')
                   : 'Pick Date & Time'}
               </button>
             </div>
@@ -275,23 +296,23 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={composeStore.isEvergreen}
-                onChange={(e) => composeStore.setIsEvergreen(e.target.checked)}
+                checked={isEvergreen}
+                onChange={(e) => setIsEvergreen(e.target.checked)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-300 peer-focus:ring-2 peer-focus:ring-[var(--color-accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-accent)]" />
             </label>
           </div>
 
-          {composeStore.isEvergreen && (
+          {isEvergreen && (
             <div className="flex items-center gap-3">
               <span className="text-sm">Repeat every</span>
               <input
                 type="number"
                 min="1"
                 max="365"
-                value={composeStore.evergreenIntervalDays}
-                onChange={(e) => composeStore.setEvergreenIntervalDays(parseInt(e.target.value) || 7)}
+                value={evergreenIntervalDays}
+                onChange={(e) => setEvergreenIntervalDays(parseInt(e.target.value) || 7)}
                 className="w-20 px-3 py-2 rounded-lg border border-[var(--color-border)]"
               />
               <span className="text-sm">days</span>
@@ -303,8 +324,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <label className="block text-sm font-medium mb-2">Tags / Hashtags</label>
             <input
               type="text"
-              value={composeStore.tags.join(' ')}
-              onChange={(e) => composeStore.setTags(e.target.value.split(' ').filter(Boolean))}
+              value={tags.join(' ')}
+              onChange={(e) => setTags(e.target.value.split(' ').filter(Boolean))}
               placeholder="Enter hashtags separated by spaces"
               className="w-full px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
             />
@@ -314,8 +335,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
         {/* Footer */}
         <div className="flex items-center justify-between p-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]/50">
           <div className="text-sm text-[var(--color-text-muted)]">
-            {composeStore.platforms.length > 0 ? (
-              <>Posting to {composeStore.platforms.length} platform{composeStore.platforms.length > 1 ? 's' : ''}</>
+            {platforms.length > 0 ? (
+              <>Posting to {platforms.length} platform{platforms.length > 1 ? 's' : ''}</>
             ) : (
               <span className="flex items-center gap-1 text-amber-600">
                 <AlertCircle className="w-4 h-4" />
@@ -334,8 +355,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <button
               onClick={handleSubmit}
               disabled={
-                composeStore.platforms.length === 0 ||
-                (!composeStore.content && composeStore.mediaUrls.length === 0) ||
+                platforms.length === 0 ||
+                (!content && mediaUrls.length === 0) ||
                 isSubmitting
               }
               className={clsx(
@@ -344,7 +365,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
-              {isSubmitting ? 'Creating...' : composeStore.scheduledAt ? 'Schedule Post' : 'Create Post'}
+              {isSubmitting ? 'Creating...' : scheduledAt ? 'Schedule Post' : 'Create Post'}
             </button>
           </div>
         </div>
