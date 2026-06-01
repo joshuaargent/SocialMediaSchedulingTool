@@ -1,0 +1,379 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// CORE MULTI-TENANT (Phase 2: Data Model)
+// ============================================
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  plan            String   @default("free")
+  settings        Json     @default("{}")
+  defaultTimezone String   @default("UTC")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  users               User[]
+  posts               Post[]
+  platformConnections PlatformConnection[]
+  mediaAssets         MediaAsset[]
+  contentTemplates    ContentTemplate[]
+  postingHistory      PostingHistory[]
+  cooldownSettings    CooldownSettings[]
+  performanceMetrics  PerformanceMetrics[]
+  algorithmHealth     AlgorithmHealth[]
+  contentProjects     ContentProject[]
+  series              Series[]
+  campaigns           Campaign[]
+  keywordTrackers     KeywordTracker[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  name           String?
+  avatarUrl      String?
+  role           String   @default("member")
+  settings       Json     @default("{}")
+  timezone       String   @default("UTC")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  posts           Post[]
+  contentProjects ContentProject[]
+
+  @@index([organizationId])
+}
+
+model Post {
+  id                    String    @id @default(cuid())
+  organizationId        String
+  userId                String
+  content               String
+  mediaUrls             String[]  @default([])
+  platforms             String[]  @default([])
+  scheduledAt           DateTime?
+  status                String    @default("draft")
+  publishedAt           DateTime?
+  errorMessage          String?
+  contentType           String?
+  postType              String?
+  isEvergreen           Boolean   @default(false)
+  evergreenIntervalDays Int?
+  tags                  String[]  @default([])
+  youtubeTitle          String?
+  youtubeDescription    String?
+  youtubeTags           String[]  @default([])
+  youtubePrivacyStatus  String    @default("public")
+  campaignId            String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign       Campaign?            @relation(fields: [campaignId], references: [id])
+  metrics        PerformanceMetrics[]
+  postingHistory PostingHistory[]
+
+  @@index([organizationId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model Campaign {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  color          String?
+  thumbnailUrl   String?
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  posts        Post[]
+
+  @@index([organizationId])
+}
+
+// ============================================
+// PLATFORM CONNECTIONS (OAuth)
+// ============================================
+
+model PlatformConnection {
+  id             String    @id @default(cuid())
+  organizationId String
+  platform       String
+  accessToken    String
+  refreshToken   String?
+  expiresAt      DateTime?
+  platformUserId String?
+  displayName    String?
+  profileImage   String?
+  followers      Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform])
+  @@index([organizationId])
+}
+
+// ============================================
+// MEDIA ASSETS
+// ============================================
+
+model MediaAsset {
+  id             String   @id @default(cuid())
+  organizationId String
+  filename       String
+  url            String
+  type           String
+  mimeType       String?
+  size           Int?
+  width          Int?
+  height         Int?
+  duration       Int?
+  thumbnailUrl   String?
+  altText        String?
+  metadata       Json?
+  folder         String?
+  tags           String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+// ============================================
+// CONTENT TEMPLATES
+// ============================================
+
+model ContentTemplate {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  name               String
+  category           String?
+  bodyTemplate       String
+  mediaDefaults      Json?
+  platformVariations Json?
+  tags               String[] @default([])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+// ============================================
+// POSTING HISTORY & ANALYTICS
+// ============================================
+
+model PostingHistory {
+  id             String   @id @default(cuid())
+  organizationId String
+  postId         String
+  platform       String
+  publishedAt    DateTime
+  views          Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  saves          Int      @default(0)
+  reach          Int      @default(0)
+  impressions    Int      @default(0)
+  collectedAt    DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post         Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([platform, publishedAt])
+}
+
+model PerformanceMetrics {
+  id             String   @id @default(cuid())
+  organizationId String
+  postId         String
+  platform       String
+  views          Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  engagementRate Float    @default(0)
+  collectedAt    DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post         Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([platform, collectedAt])
+}
+
+model AlgorithmHealth {
+  id                    String   @id @default(cuid())
+  organizationId        String
+  platform              String
+  shadowbanRisk         String   @default("low")
+  postingFrequencyScore Int      @default(100)
+  engagementScore       Int      @default(50)
+  contentDiversityScore Int      @default(50)
+  issues                Json     @default("[]")
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform])
+}
+
+// ============================================
+// COOLDOWN SETTINGS
+// ============================================
+
+model CooldownSettings {
+  id             String   @id @default(cuid())
+  organizationId String
+  platform       String
+  minMinutes     Int      @default(60)
+  maxPostsPerDay Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform])
+}
+
+// ============================================
+// CONTENT PIPELINE (Production Workflow)
+// ============================================
+
+model ContentProject {
+  id              String    @id @default(cuid())
+  organizationId  String
+  userId          String
+  seriesId        String?
+  title           String
+  description     String?
+  status          String    @default("idea")
+  productionStage String    @default("idea")
+  thumbnailUrl    String?
+  ideaDate        DateTime?
+  scriptDeadline  DateTime?
+  filmedDate      DateTime?
+  editedDate      DateTime?
+  reviewDate      DateTime?
+  notes           Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series       Series?      @relation(fields: [seriesId], references: [id])
+  milestones   Milestone[]
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Series {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  thumbnailUrl   String?
+  color          String?
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contentProjects ContentProject[]
+
+  @@index([organizationId])
+}
+
+model Milestone {
+  id               String    @id @default(cuid())
+  contentProjectId String
+  title            String
+  dueDate          DateTime?
+  completedAt      DateTime?
+  notes            String?
+  sortOrder        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  contentProject ContentProject @relation(fields: [contentProjectId], references: [id], onDelete: Cascade)
+
+  @@index([contentProjectId])
+}
+
+// ============================================
+// SEO & KEYWORDS
+// ============================================
+
+model KeywordTracker {
+  id             String   @id @default(cuid())
+  organizationId String
+  keyword        String
+  searchVolume   Int?
+  rank           Int?
+  targetVideos   String[] @default([])
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "fk_keyword_tracker_org")
+
+  @@index([organizationId])
+}
+
+// ============================================
+// SCHEDULING JOBS (for cron-based publishing)
+// ============================================
+
+model ScheduledJob {
+  id           String    @id @default(cuid())
+  postId       String
+  platform     String
+  scheduledFor DateTime
+  status       String    @default("pending")
+  executedAt   DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([scheduledFor])
+  @@index([status])
+}
