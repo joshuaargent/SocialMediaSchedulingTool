@@ -11,11 +11,13 @@ import {
   Check
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useSearchParams } from 'next/navigation';
 import { useOrganizationStore, usePlatformStore, platformOAuthConfigs } from '@/stores';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { OAuthCallbackHandler } from '@/components/auth/OAuthCallbackHandler';
 import type { SocialPlatform } from '@/types';
 
 // ============================================
@@ -24,6 +26,11 @@ import type { SocialPlatform } from '@/types';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'connections' | 'scheduling' | 'notifications' | 'appearance'>('connections');
+  const searchParams = useSearchParams();
+  
+  // Check for OAuth callback params
+  const connectedParam = searchParams.get('connected');
+  const errorParam = searchParams.get('error');
 
   const tabs = [
     { id: 'connections', label: 'Connections', icon: <Link2 className="w-4 h-4" /> },
@@ -34,6 +41,9 @@ export default function SettingsPage() {
 
   return (
     <>
+      {/* Handle OAuth callbacks */}
+      {connectedParam && <OAuthCallbackHandler platform={connectedParam as SocialPlatform} />}
+      
       <PageHeader 
         title="Settings" 
         description="Manage your preferences and connections"
@@ -41,6 +51,15 @@ export default function SettingsPage() {
       />
 
       <Container>
+        {/* Show error/success messages */}
+        {errorParam && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p className="text-red-700 dark:text-red-300">
+              Authentication failed: {errorParam}
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Tabs */}
           <div className="lg:w-64 flex-shrink-0">
