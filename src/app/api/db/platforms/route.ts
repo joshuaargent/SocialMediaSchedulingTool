@@ -12,7 +12,18 @@ export async function GET() {
     });
 
     // Don't return access tokens in response
-    const safeConnections = connections.map((c) => ({
+    const safeConnections = connections.map((c: {
+      id: string;
+      platform: string;
+      platformUserId: string | null;
+      displayName: string | null;
+      profileImage: string | null;
+      followers: number | null;
+      expiresAt: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      accessToken: string | null;
+    }) => ({
       id: c.id,
       platform: c.platform,
       platformUserId: c.platformUserId,
