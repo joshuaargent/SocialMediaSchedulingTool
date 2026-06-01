@@ -23,6 +23,11 @@ A powerful content creation and scheduling platform for top-performing content c
 - **Platform Analytics**: Per-platform engagement tracking
 - **SEO Optimization**: YouTube title, description, and tag analysis
 - **Hashtag Suggestions**: Trending hashtags for your content
+- **Content Pipeline**: Kanban board for production workflow
+- **Series Management**: Organize content into themed series
+- **Production Calendar**: Track filming and editing deadlines
+- **Trends Tracking**: Monitor trending topics and competitors
+- **Link-in-Bio**: Customizable landing page with themes
 
 ### Multi-Tenant Architecture (v2 Ready)
 - Organization-scoped data isolation
@@ -102,7 +107,16 @@ Open http://localhost:3000 to view the dashboard.
 |-------|-------------|
 | `/` | Redirects to dashboard |
 | `/dashboard` | Main command center |
+| `/queue` | Post queue management |
+| `/calendar` | Visual content calendar |
+| `/media-library` | Upload and manage media |
 | `/analytics` | Performance analytics |
+| `/pipeline` | Content production pipeline (Kanban) |
+| `/series` | Series and playlist management |
+| `/production-calendar` | Filming and editing schedule |
+| `/seo` | YouTube SEO tools |
+| `/trends` | Trend and competitor tracking |
+| `/bio` | Link-in-bio page builder |
 | `/settings` | App settings and platform connections |
 
 ## Available Scripts
