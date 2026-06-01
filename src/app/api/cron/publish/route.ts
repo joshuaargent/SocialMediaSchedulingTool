@@ -23,7 +23,12 @@ export async function GET() {
       include: {
         organization: {
           include: {
-            platformConnections: true,
+            platformConnections: {
+              select: {
+                platform: true,
+                accessToken: true,
+              },
+            },
           },
         },
       },
@@ -37,7 +42,7 @@ export async function GET() {
       for (const platform of post.platforms) {
         try {
           const connection = post.organization.platformConnections.find(
-            (c) => c.platform === platform
+            (c: { platform: string }) => c.platform === platform
           );
 
           if (connection) {
