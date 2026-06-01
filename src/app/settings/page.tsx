@@ -11,7 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useOrganizationStore, usePlatformStore } from '@/stores';
+import { useOrganizationStore, usePlatformStore, platformOAuthConfigs, buildOAuthUrl } from '@/stores';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -83,6 +83,9 @@ export default function SettingsPage() {
 function PlatformConnections() {
   const connections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
+  const addConnection = usePlatformStore((state) => state.addConnection);
+  const removeConnection = usePlatformStore((state) => state.removeConnection);
+  const updateStats = usePlatformStore((state) => state.updateStats);
 
   const platforms: { id: SocialPlatform; name: string; color: string; description: string }[] = [
     { id: 'tiktok', name: 'TikTok', color: 'bg-black', description: 'Connect to post short-form videos' },
@@ -94,6 +97,45 @@ function PlatformConnections() {
   const connectedPlatforms = useMemo(() => {
     return connections.map((c) => c.platform);
   }, [connections]);
+
+  // Handle connect button click
+  const handleConnect = (platform: SocialPlatform) => {
+    // In production, this would redirect to OAuth flow
+    // For demo, we'll simulate a connection
+    const oauthConfig = platformOAuthConfigs[platform];
+    
+    if (!oauthConfig.clientId) {
+      // Demo mode - simulate connection
+      addConnection({
+        platform,
+        userId: 'demo-user',
+        organizationId: 'demo-org',
+        platformUserId: `demo_${platform}_user`,
+        platformUsername: `demo_${platform}`,
+        accessToken: 'demo_token',
+        expiresAt: new Date(Date.now() + 3600000),
+        permissions: oauthConfig.scopes,
+      });
+      
+      // Simulate getting stats
+      updateStats(platform, {
+        platform,
+        followers: Math.floor(Math.random() * 10000) + 1000,
+        following: Math.floor(Math.random() * 1000) + 100,
+        posts: Math.floor(Math.random() * 100) + 10,
+      });
+    } else {
+      // Real OAuth flow - redirect
+      const redirectUri = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/auth/${platform}/callback` 
+        : '';
+      window.location.href = buildOAuthUrl(oauthConfig, redirectUri);
+    }
+  };
+
+  const handleDisconnect = (platform: SocialPlatform) => {
+    removeConnection(platform);
+  };
 
   return (
     <Card className="p-6">
@@ -134,7 +176,7 @@ function PlatformConnections() {
                         <Check className="w-4 h-4" />
                         Connected
                       </span>
-                      <Button size="sm" variant="danger">
+                      <Button size="sm" variant="danger" onClick={() => handleDisconnect(platform.id)}>
                         Disconnect
                       </Button>
                     </>
@@ -142,6 +184,7 @@ function PlatformConnections() {
                     <Button
                       size="sm"
                       leftIcon={<Link2 className="w-4 h-4" />}
+                      onClick={() => handleConnect(platform.id)}
                     >
                       Connect
                     </Button>
@@ -160,6 +203,11 @@ function PlatformConnections() {
             <h4 className="font-medium text-blue-800 dark:text-blue-200">OAuth Integration</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
               Platform connections are secured using OAuth 2.0. We never store your passwords.
+              {Object.values(platformOAuthConfigs).every(c => !c.clientId) && (
+                <span className="block mt-1 font-medium">
+                  Demo mode: Click Connect to simulate a connection.
+                </span>
+              )}
             </p>
           </div>
         </div>
