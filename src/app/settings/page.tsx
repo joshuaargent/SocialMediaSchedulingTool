@@ -2,21 +2,20 @@
 
 import { useState, useMemo } from 'react';
 import { 
-  Settings, 
   Link2, 
   Bell, 
   Clock, 
-  Shield, 
   Palette,
   Save,
-  RefreshCw,
-  ExternalLink,
   AlertCircle,
   Check
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useOrganizationStore, usePlatformStore } from '@/stores';
-import { Sidebar, Header, MobileSidebar, PageHeader, Section } from '@/components/dashboard/Layout';
+import { Container } from '@/components/layout/Container';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import type { SocialPlatform } from '@/types';
 
 // ============================================
@@ -24,8 +23,6 @@ import type { SocialPlatform } from '@/types';
 // ============================================
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState('settings');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'connections' | 'scheduling' | 'notifications' | 'appearance'>('connections');
 
   const tabs = [
@@ -36,69 +33,46 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-primary)] flex">
-      <Sidebar 
-        activeItem={activeSection} 
-        onItemClick={setActiveSection} 
-      />
-      
-      <MobileSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        activeItem={activeSection}
-        onItemClick={setActiveSection}
+    <>
+      <PageHeader 
+        title="Settings" 
+        description="Manage your preferences and connections"
+        align="left"
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="flex-1 p-6 overflow-auto">
-          <PageHeader 
-            title="Settings" 
-            description="Manage your preferences and connections"
-          />
-
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Sidebar Tabs */}
-            <div className="lg:w-64 flex-shrink-0">
-              <nav className="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] p-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                    className={clsx(
-                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left',
-                      activeTab === tab.id
-                        ? 'bg-[var(--color-accent)] text-white'
-                        : 'hover:bg-[var(--color-bg-secondary)]'
-                    )}
-                  >
-                    {tab.icon}
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 space-y-6">
-              {activeTab === 'connections' && (
-                <PlatformConnections />
-              )}
-              {activeTab === 'scheduling' && (
-                <SchedulingSettings />
-              )}
-              {activeTab === 'notifications' && (
-                <NotificationSettings />
-              )}
-              {activeTab === 'appearance' && (
-                <AppearanceSettings />
-              )}
-            </div>
+      <Container>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Tabs */}
+          <div className="lg:w-64 flex-shrink-0">
+            <Card className="p-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  className={clsx(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left',
+                    activeTab === tab.id
+                      ? 'bg-[var(--color-accent)] text-white'
+                      : 'hover:bg-[var(--color-bg-secondary)]'
+                  )}
+                >
+                  {tab.icon}
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </Card>
           </div>
-        </main>
-      </div>
-    </div>
+
+          {/* Content */}
+          <div className="flex-1 space-y-6">
+            {activeTab === 'connections' && <PlatformConnections />}
+            {activeTab === 'scheduling' && <SchedulingSettings />}
+            {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'appearance' && <AppearanceSettings />}
+          </div>
+        </div>
+      </Container>
+    </>
   );
 }
 
@@ -107,7 +81,6 @@ export default function SettingsPage() {
 // ============================================
 
 function PlatformConnections() {
-  // Use selectors
   const connections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
 
@@ -118,13 +91,13 @@ function PlatformConnections() {
     { id: 'youtube', name: 'YouTube', color: 'bg-[#FF0000]', description: 'Connect to upload videos to YouTube' },
   ];
 
-  // Compute connected platforms
   const connectedPlatforms = useMemo(() => {
     return connections.map((c) => c.platform);
   }, [connections]);
 
   return (
-    <Section title="Connected Platforms" description="Manage your social media connections">
+    <Card className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Connected Platforms</h2>
       <div className="space-y-4">
         {platforms.map((platform) => {
           const isConnected = connectedPlatforms.includes(platform.id);
@@ -133,7 +106,7 @@ function PlatformConnections() {
           return (
             <div 
               key={platform.id}
-              className="p-4 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)]"
+              className="p-4 rounded-lg bg-[var(--color-bg-secondary)]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -161,15 +134,17 @@ function PlatformConnections() {
                         <Check className="w-4 h-4" />
                         Connected
                       </span>
-                      <button className="px-4 py-2 text-sm rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                      <Button size="sm" variant="danger">
                         Disconnect
-                      </button>
+                      </Button>
                     </>
                   ) : (
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors">
-                      <Link2 className="w-4 h-4" />
+                    <Button
+                      size="sm"
+                      leftIcon={<Link2 className="w-4 h-4" />}
+                    >
                       Connect
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -185,12 +160,11 @@ function PlatformConnections() {
             <h4 className="font-medium text-blue-800 dark:text-blue-200">OAuth Integration</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
               Platform connections are secured using OAuth 2.0. We never store your passwords.
-              You can revoke access at any time from your platform settings.
             </p>
           </div>
         </div>
       </div>
-    </Section>
+    </Card>
   );
 }
 
@@ -213,12 +187,14 @@ function SchedulingSettings() {
   };
 
   return (
-    <Section title="Cooldown Settings" description="Configure minimum time between posts per platform">
+    <Card className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Cooldown Settings</h2>
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">Configure minimum time between posts per platform</p>
       <div className="space-y-4">
         {platforms.map((platform) => (
           <div 
             key={platform}
-            className="flex items-center justify-between p-4 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)]"
+            className="flex items-center justify-between p-4 rounded-lg bg-[var(--color-bg-secondary)]"
           >
             <div>
               <h3 className="font-medium">{platformNames[platform]}</h3>
@@ -233,7 +209,7 @@ function SchedulingSettings() {
                 max="480"
                 value={cooldowns[platform]}
                 onChange={(e) => updateCooldownSettings({ [platform]: parseInt(e.target.value) || 0 })}
-                className="w-20 px-3 py-2 rounded-lg border border-[var(--color-border)] text-center"
+                className="w-20 px-3 py-2 rounded-lg border border-[var(--color-border)] text-center bg-[var(--color-bg-card)]"
               />
               <span className="text-[var(--color-text-muted)]">minutes</span>
             </div>
@@ -242,12 +218,11 @@ function SchedulingSettings() {
       </div>
 
       <div className="mt-6">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors">
-          <Save className="w-4 h-4" />
+        <Button leftIcon={<Save className="w-4 h-4" />}>
           Save Changes
-        </button>
+        </Button>
       </div>
-    </Section>
+    </Card>
   );
 }
 
@@ -265,7 +240,9 @@ function NotificationSettings() {
   });
 
   return (
-    <Section title="Notification Preferences" description="Choose what notifications you want to receive">
+    <Card className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">Choose what notifications you want to receive</p>
       <div className="space-y-4">
         {[
           { key: 'postPublished', label: 'Post Published', description: 'Get notified when a post is successfully published' },
@@ -276,7 +253,7 @@ function NotificationSettings() {
         ].map((item) => (
           <div 
             key={item.key}
-            className="flex items-center justify-between p-4 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)]"
+            className="flex items-center justify-between p-4 rounded-lg bg-[var(--color-bg-secondary)]"
           >
             <div>
               <h3 className="font-medium">{item.label}</h3>
@@ -296,12 +273,11 @@ function NotificationSettings() {
       </div>
 
       <div className="mt-6">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors">
-          <Save className="w-4 h-4" />
+        <Button leftIcon={<Save className="w-4 h-4" />}>
           Save Preferences
-        </button>
+        </Button>
       </div>
-    </Section>
+    </Card>
   );
 }
 
@@ -313,9 +289,11 @@ function AppearanceSettings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
 
   return (
-    <Section title="Appearance" description="Customize how ContentHub looks">
-      <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
+    <Card className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Appearance</h2>
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">Customize how ContentHub looks</p>
+      <div className="space-y-6">
+        <div>
           <h3 className="font-medium mb-3">Theme</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -350,6 +328,6 @@ function AppearanceSettings() {
           Built with Next.js, TypeScript, Tailwind CSS, and Zustand
         </p>
       </div>
-    </Section>
+    </Card>
   );
 }

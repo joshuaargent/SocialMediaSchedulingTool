@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { inter, lora, jetbrainsMono } from '@/lib/fonts';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { Toaster } from '@/components/ui/Toaster';
 import './globals.css';
 
 // ============================================
@@ -51,7 +55,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <ThemeProvider>
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

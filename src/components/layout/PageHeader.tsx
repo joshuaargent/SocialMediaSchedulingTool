@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { Container } from '@/components/layout/Container';
 import { SectionHeading } from '@/components/shared/SectionHeading';
 
 // ============================================
@@ -10,6 +9,7 @@ export interface PageHeaderProps {
   title: string;
   description?: string;
   children?: React.ReactNode;
+  actions?: React.ReactNode;
   className?: string;
   align?: 'left' | 'center';
   size?: 'default' | 'large';
@@ -23,32 +23,38 @@ export function PageHeader({
   title,
   description,
   children,
+  actions,
   className,
   align = 'center',
   size = 'default',
 }: PageHeaderProps) {
   return (
-    <header className={cn('py-12 md:py-16', size === 'large' && 'py-16 md:py-24', className)}>
+    <header className={cn('py-8 md:py-12', size === 'large' && 'py-12 md:py-16', className)}>
       <div className={cn('container', align === 'center' && 'text-center')}>
-        <h1
-          className={cn(
-            'text-text-primary font-bold tracking-tight',
-            size === 'default' ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl'
-          )}
-        >
-          {title}
-        </h1>
-        {description && (
-          <p
-            className={cn(
-              'text-text-secondary mt-4 max-w-2xl text-lg',
-              align === 'center' && 'mx-auto'
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className={align === 'center' ? 'text-center mx-auto' : ''}>
+            <h1
+              className={cn(
+                'text-text-primary font-bold tracking-tight',
+                size === 'default' ? 'text-2xl md:text-3xl' : 'text-3xl md:text-4xl'
+              )}
+            >
+              {title}
+            </h1>
+            {description && (
+              <p
+                className={cn(
+                  'text-text-secondary mt-2 max-w-2xl text-base',
+                  align === 'center' && 'mx-auto'
+                )}
+              >
+                {description}
+              </p>
             )}
-          >
-            {description}
-          </p>
-        )}
-        {children && <div className="mt-6">{children}</div>}
+          </div>
+          {actions && <div className="flex items-center gap-3">{actions}</div>}
+        </div>
+        {children && <div className="mt-4">{children}</div>}
       </div>
     </header>
   );
