@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const totalViews = metrics.reduce((sum, m) => sum + m.views, 0);
-    const totalLikes = metrics.reduce((sum, m) => sum + m.likes, 0);
-    const totalComments = metrics.reduce((sum, m) => sum + m.comments, 0);
-    const totalShares = metrics.reduce((sum, m) => sum + m.shares, 0);
+    const totalViews = metrics.reduce((sum: number, m: { views: number }) => sum + m.views, 0);
+    const totalLikes = metrics.reduce((sum: number, m: { likes: number }) => sum + m.likes, 0);
+    const totalComments = metrics.reduce((sum: number, m: { comments: number }) => sum + m.comments, 0);
+    const totalShares = metrics.reduce((sum: number, m: { shares: number }) => sum + m.shares, 0);
     const avgEngagementRate = metrics.length > 0 
-      ? metrics.reduce((sum, m) => sum + m.engagementRate, 0) / metrics.length 
+      ? metrics.reduce((sum: number, m: { engagementRate: number }) => sum + m.engagementRate, 0) / metrics.length 
       : 0;
 
     // Get platform breakdown
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const platformBreakdown: Record<string, { posts: number; views: number; engagement: number; engagementRate: number }> = {};
 
     for (const platform of platforms) {
-      const platformMetrics = metrics.filter((m) => m.platform === platform);
+      const platformMetrics = metrics.filter((m: { platform: string }) => m.platform === platform);
       const platformPosts = await prisma.post.count({
         where: {
           organizationId: DEFAULT_ORG_ID,
@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
 
       platformBreakdown[platform] = {
         posts: platformPosts,
-        views: platformMetrics.reduce((sum, m) => sum + m.views, 0),
-        engagement: platformMetrics.reduce((sum, m) => sum + m.likes + m.comments + m.shares, 0),
+        views: platformMetrics.reduce((sum: number, m: { views: number }) => sum + m.views, 0),
+        engagement: platformMetrics.reduce((sum: number, m: { likes: number; comments: number; shares: number }) => sum + m.likes + m.comments + m.shares, 0),
         engagementRate: platformMetrics.length > 0 
-          ? platformMetrics.reduce((sum, m) => sum + m.engagementRate, 0) / platformMetrics.length 
+          ? platformMetrics.reduce((sum: number, m: { engagementRate: number }) => sum + m.engagementRate, 0) / platformMetrics.length 
           : 0,
       };
     }
