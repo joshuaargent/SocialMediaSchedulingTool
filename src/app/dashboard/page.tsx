@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { clsx } from 'clsx';
-import { usePostsStore, useAnalyticsStore, usePlatformStore } from '@/stores';
+import { usePostsStore, useAnalyticsStore, usePlatformStore, useOrganizationStore } from '@/stores';
 import { Sidebar, Header, MobileSidebar, PageHeader, StatsCard, Section } from '@/components/dashboard/Layout';
 import { PostCard, PlatformPills } from '@/components/dashboard/PostCard';
 import { Calendar } from '@/components/calendar/Calendar';
@@ -29,26 +29,78 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
 
-  const postsStore = usePostsStore();
-  const analyticsStore = useAnalyticsStore();
-  const platformStore = usePlatformStore();
+  // Get store state directly using selectors
+  const posts = usePostsStore((state) => state.posts);
+  const postingHistory = usePostsStore((state) => state.postingHistory);
+  const analyticsMetrics = useAnalyticsStore((state) => state.metrics);
+  const platformConnections = usePlatformStore((state) => state.connections);
+  const platformStats = usePlatformStore((state) => state.platformStats);
+  const organization = useOrganizationStore((state) => state.organization);
 
-  const scheduledPosts = postsStore.getScheduledPosts();
-  const publishedPosts = postsStore.getPublishedPosts();
-  const calendarEvents = postsStore.getCalendarEvents();
-  const summary = analyticsStore.getSummary(7);
+  // Compute scheduled posts
+  const scheduledPosts = useMemo(() => {
+    return posts.filter((p) => p.status === 'scheduled');
+  }, [posts]);
 
-  const todaysPosts = scheduledPosts.filter((p) => {
-    if (!p.scheduledAt) return false;
-    return isToday(new Date(p.scheduledAt));
-  });
+  // Compute published posts
+  const publishedPosts = useMemo(() => {
+    return posts.filter((p) => p.status === 'published');
+  }, [posts]);
 
-  const tomorrowsPosts = scheduledPosts.filter((p) => {
-    if (!p.scheduledAt) return false;
-    return isTomorrow(new Date(p.scheduledAt));
-  });
+  // Compute calendar events
+  const calendarEvents = useMemo(() => {
+    return posts.map((post) => ({
+      id: post.id,
+      title: post.content.slice(0, 50) + (post.content.length > 50 ? '...' : ''),
+      date: post.scheduledAt || post.publishedAt || post.createdAt,
+      type: 'post' as const,
+      status: post.status,
+      platforms: post.platforms,
+      postId: post.id,
+    }));
+  }, [posts]);
 
-  const queueWithCooldowns = postsStore.getQueueWithCooldowns();
+  // Compute summary
+  const summary = useMemo(() => {
+    const totalViews = analyticsMetrics.reduce((sum, m) => sum + m.views, 0);
+    const totalEngagement = analyticsMetrics.reduce(
+      (sum, m) => sum + m.likes + m.comments + m.shares,
+      0
+    );
+    const avgEngagementRate =
+      analyticsMetrics.length > 0
+        ? analyticsMetrics.reduce((sum, m) => sum + m.engagementRate, 0) / analyticsMetrics.length
+        : 0;
+
+    const platformBreakdown = {
+      tiktok: { posts: publishedPosts.filter(p => p.platforms.includes('tiktok')).length, views: 0, engagement: 0, engagementRate: 0 },
+      facebook: { posts: publishedPosts.filter(p => p.platforms.includes('facebook')).length, views: 0, engagement: 0, engagementRate: 0 },
+      instagram: { posts: publishedPosts.filter(p => p.platforms.includes('instagram')).length, views: 0, engagement: 0, engagementRate: 0 },
+      youtube: { posts: publishedPosts.filter(p => p.platforms.includes('youtube')).length, views: 0, engagement: 0, engagementRate: 0 },
+    };
+
+    return { totalPosts: publishedPosts.length, totalViews, totalEngagement, averageEngagementRate: avgEngagementRate, platformBreakdown };
+  }, [analyticsMetrics, publishedPosts]);
+
+  // Get today's and tomorrow's posts
+  const todaysPosts = useMemo(() => {
+    return scheduledPosts.filter((p) => {
+      if (!p.scheduledAt) return false;
+      return isToday(new Date(p.scheduledAt));
+    });
+  }, [scheduledPosts]);
+
+  const tomorrowsPosts = useMemo(() => {
+    return scheduledPosts.filter((p) => {
+      if (!p.scheduledAt) return false;
+      return isTomorrow(new Date(p.scheduledAt));
+    });
+  }, [scheduledPosts]);
+
+  // Get connected platforms
+  const connectedPlatforms = useMemo(() => {
+    return platformConnections.map((c) => c.platform);
+  }, [platformConnections]);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] flex">
@@ -125,7 +177,7 @@ export default function DashboardPage() {
               <Section title="Platform Performance (7 days)">
                 <div className="grid grid-cols-2 gap-4">
                   {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
-                    const platformStats = summary.platformBreakdown[platform];
+                    const platformStatsData = summary.platformBreakdown[platform];
                     return (
                       <div 
                         key={platform}
@@ -146,15 +198,15 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <p className="text-xs text-[var(--color-text-muted)]">Posts</p>
-                            <p className="text-lg font-semibold">{platformStats.posts}</p>
+                            <p className="text-lg font-semibold">{platformStatsData.posts}</p>
                           </div>
                           <div>
                             <p className="text-xs text-[var(--color-text-muted)]">Views</p>
-                            <p className="text-lg font-semibold">{platformStats.views.toLocaleString()}</p>
+                            <p className="text-lg font-semibold">{platformStatsData.views.toLocaleString()}</p>
                           </div>
                           <div className="col-span-2">
                             <p className="text-xs text-[var(--color-text-muted)]">Engagement</p>
-                            <p className="text-lg font-semibold">{platformStats.engagement.toLocaleString()}</p>
+                            <p className="text-lg font-semibold">{platformStatsData.engagement.toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
@@ -205,33 +257,6 @@ export default function DashboardPage() {
                 </div>
               </Section>
 
-              {queueWithCooldowns.length > 0 && (
-                <Section title="Cooldown Queue">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                      <AlertCircle className="w-4 h-4 text-amber-600" />
-                      <span className="text-sm text-amber-800 dark:text-amber-200">
-                        Some posts are waiting for cooldown period
-                      </span>
-                    </div>
-                    {queueWithCooldowns.slice(0, 5).map((post) => (
-                      <div 
-                        key={post.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]"
-                      >
-                        <PlatformPills platforms={post.platforms} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate">{post.content || 'No content'}</p>
-                          <p className="text-xs text-amber-600">
-                            Cooldown: {Math.ceil(post.cooldownRemaining / 60000)} min
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Section>
-              )}
-
               <Section title="Quick Actions">
                 <div className="space-y-2">
                   <button
@@ -255,8 +280,8 @@ export default function DashboardPage() {
               <Section title="Platform Connections">
                 <div className="space-y-3">
                   {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
-                    const isConnected = platformStore.isPlatformConnected(platform);
-                    const stats = platformStore.platformStats[platform];
+                    const isConnected = connectedPlatforms.includes(platform);
+                    const stats = platformStats[platform];
                     
                     return (
                       <div 
