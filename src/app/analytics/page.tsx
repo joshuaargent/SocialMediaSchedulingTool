@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
   Eye, 
   Heart,
-  Download
+  Download,
+  RefreshCw,
+  TrendingDown
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAnalyticsStore, usePostsStore, usePlatformStore } from '@/stores';
@@ -14,6 +16,7 @@ import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { platformColors } from '@/components/platforms/PlatformIcon';
 
 // ============================================
 // Simple Bar Chart Component
@@ -49,18 +52,103 @@ function BarChart({ data, height = 200 }: BarChartProps) {
 }
 
 // ============================================
+// Platform Analytics Card
+// ============================================
+
+interface PlatformCardProps {
+  platform: 'tiktok' | 'facebook' | 'instagram' | 'youtube';
+  stats: { posts: number; views: number; engagement: number; engagementRate: number };
+  isConnected: boolean;
+  onRefresh: () => void;
+  isLoading: boolean;
+}
+
+function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoading }: PlatformCardProps) {
+  return (
+    <Card className="p-4" hover>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className={clsx('w-10 h-10 rounded-full flex items-center justify-center', platformColors[platform].bg)}>
+            <span className="text-white font-bold text-lg">{platform.charAt(0).toUpperCase()}</span>
+          </div>
+          <div>
+            <h3 className="font-semibold capitalize">{platform}</h3>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {isConnected ? 'Connected' : 'Not connected'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={!isConnected || isLoading}
+          className="p-2 rounded-lg hover:bg-[var(--color-bg-secondary)] disabled:opacity-50"
+        >
+          <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs text-[var(--color-text-muted)]">Posts</p>
+          <p className="text-xl font-bold">{stats.posts}</p>
+        </div>
+        <div>
+          <p className="text-xs text-[var(--color-text-muted)]">Views</p>
+          <p className="text-xl font-bold">{stats.views.toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-xs text-[var(--color-text-muted)]">Engagement</p>
+          <p className="text-xl font-bold">{stats.engagement.toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-xs text-[var(--color-text-muted)]">Rate</p>
+          <p className="text-xl font-bold">{(stats.engagementRate * 100).toFixed(1)}%</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================
 // Analytics Dashboard Page
 // ============================================
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('7');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshedPlatform, setRefreshedPlatform] = useState<string | null>(null);
 
-  // Use selectors to get raw state
   const metrics = useAnalyticsStore((state) => state.metrics);
   const posts = usePostsStore((state) => state.posts);
   const platformStats = usePlatformStore((state) => state.platformStats);
+  const connections = usePlatformStore((state) => state.connections);
+  const updateStats = usePlatformStore((state) => state.updateStats);
 
-  // Compute summary with useMemo
+  const refreshPlatformAnalytics = useCallback(async (platform: string) => {
+    setIsRefreshing(true);
+    setRefreshedPlatform(platform);
+    
+    try {
+      const response = await fetch(`/api/analytics/${platform}?days=${dateRange}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.analytics) {
+          updateStats(platform as any, {
+            platform: platform as any,
+            followers: data.analytics.summary.followers,
+            following: 0,
+            posts: data.analytics.summary.posts || 0,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh analytics:', error);
+    } finally {
+      setIsRefreshing(false);
+      setRefreshedPlatform(null);
+    }
+  }, [dateRange, updateStats]);
+
   const summary = useMemo(() => {
     const totalViews = metrics.reduce((sum, m) => sum + m.views, 0);
     const totalEngagement = metrics.reduce(
@@ -267,46 +355,17 @@ export default function AnalyticsPage() {
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const stats = platformStats[platform];
                   const platformAnalytics = summary.platformBreakdown[platform];
+                  const isConnected = connections.some((c) => c.platform === platform);
                   
                   return (
-                    <div 
+                    <PlatformAnalyticsCard
                       key={platform}
-                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)]"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={clsx(
-                          'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold',
-                          platform === 'tiktok' && 'bg-black',
-                          platform === 'facebook' && 'bg-[#1877F2]',
-                          platform === 'instagram' && 'bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045]',
-                          platform === 'youtube' && 'bg-[#FF0000]'
-                        )}>
-                          {platform.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium capitalize">{platform}</p>
-                          {stats?.followers && (
-                            <p className="text-xs text-[var(--color-text-muted)]">
-                              {stats.followers.toLocaleString()} followers
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-semibold">{platformAnalytics.posts}</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">Posts</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-semibold">{platformAnalytics.views.toLocaleString()}</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">Views</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-semibold">{platformAnalytics.engagementRate.toFixed(1)}%</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">ER</p>
-                        </div>
-                      </div>
-                    </div>
+                      platform={platform}
+                      stats={platformAnalytics}
+                      isConnected={isConnected}
+                      onRefresh={() => refreshPlatformAnalytics(platform)}
+                      isLoading={isRefreshing && refreshedPlatform === platform}
+                    />
                   );
                 })}
               </div>
