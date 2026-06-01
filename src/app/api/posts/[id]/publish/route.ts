@@ -40,7 +40,7 @@ export async function POST(
     for (const p of platforms) {
       try {
         const connection = post.organization.platformConnections.find(
-          (c) => c.platform === p
+          (c: { platform: string }) => c.platform === p
         );
 
         if (!connection) {
