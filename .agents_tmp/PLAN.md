@@ -42,6 +42,15 @@ Build the ultimate content creation and scheduling platform that surpasses Buffe
 - 🚫 Engagement-boosting CTA suggestions
 - 🚫 Template performance analytics
 - 🚫 Content pattern visualization (3 short/day, 3 long/week tracking)
+- 🚫 **First comment auto-post** (critical for YouTube engagement)
+- 🚫 **Auto-generated captions** (AI-powered)
+- 🚫 **Content brief/notepad** for ideation
+- 🚫 **Revision history** for posts
+- 🚫 **Trend alerts** across platforms
+- 🚫 **Competitor tracking** (manual input)
+- 🚫 **Content repurposing** suggestions
+- 🚫 **Scheduled report emails** (weekly/monthly digest)
+- 🚫 **Link-in-bio page** (customizable landing page)
 
 ## 2. CONTEXT SUMMARY
 - **Creator Profile**: Top-performing YouTuber who schedules all content beforehand
@@ -133,6 +142,21 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - `KeywordTracker` (id, organization_id, keyword, target_videos[], search_volume, rank, updated_at)
   - `PerformanceMetrics` (id, post_id, platform, views, likes, comments, shares, engagement_rate, collected_at)
   - `AlgorithmHealth` (id, organization_id, platform, shadowban_risk, posting_frequency_score, engagement_score, updated_at)
+  
+  // === TRENDS & COMPETITORS ===
+  - `Trend` (id, organization_id, platform, keyword, source, created_at, expires_at)
+  - `Competitor` (id, organization_id, platform, username, url, last_post_date, tracking_since)
+  - `TrendAlert` (id, organization_id, trend_id, dismissed, created_at)
+  
+  // === REVISION HISTORY ===
+  - `PostRevision` (id, post_id, content_snapshot, media_snapshot, metadata_snapshot, created_at)
+  
+  // === LINK-IN-BIO ===
+  - `LinkInBioPage` (id, organization_id, title, slug, is_active, created_at)
+  - `LinkInBioLink` (id, page_id, title, url, position, icon, click_count, schedule_start, schedule_end)
+  
+  // === REPORTS ===
+  - `ScheduledReport` (id, organization_id, type, frequency, metrics_json, recipients_json, last_sent_at, next_send_at)
 
 - **2.2** Implement Database Layer
   - Add PostgreSQL via Prisma ORM (better for multi-tenant than SQLite)
@@ -186,6 +210,21 @@ Build a Next.js application with a multi-tenant-ready architecture:
   keyword_trackers (id, organization_id, keyword, target_video_ids_json, search_volume, current_rank, updated_at)
   performance_metrics (id, organization_id, post_id, platform, views, likes, comments, shares, engagement_rate, collected_at)
   algorithm_health_checks (id, organization_id, platform, shadowban_risk_score, frequency_score, engagement_score, last_checked_at)
+  
+  // Trends & Competitors
+  trends (id, organization_id, platform, keyword, source, is_active, expires_at, created_at)
+  competitors (id, organization_id, platform, username, display_name, url, last_post_date, notes, tracking_since, created_at)
+  trend_alerts (id, organization_id, trend_id, is_dismissed, created_at)
+  
+  // Revision History
+  post_revisions (id, post_id, content_snapshot, media_snapshot_json, metadata_snapshot_json, created_at)
+  
+  // Link-in-Bio
+  link_in_bio_pages (id, organization_id, title, slug, is_active, created_at, updated_at)
+  link_in_bio_links (id, page_id, title, url, icon, position, click_count, schedule_start, schedule_end, is_active, created_at)
+  
+  // Reports
+  scheduled_reports (id, organization_id, name, type, frequency, metrics_json, recipients_json, format, last_sent_at, next_send_at, is_active, created_at)
   ```
 
 ### Phase 3: Platform OAuth Connections
@@ -279,9 +318,11 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - Quick actions: edit, schedule, duplicate, archive
   - Drag-and-drop reordering for bulk scheduling
   - Bulk select for batch operations (delete, reschedule, move)
+  - **Revision history**: Track all changes to posts with timestamps and restore previous versions
+  - **Content brief/notepad**: Quick notes field for each post with ideas, reminders, talking points
 
 - **4.2** Platform-Specific Post Composer
-  
+
   **Universal Fields:**
   - Platform selector (multi-select)
   - Content text with character counter per platform
@@ -291,9 +332,12 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - @mention suggestions
   - Schedule datetime picker
   - Content type: short-form vs long-form
-  
+  - **First comment auto-post**: Optional pinned comment text (critical for YouTube engagement)
+  - **Auto-generated captions**: AI-powered caption generation for videos
+  - **Content brief**: Notes field for ideation and talking points
+
   **YouTube Composer:**
-  - Video file upload with resumable uploads
+  - Video file upload with resumable uploads (1280x720 thumbnails, 256GB max file)
   - Custom thumbnail upload with A/B testing option
   - Title (up to 100 chars) with AI suggestions
   - Description with rich template support
@@ -302,42 +346,51 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - Category selection
   - License: Standard | Creative Commons | Public Domain
   - Made for Kids toggle (affects comment policies)
+  - Age restriction setting (made for kids impacts monetization)
   - Recording date & location
   - Language
-  - Chapters with auto-detect or manual add
-  - Cards editor (link to other videos/playlists)
-  - End screen builder
+  - Chapters with auto-detect or manual add (parsed from description)
+  - Cards editor (link to other videos/playlists) - **NOTE: Partner API only, document limitation**
+  - End screen builder - **NOTE: Partner API only, document limitation**
   - Auto chapters generation
-  - Caption upload (SRT/VTT)
+  - Caption upload (SRT/VTT files)
   - Loop video option
   - Premiere setup (with countdown)
-  
+  - **First comment** (auto-post after publish)
+  - **Pinned comment** (set after publish)
+  - Community posts - **NOT SUPPORTED via API**
+  - Live streaming setup
+
   **TikTok Composer:**
   - Video file upload
   - Caption with trending hashtag suggestions
-  - Music/sound selection from TikTok library
+  - Music/sound selection - **NOTE: Native library NOT available via API, user must add manually**
+  - Commercial Music Library (song_clip_id for eligible accounts)
   - Duet/Stitch settings (on/off)
   - Visibility: Public | Private | Friends
   - Comment settings: All | Friends | Off
   - Download permission: Allow | Don't allow
-  - Content disclosure toggle (sponsored content)
-  - Cover frame selection
+  - Content disclosure toggle (brand_content_toggle, brand_organic_toggle - sponsored content)
+  - AIGC content labeling (is_aigc)
+  - Cover frame selection (video_cover_timestamp_ms)
   - Caption language detection
-  
+  - Live streaming setup
+
   **Instagram Composer:**
   - Post Type selector: Feed | Reel | Story | Carousel
   - Feed: Single image or carousel (up to 10)
   - Reel: Video with music, effects, text overlays
-  - Story: Photo/video with stickers, polls, questions, countdowns
+  - Story: Photo/video with stickers, polls, questions, countdowns (via platform)
   - Caption with hashtag suggestions
-  - Location tag with search
+  - Location tag with search (Facebook Places)
   - User/product tags (for shopping)
-  - Alt text editor
+  - Alt text editor (images only, not Reels/Stories)
   - Hide likes/view count toggle
   - Close friends only (stories)
   - Schedule for Stories (auto-delete after 24h reminder)
-  - Music library access
-  
+  - **Auto-generated captions**: AI caption generation for Reels
+  - Caption translation suggestions
+
   **Facebook Composer:**
   - Post Type: Text | Photo | Video | Link | Event | Poll | Offer
   - Multiple page selector
@@ -349,9 +402,11 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - Audience selector (public, friends, specific)
   - Hide from timeline option
   - Disable comments option
-  - Event details (if event type)
-  - Poll options (if poll type)
-  - Offer details (if offer type)
+  - Event details (if event type): title, description, start/end time, location, cover
+  - Poll options (if poll type): question + multiple choice options
+  - Offer details (if offer type): title, terms, expiration
+  - Live video scheduling
+  - Scheduled publishing (native via API)
 
 - **4.3** Short-Form Clip Creator
   - Import full YouTube video
@@ -374,6 +429,33 @@ Build a Next.js application with a multi-tenant-ready architecture:
   - "Clone from template" for quick creation
   - Evergreen content with auto-repost
   - Template performance tracking
+
+- **4.5** Trend Alerts & Competitor Tracking
+  - **Trend detection**: Manual input of trending topics/hashtags
+  - **Competitor tracking**: Add competitor accounts, track their posting patterns
+  - **Alert system**: Notifications when trending topics match your niche
+  - **"First to post" advantage**: Track and encourage early posting on trends
+  - Trending hashtag aggregation per platform
+
+- **4.6** Content Repurposing Tools
+  - Auto-suggest content repurposing (e.g., "This YouTube video can be clipped for TikTok")
+  - Cross-platform adaptation suggestions
+  - Quote/clip extraction from longer content
+  - "Evergreen content" identification
+
+- **4.7** Link-in-Bio Landing Page
+  - Customizable link page (like Linktree)
+  - Custom domain support (v2)
+  - Analytics on link clicks
+  - Multiple link variants for A/B testing
+  - Schedule link changes
+
+- **4.8** Scheduled Report Emails
+  - Weekly/monthly performance digest
+  - Customizable metrics per report
+  - Export to PDF option
+  - Automated email delivery
+  - Custom branding on reports
 
 ### Phase 5: Media Storage & Processing
 - **5.1** Local Storage Layer
@@ -707,12 +789,61 @@ Build a Next.js application with a multi-tenant-ready architecture:
 
 ## 5. TESTING AND VALIDATION
 
-- **UI Consistency**: Compare components visually with Portfolio site
-- **OAuth Flow**: Test connecting each platform
+### Core Functionality Tests
+- **OAuth Flow**: Test connecting each platform (YouTube, TikTok, Instagram, Facebook)
 - **Scheduling**: Verify posts publish at correct times
 - **Cooldown Warnings**: Confirm warnings display correctly (but don't block)
 - **Error Handling**: Test failed posts, token refresh, network errors
 - **Multi-Tenant Ready**: API queries scoped by organization_id (even with single user)
+
+### Platform-Specific Tests
+- **YouTube**: 
+  - Video upload (resumable), thumbnail upload, scheduled publishing
+  - First comment auto-post, pinned comment
+  - Caption upload, chapters (via description)
+  - ❌ Verify cards/end screens are NOT supported (partner-only)
+  - ❌ Verify community posts are NOT supported
+  
+- **TikTok**: 
+  - Video upload (FILE_UPLOAD and PULL_FROM_URL)
+  - All content settings (duet, stitch, comments, download, branded content)
+  - Cover frame selection
+  - ❌ Verify native sounds NOT available via API
+  
+- **Instagram**: 
+  - Photo, video, carousel, Reels, Stories publishing
+  - Alt text, location, user tags
+  - Comment moderation
+  - Insights retrieval
+  - ❌ Verify story stickers NOT supported via API
+  
+- **Facebook**: 
+  - All post types (text, photo, video, link, event, poll, offer)
+  - Scheduled publishing
+  - Page and Group posting
+  - Insights
+
+### New Feature Tests
+- **Revision History**: Create post, edit multiple times, verify history, restore previous version
+- **Content Brief**: Add notes to post, verify persistence
+- **Trend Alerts**: Add trend, verify alert triggers
+- **Competitor Tracking**: Add competitor, verify tracking data
+- **Auto-generated Captions**: Upload video, verify AI caption generation
+- **Link-in-Bio**: Create page, add links, verify public access
+- **Scheduled Reports**: Configure report, verify email delivery
+
+### Performance & Security Tests
+- **Quotas**: Monitor YouTube API quota usage
+- **Rate Limits**: Verify handling of 429 errors across platforms
+- **Token Refresh**: Verify automatic token refresh on expiry
+- **Encryption**: Verify tokens are encrypted at rest
+
+### UI/UX Tests
+- **Dark Mode**: Verify Portfolio styling applies correctly
+- **Responsive Design**: Test on mobile/tablet
+- **Post Preview**: Verify preview matches platform appearance
+- **Calendar View**: Verify drag-drop, color coding, density heatmap
+- **Queue View**: Verify reordering, bulk actions
 
 ## 6. FUTURE V2 CONSIDERATIONS
 

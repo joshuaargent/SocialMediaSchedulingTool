@@ -45,6 +45,7 @@ export const mainNav = [
   { label: 'Calendar', href: '/calendar' },
   { label: 'Analytics', href: '/analytics' },
   { label: 'Media', href: '/media-library' },
+  { label: 'Pipeline', href: '/pipeline' },
   { label: 'Settings', href: '/settings' },
 ];
 
