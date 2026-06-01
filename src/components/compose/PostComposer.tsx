@@ -109,14 +109,33 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
     setShowDatePicker(false);
   };
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
     for (const file of Array.from(files)) {
-      // Create object URL for preview
-      const url = URL.createObjectURL(file);
-      addMediaUrl(url);
+      try {
+        // Upload file to server
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            addMediaUrl(data.file.url);
+          }
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        // Fallback to blob URL for preview
+        const url = URL.createObjectURL(file);
+        addMediaUrl(url);
+      }
     }
   }, [addMediaUrl]);
 

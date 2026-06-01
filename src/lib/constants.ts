@@ -41,14 +41,20 @@ export const meta = {
 
 export const mainNav = [
   { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Queue', href: '/queue' },
+  { label: 'Calendar', href: '/calendar' },
   { label: 'Analytics', href: '/analytics' },
+  { label: 'Media', href: '/media-library' },
   { label: 'Settings', href: '/settings' },
 ];
 
 export const footerNav = {
   main: [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Queue', href: '/queue' },
+    { label: 'Calendar', href: '/calendar' },
     { label: 'Analytics', href: '/analytics' },
+    { label: 'Media Library', href: '/media-library' },
     { label: 'Settings', href: '/settings' },
   ],
   social: [
