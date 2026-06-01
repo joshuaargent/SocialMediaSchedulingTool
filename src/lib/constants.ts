@@ -3,9 +3,9 @@
 // ============================================
 
 export const siteConfig = {
-  name: 'My Template',
-  description: 'A reusable Next.js template for any website project.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com',
+  name: 'ContentHub',
+  description: 'Social Media Command Center for content creators',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://contenthub.app',
   ogImage: '/og-image.png',
   location: 'Surrey, United Kingdom',
   links: {
@@ -17,8 +17,8 @@ export const siteConfig = {
     email: 'mailto:argentjackjoshua@outlook.com',
   },
   author: {
-    name: 'Your Name',
-    bio: 'Your bio here',
+    name: 'Joshua Argent',
+    bio: 'Top-performing content creator',
   },
 };
 
@@ -27,12 +27,12 @@ export const siteConfig = {
 // ============================================
 
 export const meta = {
-  title: 'My Template',
-  description: 'A reusable Next.js template for any website project.',
-  keywords: ['template', 'nextjs', 'website', 'portfolio'] as string[],
-  siteName: 'My Template',
-  twitter: '@yourhandle',
-  instagramHandle: '@yourhandle',
+  title: 'ContentHub - Social Media Command Center',
+  description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube',
+  keywords: ['social media', 'content scheduling', 'tiktok', 'youtube', 'instagram', 'facebook'] as string[],
+  siteName: 'ContentHub',
+  twitter: '@joshua_argent',
+  instagramHandle: '@joshua_argent',
 };
 
 // ============================================
@@ -40,28 +40,29 @@ export const meta = {
 // ============================================
 
 export const mainNav = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Queue', href: '/queue' },
+  { label: 'Calendar', href: '/calendar' },
+  { label: 'Analytics', href: '/analytics' },
+  { label: 'Media', href: '/media-library' },
+  { label: 'Pipeline', href: '/pipeline' },
+  { label: 'Settings', href: '/settings' },
 ];
 
 export const footerNav = {
   main: [
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
-  ],
-  content: [
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Queue', href: '/queue' },
+    { label: 'Calendar', href: '/calendar' },
+    { label: 'Analytics', href: '/analytics' },
+    { label: 'Media Library', href: '/media-library' },
+    { label: 'Settings', href: '/settings' },
   ],
   social: [
     { label: 'YouTube', href: siteConfig.links.youtube },
     { label: 'GitHub', href: siteConfig.links.github },
     { label: 'Instagram', href: siteConfig.links.instagram },
     { label: 'Facebook', href: siteConfig.links.facebook },
-    { label: 'Strava', href: siteConfig.links.strava },
   ],
 };
 

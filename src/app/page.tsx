@@ -1,13 +1,9 @@
-import { Hero } from '@/components/home/Hero';
+import { redirect } from 'next/navigation';
 
 // ============================================
-// Homepage
+// Homepage - Redirect to Dashboard
 // ============================================
 
 export default function HomePage() {
-  return (
-    <>
-      <Hero />
-    </>
-  );
+  redirect('/dashboard');
 }

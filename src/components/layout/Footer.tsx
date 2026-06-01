@@ -103,13 +103,13 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Content */}
+          {/* Quick Links */}
           <div>
             <h3 className="text-text-primary text-sm font-semibold tracking-wider uppercase">
-              Content
+              Quick Links
             </h3>
             <ul className="mt-4 space-y-2">
-              {footerNav.content.map((item) => (
+              {footerNav.main.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}

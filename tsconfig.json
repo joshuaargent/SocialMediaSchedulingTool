@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "src/test",
-    "tests"
+    "tests",
+    "prisma"
   ]
 }
