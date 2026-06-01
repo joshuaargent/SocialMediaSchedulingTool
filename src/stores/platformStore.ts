@@ -129,7 +129,7 @@ export interface OAuthConfig {
 export const platformOAuthConfigs: Record<SocialPlatform, OAuthConfig> = {
   tiktok: {
     platform: 'tiktok',
-    clientId: process.env.NEXT_PUBLIC_TIKTOK_CLIENT_ID || '',
+    clientId: process.env.NEXT_PUBLIC_TIKTOK_CLIENT_ID || process.env.TIKTOK_CLIENT_ID || '',
     authorizationUrl: 'https://www.tiktok.com/v2/auth/authorize/',
     scopes: ['user.info.basic', 'video.upload', 'video.publish'],
     icon: 'Tiktok',
@@ -138,7 +138,7 @@ export const platformOAuthConfigs: Record<SocialPlatform, OAuthConfig> = {
   },
   facebook: {
     platform: 'facebook',
-    clientId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '',
+    clientId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FACEBOOK_CLIENT_ID || '',
     authorizationUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
     scopes: ['pages_manage_posts', 'pages_read_engagement', 'instagram_basic', 'instagram_manage_insights'],
     icon: 'Facebook',
@@ -147,7 +147,7 @@ export const platformOAuthConfigs: Record<SocialPlatform, OAuthConfig> = {
   },
   instagram: {
     platform: 'instagram',
-    clientId: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID || '',
+    clientId: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID || process.env.INSTAGRAM_CLIENT_ID || '',
     authorizationUrl: 'https://api.instagram.com/oauth/authorize',
     scopes: ['user_profile', 'user_media'],
     icon: 'Instagram',
@@ -156,7 +156,7 @@ export const platformOAuthConfigs: Record<SocialPlatform, OAuthConfig> = {
   },
   youtube: {
     platform: 'youtube',
-    clientId: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID || '',
+    clientId: process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID || process.env.YOUTUBE_CLIENT_ID || '',
     authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
     scopes: [
       'https://www.googleapis.com/auth/youtube.upload',
