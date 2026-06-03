@@ -6,10 +6,7 @@ let videoCache: { videos: any[]; summary: any; timestamp: number } | null = null
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // GET /api/analytics/youtube/videos - Get YouTube video analytics
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ platform: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
     const platformStore = usePlatformStore.getState();
     const connections = platformStore.connections;
