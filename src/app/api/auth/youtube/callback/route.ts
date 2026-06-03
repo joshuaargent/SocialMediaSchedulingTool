@@ -46,25 +46,62 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
 
+    // Fetch YouTube channel info to get subscriber count
+    let youtubeStats = {
+      subscribers: 0,
+      channelId: '',
+      channelTitle: '',
+    };
+    
+    try {
+      // Get channel details with stats
+      const channelResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true`,
+        { headers: { 'Authorization': `Bearer ${tokenData.access_token}` }}
+      );
+      const channelData = await channelResponse.json();
+      
+      if (channelData.items && channelData.items[0]) {
+        const channel = channelData.items[0];
+        youtubeStats = {
+          subscribers: parseInt(channel.statistics.subscriberCount) || 0,
+          channelId: channel.id as string || '',
+          channelTitle: channel.snippet.title,
+        };
+      }
+    } catch (ytError) {
+      console.error('Failed to fetch YouTube channel info:', ytError);
+    }
+
+    // Encode stats in a visible cookie for client to read
+    const statsCookie = JSON.stringify(youtubeStats);
     const response = NextResponse.redirect(
       new URL('/settings?connected=youtube', request.url)
     );
 
-    response.cookies.set('yt_access_token', tokenData.access_token, {
-      httpOnly: true,
+    response.cookies.set('yt_access_token', tokenData!.access_token, {
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 3600,
     });
 
-    if (tokenData.refresh_token) {
-      response.cookies.set('yt_refresh_token', tokenData.refresh_token, {
-        httpOnly: true,
+    if (tokenData!.refresh_token) {
+      response.cookies.set('yt_refresh_token', tokenData!.refresh_token, {
+        httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 60,
       });
     }
+
+    // Store stats in cookie for client sync
+    response.cookies.set('yt_stats', statsCookie, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24,
+    });
 
     return response;
   } catch (err) {

@@ -4,12 +4,20 @@ import { useEffect } from 'react';
 import { usePlatformStore } from '@/stores';
 
 // Cookie names for each platform
-const COOKIE_MAP: Record<string, string> = {
-  tiktok: 'tt_access_token',
-  youtube: 'yt_access_token',
-  facebook: 'fb_access_token',
-  instagram: 'ig_access_token',
+const COOKIE_MAP: Record<string, { access: string; stats?: string }> = {
+  tiktok: { access: 'tt_access_token' },
+  youtube: { access: 'yt_access_token', stats: 'yt_stats' },
+  facebook: { access: 'fb_access_token' },
+  instagram: { access: 'ig_access_token' },
 };
+
+/**
+ * Parse a cookie value by name
+ */
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 /**
  * This component syncs OAuth connections from cookies to the store.
@@ -26,23 +34,40 @@ export function OAuthConnectionSync() {
     const timeout = setTimeout(() => {
       const currentPlatforms = connections.map(c => c.platform);
       
-      for (const [platform, cookieName] of Object.entries(COOKIE_MAP)) {
+      for (const [platform, cookies] of Object.entries(COOKIE_MAP)) {
         if (currentPlatforms.includes(platform as any)) continue;
         
-        if (document.cookie.includes(`${cookieName}=`)) {
-          addConnection({
-            platform: platform as any,
-            accessToken: 'connected_via_oauth',
-            platformUserId: 'oauth_user',
-            permissions: [],
-          });
-          updateStats(platform as any, {
-            platform: platform as any,
-            followers: 0,
-            following: 0,
-            posts: 0,
-          });
+        const accessToken = getCookie(cookies.access);
+        if (!accessToken) continue;
+        
+        // Parse stats cookie if exists
+        let stats = { followers: 0, following: 0, posts: 0 };
+        if (cookies.stats) {
+          const statsCookie = getCookie(cookies.stats);
+          if (statsCookie) {
+            try {
+              const parsed = JSON.parse(statsCookie);
+              stats = {
+                followers: parsed.subscribers || 0,
+                following: 0,
+                posts: 0,
+              };
+            } catch (e) {
+              // ignore parse errors
+            }
+          }
         }
+        
+        addConnection({
+          platform: platform as any,
+          accessToken,
+          platformUserId: 'oauth_user',
+          permissions: [],
+        });
+        updateStats(platform as any, {
+          platform: platform as any,
+          ...stats,
+        });
       }
     }, 100);
 
