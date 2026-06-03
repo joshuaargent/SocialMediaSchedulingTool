@@ -5,7 +5,7 @@ let videoCache: { videos: any[]; summary: any; timestamp: number } | null = null
 
 // GET /api/analytics/youtube/videos
 export async function GET(request: NextRequest) {
-  const days = parseInt(request.nextUrl.searchParams.get('days') || '90'); // Default to 90 days
+  const days = parseInt(request.nextUrl.searchParams.get('days') || '365');
   const forceRefresh = request.nextUrl.searchParams.get('refresh') === 'true';
 
   // Check cache (skip if force refresh)
@@ -21,17 +21,6 @@ export async function GET(request: NextRequest) {
   // Get YouTube tokens from cookies
   let accessToken = request.cookies.get('yt_access_token')?.value;
   const refreshToken = request.cookies.get('yt_refresh_token')?.value;
-  const ytStatsCookie = request.cookies.get('yt_stats')?.value;
-
-  // Parse channel info from yt_stats cookie
-  let channelInfo = null;
-  if (ytStatsCookie) {
-    try {
-      channelInfo = JSON.parse(ytStatsCookie);
-    } catch (e) {
-      // ignore parse errors
-    }
-  }
 
   // If no access token but we have refresh token, try to get a new one
   if (!accessToken && refreshToken) {
@@ -54,9 +43,10 @@ export async function GET(request: NextRequest) {
         if (refreshResponse.ok) {
           const tokenData = await refreshResponse.json();
           accessToken = tokenData.access_token;
-          
-          // Update the cookie with new token
           console.log('Successfully refreshed YouTube access token');
+        } else {
+          const errorText = await refreshResponse.text();
+          console.error('Token refresh failed:', refreshResponse.status, errorText);
         }
       } catch (e) {
         console.error('Failed to refresh token:', e);
@@ -64,90 +54,69 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // If still no access token, return error with channel info if available
+  // If still no access token
   if (!accessToken) {
     return NextResponse.json({
       connected: false,
       platform: 'youtube',
-      error: 'YouTube access token not found. Please reconnect YouTube in Settings.',
-      channelInfo: channelInfo,
-      debug: {
-        hasRefreshToken: !!refreshToken,
-        hasChannelInfo: !!channelInfo,
-        clientIdConfigured: !!process.env.YOUTUBE_CLIENT_ID,
-      }
+      error: 'YouTube not connected. Please connect in Settings.',
     }, { status: 401 });
   }
 
   try {
-    // Calculate date range
+    // Calculate date range - search all time if days is large
     const publishedAfter = new Date();
     publishedAfter.setDate(publishedAfter.getDate() - days);
 
-    console.log('Fetching YouTube videos with token, days:', days, 'publishedAfter:', publishedAfter.toISOString());
+    console.log('Fetching YouTube videos with days:', days, 'publishedAfter:', publishedAfter.toISOString());
 
-    // Fetch user's videos from YouTube Data API
+    // Fetch user's videos from YouTube Data API using search
     const searchResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&mine=true&type=video&order=date&maxResults=50&publishedAfter=${publishedAfter.toISOString()}`,
       { headers: { 'Authorization': `Bearer ${accessToken}` }}
     );
 
     const searchData = await searchResponse.json();
+
+    console.log('YouTube search response status:', searchResponse.status);
+    console.log('YouTube search response keys:', Object.keys(searchData));
     
-    console.log('YouTube API response status:', searchResponse.status);
-    console.log('YouTube API items count:', searchData.items?.length || 0);
-    
-    // Handle token expiration
-    if (searchResponse.status === 401 && refreshToken) {
-      // Try to refresh the token
-      const clientId = process.env.YOUTUBE_CLIENT_ID;
-      const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
-
-      if (clientId && clientSecret) {
-        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            grant_type: 'refresh_token',
-            refresh_token: refreshToken,
-          }),
-        });
-
-        if (refreshResponse.ok) {
-          const newTokenData = await refreshResponse.json();
-          
-          // Retry with new token
-          const retryResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&mine=true&type=video&order=date&maxResults=50&publishedAfter=${publishedAfter.toISOString()}`,
-            { headers: { 'Authorization': `Bearer ${newTokenData.access_token}` }}
-          );
-
-          if (retryResponse.ok) {
-            const retryData = await retryResponse.json();
-            // Update cookie with new token
-            const result = await processVideos(retryData, newTokenData.access_token);
-            const response = NextResponse.json({
-              connected: true,
-              platform: 'youtube',
-              ...result,
-              period: { days },
-            });
-            response.cookies.set('yt_access_token', newTokenData.access_token, {
-              httpOnly: false,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax',
-              maxAge: 3600,
-            });
-            videoCache = { videos: result.videos, summary: result.summary, timestamp: Date.now() };
-            return response;
-          }
-        }
-      }
+    // Check for API errors
+    if (searchData.error) {
+      console.error('YouTube API error:', searchData.error);
+      return NextResponse.json({
+        connected: false,
+        platform: 'youtube',
+        error: searchData.error.message || 'YouTube API error',
+        errorCode: searchData.error.code,
+      }, { status: 500 });
     }
 
+    // If no items, try fetching all videos without date filter
     if (!searchData.items || searchData.items.length === 0) {
+      console.log('No videos with date filter, trying without date...');
+      
+      // Try without publishedAfter filter
+      const allVideosResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&mine=true&type=video&order=date&maxResults=50`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` }}
+      );
+      
+      const allVideosData = await allVideosResponse.json();
+      
+      if (allVideosData.items && allVideosData.items.length > 0) {
+        console.log('Found', allVideosData.items.length, 'videos without date filter');
+        const result = await processVideos(allVideosData, accessToken);
+        videoCache = { videos: result.videos, summary: result.summary, timestamp: Date.now() };
+        return NextResponse.json({
+          connected: true,
+          platform: 'youtube',
+          ...result,
+          period: { days: 'all' },
+        });
+      }
+      
+      // Return empty
       const emptyResult = {
         videos: [],
         summary: { totalVideos: 0, totalViews: 0, totalLikes: 0, totalComments: 0, avgViewsPerVideo: 0 },
@@ -158,11 +127,13 @@ export async function GET(request: NextRequest) {
         platform: 'youtube',
         ...emptyResult,
         period: { days },
+        message: 'No videos found',
       });
     }
 
     // Get video IDs for stats
     const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
+    console.log('Fetching stats for', videoIds.split(',').length, 'videos');
 
     // Fetch video statistics
     const statsResponse = await fetch(
@@ -177,6 +148,8 @@ export async function GET(request: NextRequest) {
 
     // Update cache
     videoCache = { videos: result.videos, summary: result.summary, timestamp: Date.now() };
+
+    console.log('Returning', result.videos.length, 'videos');
 
     return NextResponse.json({
       connected: true,
@@ -203,14 +176,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       connected: false,
       platform: 'youtube',
-      error: 'Failed to fetch YouTube videos. Please try again.',
+      error: 'Failed to fetch YouTube videos',
     }, { status: 500 });
   }
 }
 
 async function processVideos(searchData: any, accessToken: string, statsData?: any) {
   // If we don't have stats data yet, fetch it
-  if (!statsData) {
+  if (!statsData && searchData.items && searchData.items.length > 0) {
     const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
     const statsResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet,contentDetails&id=${videoIds}`,
@@ -220,7 +193,8 @@ async function processVideos(searchData: any, accessToken: string, statsData?: a
   }
 
   // Combine search and stats data
-  const videos = statsData.items?.map((video: any) => {
+  const videos = statsData?.items?.map((video: any) => {
+    const searchItem = searchData.items?.find((s: any) => s.id.videoId === video.id);
     return {
       id: video.id,
       title: video.snippet.title,
