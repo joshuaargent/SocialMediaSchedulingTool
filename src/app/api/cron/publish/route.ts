@@ -3,8 +3,7 @@ import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 // This endpoint is meant to be called by Vercel Cron
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/publish", "schedule": "* * * * *" }] }
-
-const DEFAULT_ORG_ID = 'default-org';
+// Note: This processes scheduled posts for ALL organizations
 
 // GET /api/cron/publish - Auto-publish scheduled posts
 export async function GET() {
@@ -20,10 +19,9 @@ export async function GET() {
 
     const now = new Date();
     
-    // Find posts that are scheduled to be published
+    // Find posts that are scheduled to be published (across all organizations)
     const postsToPublish = await prisma.post.findMany({
       where: {
-        organizationId: DEFAULT_ORG_ID,
         status: 'scheduled',
         scheduledAt: {
           lte: now,
@@ -43,7 +41,7 @@ export async function GET() {
       },
     });
 
-    const results: { postId: string; platforms: string[]; success: boolean }[] = [];
+    const results: { postId: string; organizationId: string; platforms: string[]; success: boolean }[] = [];
 
     for (const post of postsToPublish) {
       const publishResults: string[] = [];
@@ -60,7 +58,7 @@ export async function GET() {
             
             publishResults.push(platform);
 
-            // Record posting history
+            // Record posting history using the post's actual organizationId
             await prisma.postingHistory.create({
               data: {
                 organizationId: post.organizationId,
@@ -94,28 +92,28 @@ export async function GET() {
 
         results.push({
           postId: post.id,
+          organizationId: post.organizationId,
           platforms: publishResults,
           success: true,
         });
       }
     }
 
-    // Check for evergreen posts
+    // Process evergreen posts (across all organizations)
     const evergreenPosts = await prisma.post.findMany({
       where: {
-        organizationId: DEFAULT_ORG_ID,
         isEvergreen: true,
         status: 'published',
       },
     });
 
     for (const post of evergreenPosts) {
-      if (post.evergreenIntervalDays) {
-        const nextPostDate = new Date(post.publishedAt!);
+      if (post.evergreenIntervalDays && post.publishedAt) {
+        const nextPostDate = new Date(post.publishedAt);
         nextPostDate.setDate(nextPostDate.getDate() + post.evergreenIntervalDays);
 
         if (now >= nextPostDate) {
-          // Create a new post instance
+          // Create a new post instance using the original post's organizationId
           await prisma.post.create({
             data: {
               organizationId: post.organizationId,

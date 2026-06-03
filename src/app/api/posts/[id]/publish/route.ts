@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
-
-const DEFAULT_ORG_ID = 'default-org';
+import { auth } from '@/auth';
 
 // POST /api/posts/[id]/publish - Publish a post to platforms
 export async function POST(
@@ -9,6 +8,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
@@ -20,7 +25,7 @@ export async function POST(
 
     // Get the post
     const post = await prisma.post.findFirst({
-      where: { id, organizationId: DEFAULT_ORG_ID },
+      where: { id, organizationId: session.user.organizationId },
       include: {
         organization: {
           include: {
@@ -71,7 +76,7 @@ export async function POST(
         // Record in posting history
         await prisma.postingHistory.create({
           data: {
-            organizationId: DEFAULT_ORG_ID,
+            organizationId: session.user.organizationId,
             postId: post.id,
             platform: p,
             publishedAt: new Date(),

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
-
-const DEFAULT_ORG_ID = 'default-org';
+import { auth } from '@/auth';
 
 // GET /api/db/analytics/summary - Get analytics summary
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ 
@@ -29,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Get posts stats
     const postsCount = await prisma.post.count({
       where: {
-        organizationId: DEFAULT_ORG_ID,
+        organizationId: session.user.organizationId,
         status: 'published',
       },
     });
@@ -37,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Get metrics sum
     const metrics = await prisma.performanceMetrics.findMany({
       where: {
-        organizationId: DEFAULT_ORG_ID,
+        organizationId: session.user.organizationId,
         collectedAt: { gte: startDate },
       },
     });
@@ -58,7 +63,7 @@ export async function GET(request: NextRequest) {
       const platformMetrics = metrics.filter((m: { platform: string }) => m.platform === platform);
       const platformPosts = await prisma.post.count({
         where: {
-          organizationId: DEFAULT_ORG_ID,
+          organizationId: session.user.organizationId,
           platforms: { has: platform },
           status: 'published',
         },
@@ -76,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Get algorithm health
     const algorithmHealth = await prisma.algorithmHealth.findMany({
-      where: { organizationId: DEFAULT_ORG_ID },
+      where: { organizationId: session.user.organizationId },
     });
 
     return NextResponse.json({
@@ -99,6 +104,12 @@ export async function GET(request: NextRequest) {
 // POST /api/db/analytics - Add performance metrics
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ 
@@ -114,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     const metrics = await prisma.performanceMetrics.create({
       data: {
-        organizationId: DEFAULT_ORG_ID,
+        organizationId: session.user.organizationId,
         postId,
         platform,
         views,

@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
-
-const DEFAULT_ORG_ID = 'default-org';
+import { auth } from '@/auth';
 
 // GET /api/db/platforms - Get all platform connections
 export async function GET() {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ platforms: [] }, { status: 200 });
     }
 
     const connections = await prisma.platformConnection.findMany({
-      where: { organizationId: DEFAULT_ORG_ID },
+      where: { organizationId: session.user.organizationId },
       orderBy: { platform: 'asc' },
     });
 
@@ -51,6 +56,12 @@ export async function GET() {
 // POST /api/db/platforms - Create/Update platform connection
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
@@ -59,11 +70,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { platform, accessToken, refreshToken, expiresAt, platformUserId, displayName, profileImage, followers } = body;
 
-    // Upsert connection
+    // Upsert connection using the authenticated user's organization
     const connection = await prisma.platformConnection.upsert({
       where: {
         organizationId_platform: {
-          organizationId: DEFAULT_ORG_ID,
+          organizationId: session.user.organizationId,
           platform,
         },
       },
@@ -77,7 +88,7 @@ export async function POST(request: NextRequest) {
         followers,
       },
       create: {
-        organizationId: DEFAULT_ORG_ID,
+        organizationId: session.user.organizationId,
         platform,
         accessToken,
         refreshToken,
@@ -107,6 +118,12 @@ export async function POST(request: NextRequest) {
 // DELETE /api/db/platforms - Disconnect a platform
 export async function DELETE(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
@@ -122,7 +139,7 @@ export async function DELETE(request: NextRequest) {
     await prisma.platformConnection.delete({
       where: {
         organizationId_platform: {
-          organizationId: DEFAULT_ORG_ID,
+          organizationId: session.user.organizationId,
           platform,
         },
       },

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
-
-const DEFAULT_ORG_ID = 'default-org';
+import { auth } from '@/auth';
 
 // GET /api/db/posts/[id] - Get single post
 export async function GET(
@@ -9,6 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured', post: null }, { status: 200 });
@@ -17,7 +22,7 @@ export async function GET(
     const { id } = await params;
     
     const post = await prisma.post.findFirst({
-      where: { id, organizationId: DEFAULT_ORG_ID },
+      where: { id, organizationId: session.user.organizationId },
       include: {
         user: { select: { id: true, name: true, email: true } },
         campaign: { select: { id: true, name: true, color: true } },
@@ -41,6 +46,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
@@ -50,7 +61,7 @@ export async function PATCH(
     const body = await request.json();
 
     const post = await prisma.post.updateMany({
-      where: { id, organizationId: DEFAULT_ORG_ID },
+      where: { id, organizationId: session.user.organizationId },
       data: {
         content: body.content,
         mediaUrls: body.mediaUrls,
@@ -75,7 +86,7 @@ export async function PATCH(
     }
 
     const updatedPost = await prisma.post.findFirst({
-      where: { id, organizationId: DEFAULT_ORG_ID },
+      where: { id, organizationId: session.user.organizationId },
     });
 
     return NextResponse.json({ post: updatedPost });
@@ -91,6 +102,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
@@ -99,7 +116,7 @@ export async function DELETE(
     const { id } = await params;
 
     const post = await prisma.post.deleteMany({
-      where: { id, organizationId: DEFAULT_ORG_ID },
+      where: { id, organizationId: session.user.organizationId },
     });
 
     if (post.count === 0) {

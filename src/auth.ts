@@ -6,10 +6,15 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db/prisma"
 
 // Create adapter only if prisma is available
+// Note: With JWT strategy, adapter is optional, but needed for Google OAuth Account linking
 const adapter = prisma ? PrismaAdapter(prisma) : null
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: adapter as any,
+  session: {
+    strategy: "jwt",  // Use JWT strategy for credentials auth
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID ? [Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -48,19 +53,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user.id && prisma) {
-        session.user.id = user.id
-        // Get user's organization and approval status
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { 
-            organizationId: true,
-            organization: { select: { approved: true } }
-          },
-        })
-        session.user.organizationId = dbUser?.organizationId
-        session.user.approved = dbUser?.organization?.approved ?? false
+    async jwt({ token, user }) {
+      // On initial sign in, user object is provided
+      if (user?.id) {
+        token.id = user.id
+        // Store organization info in token
+        if (prisma) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id as string },
+            select: { 
+              organizationId: true,
+              organization: { select: { approved: true } }
+            },
+          })
+          token.organizationId = dbUser?.organizationId
+          token.approved = dbUser?.organization?.approved ?? false
+        }
+      }
+      return token
+    },
+    async session({ session, token }) {
+      // Add custom fields from token to session
+      if (token?.id) {
+        session.user.id = token.id as string
+      }
+      if (token?.organizationId) {
+        session.user.organizationId = token.organizationId as string
+      }
+      if (token?.approved !== undefined) {
+        session.user.approved = token.approved as boolean
       }
       return session
     },

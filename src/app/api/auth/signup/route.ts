@@ -43,6 +43,16 @@ export async function POST(req: Request) {
       },
     })
 
+    // Create an Account record for credentials auth (required by PrismaAdapter)
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: 'credentials',
+        provider: 'credentials',
+        providerAccountId: user.id,
+      },
+    })
+
     return NextResponse.json({ success: true, userId: user.id })
   } catch (error) {
     console.error('Signup error:', error)
