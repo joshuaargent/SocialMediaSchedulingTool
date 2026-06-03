@@ -1,35 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import { randomUUID } from 'crypto';
-
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-
-// Ensure upload directory exists
-async function ensureUploadDir() {
-  try {
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
-    }
-  } catch (error) {
-    console.warn('Upload directory creation failed:', error);
-  }
-}
-
-// Validate file size based on environment
-function getMaxSize(): number {
-  // Vercel has a 4.5MB default for serverless functions
-  // For Edge runtime, it's even smaller (0.5MB)
-  // For Node.js runtime, we can go up to 4.5MB in theory, but typically 4.5MB is the limit
-  const maxSize = 4.5 * 1024 * 1024; // 4.5MB for Vercel serverless
-  return maxSize;
-}
+import { uploadFile, validateFile } from '@/lib/storage';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/db/prisma';
 
 // POST /api/upload - Upload a file
 export async function POST(request: NextRequest) {
   try {
-    await ensureUploadDir();
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -38,52 +19,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+    // Validate file
+    let type: 'image' | 'video' | 'document' = 'document';
+    if (file.type.startsWith('image/')) type = 'image';
+    else if (file.type.startsWith('video/')) type = 'video';
+
+    const validation = validateFile(file, type);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Validate file size
-    const maxSize = getMaxSize();
-    if (file.size > maxSize) {
-      return NextResponse.json({ 
-        error: `File too large (max ${Math.round(maxSize / 1024 / 1024)}MB for serverless upload)`,
-        maxSize: maxSize,
-      }, { status: 400 });
+    // Upload to storage
+    const folder = `org-${session.user.organizationId}`;
+    const { url, key } = await uploadFile(file, folder);
+
+    // Store metadata in database (if prisma is configured)
+    let mediaAsset = null;
+    if (prisma) {
+      try {
+        mediaAsset = await prisma.mediaAsset.create({
+          data: {
+            organizationId: session.user.organizationId,
+            filename: file.name,
+            url: url,
+            type: type,
+            mimeType: file.type,
+            size: file.size,
+          },
+        });
+      } catch (dbError) {
+        // File uploaded but database record failed - not critical
+        console.warn('Failed to create MediaAsset record:', dbError);
+      }
     }
-
-    // Generate unique filename
-    const ext = path.extname(file.name);
-    const filename = `${randomUUID()}${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
-
-    // Write file
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(filepath, buffer);
-    } catch (fsError) {
-      console.error('File system write error:', fsError);
-      // If file system write fails (common on Vercel), store in memory and return URL
-      // For production, use Vercel Blob or S3
-      return NextResponse.json({ 
-        error: 'File storage not available in this environment. Use Vercel Blob or external storage.',
-        message: 'Upload endpoint requires persistent file storage. Configure Vercel Blob or S3 for production.',
-      }, { status: 503 });
-    }
-
-    // Generate URL (for local development)
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const url = `${baseUrl}/uploads/${filename}`;
 
     return NextResponse.json({
       success: true,
       file: {
-        filename,
-        originalName: file.name,
         url,
+        key,
+        originalName: file.name,
         size: file.size,
         type: file.type,
+        mediaAssetId: mediaAsset?.id,
       },
     }, { status: 201 });
   } catch (error) {
@@ -93,20 +71,24 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/upload - List uploaded files
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    await ensureUploadDir();
-    const { readdir } = await import('fs/promises');
-    
-    const files = await readdir(UPLOAD_DIR);
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    
-    const fileList = files.map((filename) => ({
-      filename,
-      url: `${baseUrl}/uploads/${filename}`,
-    }));
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    return NextResponse.json({ files: fileList });
+    if (!prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
+    const assets = await prisma.mediaAsset.findMany({
+      where: { organizationId: session.user.organizationId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+
+    return NextResponse.json({ files: assets });
   } catch (error) {
     console.error('List error:', error);
     return NextResponse.json({ error: 'Failed to list files' }, { status: 500 });
