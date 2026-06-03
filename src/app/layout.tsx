@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/Toaster';
+import { OAuthConnectionSync } from '@/components/auth/OAuthConnectionSync';
 import './globals.css';
 
 // ============================================
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen antialiased">
         <ThemeProvider>
+          <OAuthConnectionSync />
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <Footer />

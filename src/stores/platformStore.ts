@@ -18,7 +18,7 @@ interface PlatformConnectionsState {
   isPlatformConnected: (platform: SocialPlatform) => boolean;
   
   // Actions
-  addConnection: (connection: Omit<PlatformConnection, 'id' | 'connectedAt'>) => void;
+  addConnection: (connection: Partial<PlatformConnection> & { platform: SocialPlatform }) => void;
   updateConnection: (platform: SocialPlatform, updates: Partial<PlatformConnection>) => void;
   removeConnection: (platform: SocialPlatform) => void;
   refreshToken: (platform: SocialPlatform, accessToken: string, expiresAt?: Date) => void;
