@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 // This endpoint is meant to be called by Vercel Cron
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/publish", "schedule": "* * * * *" }] }
@@ -9,6 +9,15 @@ const DEFAULT_ORG_ID = 'default-org';
 // GET /api/cron/publish - Auto-publish scheduled posts
 export async function GET() {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Database not configured',
+        published: 0 
+      }, { status: 200 });
+    }
+
     const now = new Date();
     
     // Find posts that are scheduled to be published

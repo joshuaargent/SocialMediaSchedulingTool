@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "src/app/api/**/*": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/upload",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "multipart/form-data"
+        }
+      ]
+    }
+  ]
+}

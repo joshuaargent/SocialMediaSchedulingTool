@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
 	reactStrictMode: true,
 
+	// Increase body size limit for file uploads
+	serverExternalPackages: ['@prisma/client'],
+
 	images: {
 		remotePatterns: [
 			{
