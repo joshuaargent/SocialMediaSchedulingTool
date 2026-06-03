@@ -5,44 +5,86 @@ let videoCache: { videos: any[]; summary: any; timestamp: number } | null = null
 
 // GET /api/analytics/youtube/videos
 export async function GET(request: NextRequest) {
-  const days = parseInt(request.nextUrl.searchParams.get('days') || '30');
+  const days = parseInt(request.nextUrl.searchParams.get('days') || '90'); // Default to 90 days
   const forceRefresh = request.nextUrl.searchParams.get('refresh') === 'true';
 
   // Check cache (skip if force refresh)
   if (!forceRefresh && videoCache && Date.now() - videoCache.timestamp < CACHE_TTL) {
-    const response = NextResponse.json({
+    return NextResponse.json({
       connected: true,
       platform: 'youtube',
       ...videoCache,
       cached: true,
     });
-    // Add debug header
-    response.headers.set('X-Cache-Status', 'hit');
-    return response;
   }
 
-  // Get YouTube access token from cookie
-  const accessToken = request.cookies.get('yt_access_token')?.value;
+  // Get YouTube tokens from cookies
+  let accessToken = request.cookies.get('yt_access_token')?.value;
   const refreshToken = request.cookies.get('yt_refresh_token')?.value;
+  const ytStatsCookie = request.cookies.get('yt_stats')?.value;
 
-  // Debug: log what we have
-  console.log('YouTube API called. Has access token:', !!accessToken, 'Has refresh token:', !!refreshToken);
+  // Parse channel info from yt_stats cookie
+  let channelInfo = null;
+  if (ytStatsCookie) {
+    try {
+      channelInfo = JSON.parse(ytStatsCookie);
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
 
+  // If no access token but we have refresh token, try to get a new one
+  if (!accessToken && refreshToken) {
+    const clientId = process.env.YOUTUBE_CLIENT_ID;
+    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+
+    if (clientId && clientSecret) {
+      try {
+        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+          }),
+        });
+
+        if (refreshResponse.ok) {
+          const tokenData = await refreshResponse.json();
+          accessToken = tokenData.access_token;
+          
+          // Update the cookie with new token
+          console.log('Successfully refreshed YouTube access token');
+        }
+      } catch (e) {
+        console.error('Failed to refresh token:', e);
+      }
+    }
+  }
+
+  // If still no access token, return error with channel info if available
   if (!accessToken) {
-    const response = NextResponse.json({
+    return NextResponse.json({
       connected: false,
       platform: 'youtube',
-      error: 'YouTube is not connected. Please connect your YouTube account in Settings.',
-      debug: 'No access token found in cookies',
+      error: 'YouTube access token not found. Please reconnect YouTube in Settings.',
+      channelInfo: channelInfo,
+      debug: {
+        hasRefreshToken: !!refreshToken,
+        hasChannelInfo: !!channelInfo,
+        clientIdConfigured: !!process.env.YOUTUBE_CLIENT_ID,
+      }
     }, { status: 401 });
-    response.headers.set('X-Debug', 'no_token');
-    return response;
   }
 
   try {
     // Calculate date range
     const publishedAfter = new Date();
     publishedAfter.setDate(publishedAfter.getDate() - days);
+
+    console.log('Fetching YouTube videos with token, days:', days, 'publishedAfter:', publishedAfter.toISOString());
 
     // Fetch user's videos from YouTube Data API
     const searchResponse = await fetch(
@@ -51,7 +93,10 @@ export async function GET(request: NextRequest) {
     );
 
     const searchData = await searchResponse.json();
-
+    
+    console.log('YouTube API response status:', searchResponse.status);
+    console.log('YouTube API items count:', searchData.items?.length || 0);
+    
     // Handle token expiration
     if (searchResponse.status === 401 && refreshToken) {
       // Try to refresh the token
