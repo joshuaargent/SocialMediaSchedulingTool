@@ -18,7 +18,19 @@ interface PlatformConnectionsState {
   isPlatformConnected: (platform: SocialPlatform) => boolean;
   
   // Actions
-  addConnection: (connection: Partial<PlatformConnection> & { platform: SocialPlatform }) => void;
+  addConnection: (connection: {
+    platform: SocialPlatform;
+    accessToken?: string;
+    platformUserId?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+    platformUsername?: string;
+    platformProfileImage?: string;
+    lastSyncAt?: Date;
+    permissions?: string[];
+    userId?: string;
+    organizationId?: string;
+  }) => void;
   updateConnection: (platform: SocialPlatform, updates: Partial<PlatformConnection>) => void;
   removeConnection: (platform: SocialPlatform) => void;
   refreshToken: (platform: SocialPlatform, accessToken: string, expiresAt?: Date) => void;
@@ -53,9 +65,19 @@ export const usePlatformStore = create<PlatformConnectionsState>()(
 
       addConnection: (connectionData) => {
         const newConnection: PlatformConnection = {
-          ...connectionData,
           id: `${connectionData.platform}-${Date.now()}`,
           connectedAt: new Date(),
+          userId: connectionData.userId || '',
+          organizationId: connectionData.organizationId || '',
+          platform: connectionData.platform,
+          accessToken: connectionData.accessToken || '',
+          platformUserId: connectionData.platformUserId || '',
+          refreshToken: connectionData.refreshToken,
+          expiresAt: connectionData.expiresAt,
+          platformUsername: connectionData.platformUsername,
+          platformProfileImage: connectionData.platformProfileImage,
+          lastSyncAt: connectionData.lastSyncAt,
+          permissions: connectionData.permissions || [],
         };
         set((state) => ({
           connections: [
