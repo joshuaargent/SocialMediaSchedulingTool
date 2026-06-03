@@ -104,7 +104,10 @@ export interface PlatformStats {
   followers: number;
   following: number;
   posts: number;
+  totalViews?: number;
+  totalPosts?: number;
   lastPostAt?: Date;
+  lastUpdated?: Date;
 }
 
 // ============================================

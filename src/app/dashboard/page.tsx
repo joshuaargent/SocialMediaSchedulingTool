@@ -89,19 +89,39 @@ function DashboardContent() {
   const platformConnections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
 
-  // Fetch YouTube videos on page load (API checks for OAuth cookie)
+  // Fetch YouTube videos and stats on page load
   useEffect(() => {
     setLoadingVideos(true);
-    // Use refresh=true to bypass cache and get fresh data
-    fetch('/api/analytics/youtube/videos?refresh=true')
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('YouTube API response:', data);
-        if (data.videos && data.videos.length > 0) {
-          setYoutubeVideos(data.videos);
+    
+    // Fetch stats first, then videos
+    Promise.all([
+      fetch('/api/analytics/youtube/stats').then(r => r.json()),
+      fetch('/api/analytics/youtube/videos?refresh=true&days=365').then(r => r.json()),
+    ])
+      .then(([statsData, videosData]) => {
+        console.log('YouTube stats:', statsData);
+        console.log('YouTube videos:', videosData);
+        
+        // Update platform store with stats
+        if (statsData.connected && statsData.stats) {
+          const existingStats = platformStats['youtube'];
+          usePlatformStore.getState().updateStats('youtube', {
+            platform: 'youtube',
+            followers: statsData.stats.subscribers || existingStats?.followers || 0,
+            following: existingStats?.following || 0,
+            posts: statsData.stats.totalVideos || existingStats?.posts || 0,
+            totalViews: statsData.stats.totalViews || 0,
+            totalPosts: statsData.stats.totalVideos || 0,
+            lastUpdated: new Date(),
+          });
+        }
+        
+        // Update videos if we got any
+        if (videosData.videos && videosData.videos.length > 0) {
+          setYoutubeVideos(videosData.videos);
         }
       })
-      .catch((err) => console.error('Failed to fetch YouTube videos:', err))
+      .catch((err) => console.error('Failed to fetch YouTube data:', err))
       .finally(() => setLoadingVideos(false));
   }, []);
 
@@ -366,7 +386,13 @@ function DashboardContent() {
                           <p className="font-medium capitalize">{platform}</p>
                           <p className="text-xs text-[var(--color-text-muted)]">
                             {isConnected ? 'Connected' : 'Not connected'}
-                            {stats?.followers && ` • ${stats.followers.toLocaleString()} followers`}
+                            {stats && (
+                              <span className="ml-1">
+                                • {(stats.followers || 0).toLocaleString()} followers
+                                {(stats.totalViews || 0) > 0 && ` • ${((stats.totalViews || 0) / 1000000).toFixed(1)}M views`}
+                                {(stats.totalPosts || stats.posts || 0) > 0 && ` • ${(stats.totalPosts || stats.posts || 0)} posts`}
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
