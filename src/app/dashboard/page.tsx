@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Calendar as CalendarIcon, 
   TrendingUp, 
@@ -24,10 +25,60 @@ import { Calendar } from '@/components/calendar/Calendar';
 import { PostComposer } from '@/components/compose/PostComposer';
 
 // ============================================
+// Auth Check Component
+// ============================================
+
+function AuthCheck({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.approved) {
+          setIsAuthenticated(true);
+          setChecking(false);
+        } else if (data.authenticated && !data.approved) {
+          router.push('/pending');
+        } else {
+          router.push('/login');
+        }
+      })
+      .catch(() => {
+        router.push('/login');
+      });
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
+// ============================================
 // Main Dashboard Page
 // ============================================
 
 export default function DashboardPage() {
+  return (
+    <AuthCheck>
+      <DashboardContent />
+    </AuthCheck>
+  );
+}
+
+function DashboardContent() {
   const [showComposer, setShowComposer] = useState(false);
 
   // Use selectors to get raw state
