@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 const DEFAULT_ORG_ID = 'default-org';
 
@@ -9,6 +9,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
+    }
+
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const { platform } = body;
@@ -51,7 +56,6 @@ export async function POST(
         // Platform-specific publishing logic
         if (p === 'tiktok') {
           // TikTok API call would go here
-          // Example: POST to TikTok API
           results[p] = { success: true, postId: `tt_${Date.now()}` };
         } else if (p === 'facebook') {
           // Facebook API call would go here
