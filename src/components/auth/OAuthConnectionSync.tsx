@@ -34,9 +34,12 @@ export function OAuthConnectionSync() {
             platform: platform as any,
             accessToken: 'connected_via_oauth',
             platformUserId: 'oauth_user',
+            userId: '',
+            organizationId: '',
             permissions: [],
           });
           updateStats(platform as any, {
+            platform: platform as any,
             followers: 0,
             following: 0,
             posts: 0,
