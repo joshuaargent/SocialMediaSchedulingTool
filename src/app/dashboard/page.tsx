@@ -80,12 +80,31 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const [showComposer, setShowComposer] = useState(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
   const router = useRouter();
 
   // Use selectors to get raw state
   const posts = usePostsStore((state) => state.posts);
   const platformConnections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
+
+  // Fetch YouTube videos when YouTube is connected
+  useEffect(() => {
+    const youtubeConnection = platformConnections.find((c) => c.platform === 'youtube');
+    if (!youtubeConnection) return;
+
+    setLoadingVideos(true);
+    fetch('/api/analytics/youtube/videos')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.videos) {
+          setYoutubeVideos(data.videos);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch YouTube videos:', err))
+      .finally(() => setLoadingVideos(false));
+  }, [platformConnections]);
 
   // Compute scheduled posts
   const scheduledPosts = useMemo(() => {
@@ -97,9 +116,21 @@ function DashboardContent() {
     return posts.filter((p) => p.status === 'published');
   }, [posts]);
 
-  // Compute calendar events
+  // Convert YouTube videos to calendar events
+  const videoCalendarEvents = useMemo(() => {
+    return youtubeVideos.map((video) => ({
+      id: video.id,
+      title: video.title,
+      date: new Date(video.publishedAt),
+      type: 'video' as const,
+      thumbnail: video.thumbnail,
+      stats: video.stats,
+    }));
+  }, [youtubeVideos]);
+
+  // Compute calendar events (posts + videos)
   const calendarEvents = useMemo(() => {
-    return posts.map((post) => ({
+    const postEvents = posts.map((post) => ({
       id: post.id,
       title: post.content.slice(0, 50) + (post.content.length > 50 ? '...' : ''),
       date: post.scheduledAt || post.publishedAt || post.createdAt,
@@ -108,7 +139,14 @@ function DashboardContent() {
       platforms: post.platforms,
       postId: post.id,
     }));
-  }, [posts]);
+
+    const videoEvents = videoCalendarEvents.map((event) => ({
+      ...event,
+      date: new Date(event.date),
+    }));
+
+    return [...postEvents, ...videoEvents];
+  }, [posts, videoCalendarEvents]);
 
   // Get today's and tomorrow's posts
   const todaysPosts = useMemo(() => {

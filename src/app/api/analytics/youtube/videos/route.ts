@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { usePlatformStore } from '@/stores';
 
+// Cache for video data
+let videoCache: { videos: any[]; summary: any; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // GET /api/analytics/youtube/videos - Get YouTube video analytics
 export async function GET(
   request: NextRequest,
@@ -10,9 +14,29 @@ export async function GET(
     const platformStore = usePlatformStore.getState();
     const connections = platformStore.connections;
     
+    // Check cache first - return cached data immediately
+    if (videoCache && Date.now() - videoCache.timestamp < CACHE_TTL) {
+      return NextResponse.json({
+        connected: true,
+        platform: 'youtube',
+        ...videoCache,
+        cached: true,
+      });
+    }
+    
     // Find YouTube connection
     const youtubeConnection = connections.find((c) => c.platform === 'youtube');
-    if (!youtubeConnection?.accessToken) {
+    if (!youtubeConnection?.accessToken || youtubeConnection.accessToken === 'connected_via_oauth') {
+      // Return stale cache if available, otherwise error
+      if (videoCache) {
+        return NextResponse.json({
+          connected: true,
+          platform: 'youtube',
+          ...videoCache,
+          cached: true,
+          stale: true,
+        });
+      }
       return NextResponse.json({ 
         error: 'YouTube is not connected',
         connected: false 
@@ -21,6 +45,7 @@ export async function GET(
 
     const accessToken = youtubeConnection.accessToken;
     const days = parseInt(request.nextUrl.searchParams.get('days') || '30');
+    const forceRefresh = request.nextUrl.searchParams.get('refresh') === 'true';
     
     // Calculate date range
     const publishedAfter = new Date();
@@ -35,11 +60,15 @@ export async function GET(
     const searchData = await searchResponse.json();
     
     if (!searchData.items || searchData.items.length === 0) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         connected: true,
+        platform: 'youtube',
         videos: [],
-        message: 'No videos found in the specified time period'
+        summary: { totalVideos: 0, totalViews: 0, totalLikes: 0, totalComments: 0, avgViewsPerVideo: 0 },
+        period: { days },
       });
+      videoCache = { videos: [], summary: { totalVideos: 0, totalViews: 0, totalLikes: 0, totalComments: 0, avgViewsPerVideo: 0 }, timestamp: Date.now() };
+      return response;
     }
     
     // Get video IDs for stats
@@ -47,7 +76,7 @@ export async function GET(
     
     // Fetch video statistics
     const statsResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds}`,
+      `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet,contentDetails&id=${videoIds}`,
       { headers: { 'Authorization': `Bearer ${accessToken}` }}
     );
     
@@ -62,10 +91,12 @@ export async function GET(
         description: video.snippet.description,
         publishedAt: video.snippet.publishedAt,
         thumbnail: video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url,
+        duration: video.contentDetails?.duration || null,
         stats: {
           views: parseInt(video.statistics.viewCount) || 0,
           likes: parseInt(video.statistics.likeCount) || 0,
           comments: parseInt(video.statistics.commentCount) || 0,
+          favorites: parseInt(video.statistics.favoriteCount) || 0,
         },
       };
     }) || [];
@@ -79,15 +110,33 @@ export async function GET(
       avgViewsPerVideo: videos.length > 0 ? Math.round(videos.reduce((sum: number, v: any) => sum + v.stats.views, 0) / videos.length) : 0,
     };
 
-    return NextResponse.json({
+    // Update cache
+    videoCache = { videos, summary, timestamp: Date.now() };
+
+    const response = NextResponse.json({
       connected: true,
       platform: 'youtube',
       summary,
       videos,
       period: { days },
     });
+    
+    return response;
   } catch (error) {
     console.error('YouTube videos API error:', error);
+    
+    // Return stale cache on error
+    if (videoCache) {
+      return NextResponse.json({
+        connected: true,
+        platform: 'youtube',
+        ...videoCache,
+        cached: true,
+        stale: true,
+        error: 'Using cached data due to API error',
+      });
+    }
+    
     return NextResponse.json({ 
       error: 'Failed to fetch YouTube videos',
       connected: false 
