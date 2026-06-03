@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -8,10 +8,13 @@ import {
   Heart,
   Download,
   RefreshCw,
-  TrendingDown
+  TrendingDown,
+  Video,
+  Play
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAnalyticsStore, usePostsStore, usePlatformStore } from '@/stores';
+import type { PlatformStats } from '@/types';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -105,6 +108,143 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
           <p className="text-xl font-bold">{(stats.engagementRate * 100).toFixed(1)}%</p>
         </div>
       </div>
+    </Card>
+  );
+}
+
+interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  thumbnail: string;
+  stats: {
+    views: number;
+    likes: number;
+    comments: number;
+  };
+}
+
+// ============================================
+// YouTube Videos Section
+// ============================================
+
+function YouTubeVideosSection() {
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const connections = usePlatformStore((state) => state.connections);
+  const updateStats = usePlatformStore((state) => state.updateStats);
+  const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
+
+  const fetchVideos = useCallback(async () => {
+    if (!isYouTubeConnected) return;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/analytics/youtube/videos?days=30');
+      const data = await response.json();
+      
+      if (data.videos) {
+        setVideos(data.videos);
+        
+        // Update platform stats with real data
+        if (data.summary) {
+          const stats: PlatformStats = {
+            platform: 'youtube',
+            followers: 0,
+            following: 0,
+            posts: data.summary.totalVideos,
+          };
+          updateStats('youtube', stats);
+        }
+      } else if (data.error) {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError('Failed to load videos');
+    } finally {
+      setLoading(false);
+    }
+  }, [isYouTubeConnected]);
+
+  // Fetch videos on mount
+  useEffect(() => {
+    if (isYouTubeConnected) {
+      fetchVideos();
+    }
+  }, [isYouTubeConnected, fetchVideos]);
+
+  if (!isYouTubeConnected) {
+    return null;
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Video className="w-5 h-5 text-[#FF0000]" />
+          YouTube Videos
+        </h2>
+        <Button 
+          size="sm" 
+          variant="outline"
+          onClick={fetchVideos}
+          disabled={loading}
+        >
+          <RefreshCw className={clsx('w-4 h-4 mr-2', loading && 'animate-spin')} />
+          Refresh
+        </Button>
+      </div>
+      
+      {loading && videos.length === 0 ? (
+        <div className="text-center py-8 text-[var(--color-text-muted)]">
+          Loading videos...
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          {error}
+        </div>
+      ) : videos.length === 0 ? (
+        <div className="text-center py-8 text-[var(--color-text-muted)]">
+          No videos found. Publish some videos to see analytics!
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {videos.slice(0, 10).map((video) => (
+            <div 
+              key={video.id} 
+              className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+            >
+              <div className="relative w-32 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                {video.thumbnail ? (
+                  <img 
+                    src={video.thumbnail} 
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Play className="w-6 h-6 text-gray-500" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-sm truncate">{video.title}</h3>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  {new Date(video.publishedAt).toLocaleDateString()}
+                </p>
+                <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
+                  <span>{video.stats.views.toLocaleString()} views</span>
+                  <span>{video.stats.likes.toLocaleString()} likes</span>
+                  <span>{video.stats.comments.toLocaleString()} comments</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
@@ -339,6 +479,9 @@ export default function AnalyticsPage() {
                 })}
               </div>
             </Card>
+
+            {/* YouTube Videos Section */}
+            <YouTubeVideosSection />
           </div>
 
           {/* Sidebar */}
