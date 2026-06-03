@@ -80,6 +80,7 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const [showComposer, setShowComposer] = useState(false);
+  const router = useRouter();
 
   // Use selectors to get raw state
   const posts = usePostsStore((state) => state.posts);
