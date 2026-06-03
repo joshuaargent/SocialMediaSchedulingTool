@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from '@/auth';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/calendar', '/queue', '/analytics', '/settings', '/media-library', '/pipeline', '/production-calendar', '/series', '/seo', '/trends', '/bio', '/contact'];
@@ -11,44 +10,29 @@ const authRoutes = ['/login', '/pending'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Get session
-  const session = await auth();
-  
   // Check if this is a protected route
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
   
-  // Redirect unauthenticated users from protected routes to login
-  if (isProtectedRoute && !session?.user) {
+  // Get session cookie
+  const sessionToken = request.cookies.get('authjs.session-token')?.value 
+    || request.cookies.get('__Secure-authjs.session-token')?.value
+    || request.cookies.get('next-auth.session-token')?.value;
+  
+  // For protected routes, check if user has session
+  if (isProtectedRoute && !sessionToken) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
   
-  // Redirect authenticated users away from auth routes (already logged in)
-  if (isAuthRoute && session?.user) {
-    // If user is authenticated but not approved, redirect to pending
-    if (session.user.approved === false) {
-      return NextResponse.redirect(new URL('/pending', request.url));
-    }
-    // If approved, go to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+  // If user has session and is on auth route, we can't redirect here 
+  // because we can't verify the session in edge runtime
+  // Let the client-side handle this instead
   
-  // For pending page, redirect to dashboard if approved
-  if (pathname === '/pending' && session?.user?.approved === true) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-  
-  // Redirect root to dashboard if authenticated, otherwise to login
+  // Redirect root to login (safe for edge)
   if (pathname === '/') {
-    if (session?.user?.approved) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    } else if (session?.user) {
-      return NextResponse.redirect(new URL('/pending', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+    return NextResponse.redirect(new URL('/login', request.url));
   }
   
   return NextResponse.next();
