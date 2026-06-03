@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
-
-const DEFAULT_ORG_ID = 'default-org';
-const DEFAULT_USER_ID = 'default-user';
+import { auth } from '@/auth';
 
 // GET /api/db/posts - List all posts
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ 
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest) {
     const platform = searchParams.get('platform');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    const where: any = { organizationId: DEFAULT_ORG_ID };
+    const where: any = { organizationId: session.user.organizationId };
     if (status) where.status = status;
     if (platform) where.platforms = { has: platform };
 
@@ -49,6 +53,12 @@ export async function GET(request: NextRequest) {
 // POST /api/db/posts - Create a new post
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Check if database is configured
     if (!isDatabaseConfigured() || !prisma) {
       return NextResponse.json({ 
@@ -62,8 +72,8 @@ export async function POST(request: NextRequest) {
     
     const post = await prisma.post.create({
       data: {
-        organizationId: DEFAULT_ORG_ID,
-        userId: DEFAULT_USER_ID,
+        organizationId: session.user.organizationId,
+        userId: session.user.id,
         content: body.content,
         mediaUrls: body.mediaUrls || [],
         platforms: body.platforms || [],
