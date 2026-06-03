@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Upload, Image, Video, Folder, Search, Trash2, Grid, List } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
 
 interface MediaFile {
   filename: string;
@@ -71,16 +72,16 @@ export default function MediaLibrary() {
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.add('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]');
+    e.currentTarget.classList.add('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]');
+    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]');
+    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
     handleUpload(e.dataTransfer.files);
   };
 
@@ -116,7 +117,7 @@ export default function MediaLibrary() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="container py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -140,12 +141,12 @@ export default function MediaLibrary() {
       </div>
 
       {/* Upload Zone */}
-      <div
+      <Card
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => document.getElementById('file-input')?.click()}
-        className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+        className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] transition-colors"
       >
         <input
           id="file-input"
@@ -165,7 +166,7 @@ export default function MediaLibrary() {
         {uploading && (
           <p className="text-sm text-[var(--color-accent)] mt-2">Uploading...</p>
         )}
-      </div>
+      </Card>
 
       {/* Search */}
       <div className="relative">
@@ -188,7 +189,7 @@ export default function MediaLibrary() {
           <p>No files yet. Upload your first file!</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredFiles.map((file) => {
             const Icon = getTypeIcon(file.type);
             const isImage = file.type?.startsWith('image');
@@ -197,7 +198,7 @@ export default function MediaLibrary() {
               <div
                 key={file.filename}
                 onClick={() => copyUrl(file.url)}
-                className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:shadow-lg transition-shadow cursor-pointer"
+                className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
               >
                 {isImage ? (
                   <img
@@ -233,7 +234,7 @@ export default function MediaLibrary() {
           })}
         </div>
       ) : (
-        <div className="bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] overflow-hidden">
+        <Card className="overflow-hidden">
           <table className="w-full">
             <thead className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
               <tr>
@@ -279,7 +280,7 @@ export default function MediaLibrary() {
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
     </div>
   );

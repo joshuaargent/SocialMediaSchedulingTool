@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 interface ContentProject {
   id: string;
@@ -115,20 +117,20 @@ export default function ContentPipeline() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="container py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Content Pipeline</h1>
           <p className="text-[var(--color-text-secondary)] mt-1">Manage your content from idea to publication</p>
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] flex items-center gap-2 transition-colors"
+          leftIcon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           New Project
-        </button>
+        </Button>
       </div>
 
       {/* Kanban Board */}
@@ -237,7 +239,7 @@ export default function ContentPipeline() {
       {/* New Project Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[var(--color-bg-card)] rounded-xl p-6 w-full max-w-lg border border-[var(--color-border)]">
+          <Card className="p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">New Content Project</h2>
               <button onClick={() => setShowModal(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
@@ -290,7 +292,7 @@ export default function ContentPipeline() {
                 </button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>
