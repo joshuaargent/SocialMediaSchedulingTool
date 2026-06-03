@@ -54,20 +54,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // Always fetch fresh organization data from database
+      if (token?.id && prisma) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { 
+            organizationId: true,
+            role: true,
+            organization: { select: { approved: true } }
+          },
+        })
+        if (dbUser) {
+          token.organizationId = dbUser.organizationId
+          token.approved = dbUser.organization?.approved ?? false
+          token.role = dbUser.role
+        }
+      }
       // On initial sign in, user object is provided
-      if (user?.id) {
+      if (user?.id && !token?.organizationId && prisma) {
         token.id = user.id
-        // Store organization info in token
-        if (prisma) {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id as string },
-            select: { 
-              organizationId: true,
-              organization: { select: { approved: true } }
-            },
-          })
-          token.organizationId = dbUser?.organizationId
-          token.approved = dbUser?.organization?.approved ?? false
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { 
+            organizationId: true,
+            role: true,
+            organization: { select: { approved: true } }
+          },
+        })
+        if (dbUser) {
+          token.organizationId = dbUser.organizationId
+          token.approved = dbUser.organization?.approved ?? false
+          token.role = dbUser.role
         }
       }
       return token
@@ -82,6 +99,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       if (token?.approved !== undefined) {
         session.user.approved = token.approved as boolean
+      }
+      if (token?.role) {
+        (session.user as any).role = token.role as string
       }
       return session
     },

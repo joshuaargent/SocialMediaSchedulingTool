@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, X, Users, Calendar, Clock } from 'lucide-react';
+import { Check, X, Users, Calendar, Clock, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+
+// Admin email whitelist
+const ADMIN_EMAILS = ['argentjackjoshua@outlook.com'];
 
 interface Organization {
   id: string;
@@ -27,10 +30,36 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+
+  // Check if user is admin
+  useEffect(() => {
+    fetch('/api/auth/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.email) {
+          setUserEmail(data.email);
+          if (ADMIN_EMAILS.includes(data.email.toLowerCase())) {
+            setIsAdmin(true);
+          }
+        }
+        setCheckingAdmin(false);
+      })
+      .catch(() => {
+        setCheckingAdmin(false);
+      });
+  }, []);
 
   useEffect(() => {
-    fetchOrganizations();
-  }, []);
+    if (!checkingAdmin && !isAdmin) {
+      // Redirect non-admins
+      router.push('/dashboard');
+    } else if (isAdmin) {
+      fetchOrganizations();
+    }
+  }, [isAdmin, checkingAdmin, router]);
 
   const fetchOrganizations = async () => {
     try {
@@ -71,6 +100,26 @@ export default function AdminPage() {
 
   const pendingOrgs = organizations.filter(org => !org.approved);
   const approvedOrgs = organizations.filter(org => org.approved);
+
+  if (checkingAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-pulse">Checking permissions...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8 text-center">
+          <Shield className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+          <p className="text-[var(--color-text-muted)]">You don't have permission to access the admin panel.</p>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
