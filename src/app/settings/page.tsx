@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Link2, 
   Bell, 
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useSearchParams } from 'next/navigation';
-import { useOrganizationStore, usePlatformStore, platformOAuthConfigs } from '@/stores';
+import { useOrganizationStore, usePlatformStore } from '@/stores';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -27,10 +27,23 @@ import type { SocialPlatform } from '@/types';
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'connections' | 'scheduling' | 'notifications' | 'appearance'>('connections');
   const searchParams = useSearchParams();
+  const [platformConfigs, setPlatformConfigs] = useState<Record<string, { configured: boolean }>>({});
   
   // Check for OAuth callback params
   const connectedParam = searchParams.get('connected');
   const errorParam = searchParams.get('error');
+
+  // Fetch platform configs on mount
+  useEffect(() => {
+    fetch('/api/platforms/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.configs) {
+          setPlatformConfigs(data.configs);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const tabs = [
     { id: 'connections', label: 'Connections', icon: <Link2 className="w-4 h-4" /> },
@@ -84,7 +97,7 @@ export default function SettingsPage() {
 
           {/* Content */}
           <div className="flex-1 space-y-6">
-            {activeTab === 'connections' && <PlatformConnections />}
+            {activeTab === 'connections' && <PlatformConnections platformConfigs={platformConfigs} />}
             {activeTab === 'scheduling' && <SchedulingSettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
@@ -99,7 +112,11 @@ export default function SettingsPage() {
 // Platform Connections Tab
 // ============================================
 
-function PlatformConnections() {
+interface PlatformConnectionsProps {
+  platformConfigs: Record<string, { configured: boolean }>;
+}
+
+function PlatformConnections({ platformConfigs }: PlatformConnectionsProps) {
   const connections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
   const removeConnection = usePlatformStore((state) => state.removeConnection);
@@ -107,7 +124,7 @@ function PlatformConnections() {
   const platforms: { id: SocialPlatform; name: string; color: string; description: string }[] = [
     { id: 'tiktok', name: 'TikTok', color: 'bg-black', description: 'Connect to post short-form videos' },
     { id: 'facebook', name: 'Facebook', color: 'bg-[#1877F2]', description: 'Connect to post to your Facebook page' },
-    { id: 'instagram', name: 'Instagram', color: 'bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045]', description: 'Connect to post to Instagram' },
+    { id: 'instagram', name: 'Instagram', color: 'bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045]', description: 'Connect to Instagram' },
     { id: 'youtube', name: 'YouTube', color: 'bg-[#FF0000]', description: 'Connect to upload videos to YouTube' },
   ];
 
@@ -125,7 +142,8 @@ function PlatformConnections() {
     removeConnection(platform);
   };
 
-  const isOAuthConfigured = platformOAuthConfigs.tiktok.clientId;
+  // Check if at least one platform is configured (for the info message)
+  const hasAnyPlatformConfigured = Object.values(platformConfigs).some(c => c?.configured);
 
   return (
     <Card className="p-6">
@@ -176,9 +194,9 @@ function PlatformConnections() {
                       size="sm"
                       leftIcon={<Link2 className="w-4 h-4" />}
                       onClick={() => handleConnect(platform.id)}
-                      disabled={!hasConfig}
+                      disabled={!platformConfigs[platform.id]?.configured}
                     >
-                      {hasConfig ? 'Connect' : 'Not Configured'}
+                      {platformConfigs[platform.id]?.configured ? 'Connect' : 'Not Configured'}
                     </Button>
                   )}
                 </div>
@@ -195,7 +213,7 @@ function PlatformConnections() {
             <h4 className="font-medium text-blue-800 dark:text-blue-200">OAuth Integration</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
               Platform connections are secured using OAuth 2.0. We never store your passwords.
-              {!isOAuthConfigured && (
+              {!hasAnyPlatformConfigured && (
                 <span className="block mt-1">
                   To enable connections, set the platform client IDs in your environment variables.
                 </span>
