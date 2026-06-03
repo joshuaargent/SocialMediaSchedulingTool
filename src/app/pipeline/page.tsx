@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, MoreVertical, Calendar, CheckCircle, 
   Clock, Edit3, Trash2, Film, FileText, Camera,
-  Palette, X, ChevronRight
+  Palette, X, ChevronRight, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -37,17 +37,15 @@ interface Milestone {
 
 type Stage = 'idea' | 'scripting' | 'filming' | 'editing' | 'review' | 'ready' | 'scheduled';
 
-const STAGES: { id: Stage; label: string; icon: any; color: string }[] = [
-  { id: 'idea', label: 'Ideas', icon: FileText, color: 'bg-gray-100 border-gray-300' },
-  { id: 'scripting', label: 'Scripting', icon: FileText, color: 'bg-blue-100 border-blue-300' },
-  { id: 'filming', label: 'Filming', icon: Camera, color: 'bg-purple-100 border-purple-300' },
-  { id: 'editing', label: 'Editing', icon: Film, color: 'bg-orange-100 border-orange-300' },
-  { id: 'review', label: 'Review', icon: Eye, color: 'bg-yellow-100 border-yellow-300' },
-  { id: 'ready', label: 'Ready', icon: CheckCircle, color: 'bg-green-100 border-green-300' },
-  { id: 'scheduled', label: 'Scheduled', icon: Calendar, color: 'bg-teal-100 border-teal-300' },
+const STAGES: { id: Stage; label: string; icon: any; color: string; borderColor: string }[] = [
+  { id: 'idea', label: 'Ideas', icon: FileText, color: 'bg-[var(--color-bg-secondary)]', borderColor: 'border-[var(--color-text-muted)]' },
+  { id: 'scripting', label: 'Scripting', icon: FileText, color: 'bg-blue-100', borderColor: 'border-blue-300' },
+  { id: 'filming', label: 'Filming', icon: Camera, color: 'bg-purple-100', borderColor: 'border-purple-300' },
+  { id: 'editing', label: 'Editing', icon: Film, color: 'bg-orange-100', borderColor: 'border-orange-300' },
+  { id: 'review', label: 'Review', icon: Eye, color: 'bg-yellow-100', borderColor: 'border-yellow-300' },
+  { id: 'ready', label: 'Ready', icon: CheckCircle, color: 'bg-green-100', borderColor: 'border-green-300' },
+  { id: 'scheduled', label: 'Scheduled', icon: Calendar, color: 'bg-[var(--color-accent-light)]', borderColor: 'border-[var(--color-accent)]' },
 ];
-
-import { Eye } from 'lucide-react';
 
 export default function ContentPipeline() {
   const [projects, setProjects] = useState<ContentProject[]>([]);
@@ -121,12 +119,12 @@ export default function ContentPipeline() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Content Pipeline</h1>
-          <p className="text-gray-500 mt-1">Manage your content from idea to publication</p>
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Content Pipeline</h1>
+          <p className="text-[var(--color-text-secondary)] mt-1">Manage your content from idea to publication</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] flex items-center gap-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Project
@@ -143,24 +141,24 @@ export default function ContentPipeline() {
             className="flex-shrink-0 w-72"
           >
             {/* Column Header */}
-            <div className={`px-3 py-2 rounded-t-lg border-2 ${stage.color}`}>
+            <div className={`px-3 py-2 rounded-t-lg border-2 ${stage.color} ${stage.borderColor}`}>
               <div className="flex items-center justify-between">
-                <stage.icon className="w-4 h-4" />
-                <span className="font-medium text-sm">{stage.label}</span>
-                <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full">
+                <stage.icon className="w-4 h-4 text-[var(--color-text-primary)]" />
+                <span className="font-medium text-sm text-[var(--color-text-primary)]">{stage.label}</span>
+                <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full text-[var(--color-text-secondary)]">
                   {getProjectsByStage(stage.id).length}
                 </span>
               </div>
             </div>
 
             {/* Column Content */}
-            <div className="bg-gray-50 border-2 border-t-0 rounded-b-lg p-2 min-h-[400px] space-y-2">
+            <div className="bg-[var(--color-bg-secondary)] border-2 border-t-0 border-[var(--color-border)] rounded-b-lg p-2 min-h-[400px] space-y-2">
               {getProjectsByStage(stage.id).map((project) => (
                 <div
                   key={project.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, project.id)}
-                  className="bg-white rounded-lg border p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                  className="bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                 >
                   {/* Thumbnail */}
                   {project.thumbnailUrl ? (
@@ -170,26 +168,26 @@ export default function ContentPipeline() {
                       className="w-full h-24 object-cover rounded mb-2"
                     />
                   ) : (
-                    <div className="w-full h-24 bg-gray-100 rounded mb-2 flex items-center justify-center">
-                      <Film className="w-8 h-8 text-gray-300" />
+                    <div className="w-full h-24 bg-[var(--color-bg-secondary)] rounded mb-2 flex items-center justify-center">
+                      <Film className="w-8 h-8 text-[var(--color-text-muted)]" />
                     </div>
                   )}
 
                   {/* Title */}
-                  <h3 className="font-medium text-sm line-clamp-2">{project.title}</h3>
+                  <h3 className="font-medium text-sm text-[var(--color-text-primary)] line-clamp-2">{project.title}</h3>
 
                   {/* Series badge */}
                   {project.series && (
                     <span
-                      className="inline-block px-2 py-0.5 text-xs rounded-full mt-2"
-                      style={{ backgroundColor: project.series.color || '#666' }}
+                      className="inline-block px-2 py-0.5 text-xs rounded-full mt-2 text-white"
+                      style={{ backgroundColor: project.series.color || 'var(--color-accent)' }}
                     >
                       {project.series.name}
                     </span>
                   )}
 
                   {/* Meta */}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 mt-2 text-xs text-[var(--color-text-secondary)]">
                     {project.ideaDate && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -198,18 +196,18 @@ export default function ContentPipeline() {
                     )}
                     {project.milestones.filter((m) => m.completedAt).length > 0 && (
                       <span className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        <CheckCircle className="w-3 h-3 text-[var(--color-success)]" />
                         {project.milestones.filter((m) => m.completedAt).length}/{project.milestones.length}
                       </span>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 mt-2 pt-2 border-t">
-                    <button className="p-1 text-gray-400 hover:text-blue-600">
+                  <div className="flex items-center gap-1 mt-2 pt-2 border-t border-[var(--color-border)]">
+                    <button className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    <button className="p-1 text-gray-400 hover;text-red-600">
+                    <button className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-error)]">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -219,7 +217,7 @@ export default function ContentPipeline() {
               {/* Add card button */}
               <button
                 onClick={() => setShowModal(true)}
-                className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg flex items-center justify-center gap-1"
+                className="w-full py-3 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-card)] rounded-lg flex items-center justify-center gap-1 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -230,7 +228,7 @@ export default function ContentPipeline() {
       </div>
 
       {/* Flow indicator */}
-      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center justify-center gap-2 text-sm text-[var(--color-text-muted)]">
         <ChevronRight className="w-4 h-4" />
         <span>Drag cards between columns to update status</span>
         <ChevronRight className="w-4 h-4" />
@@ -239,36 +237,36 @@ export default function ContentPipeline() {
       {/* New Project Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-[var(--color-bg-card)] rounded-xl p-6 w-full max-w-lg border border-[var(--color-border)]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">New Content Project</h2>
-              <button onClick={() => setShowModal(false)}>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">New Content Project</h2>
+              <button onClick={() => setShowModal(false)} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">Title</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent)]"
                   placeholder="What is this content about?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">Description</label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent)]"
                   placeholder="Brief description or notes..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Content Type</label>
-                <select className="w-full px-3 py-2 border rounded-lg">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">Content Type</label>
+                <select className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
                   <option value="YouTube">YouTube Video</option>
                   <option value="shorts">YouTube Shorts</option>
                   <option value="TikTok">TikTok</option>
@@ -280,13 +278,13 @@ export default function ContentPipeline() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
                 >
                   Create Project
                 </button>
