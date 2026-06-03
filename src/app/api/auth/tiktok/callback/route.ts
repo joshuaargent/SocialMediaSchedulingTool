@@ -1,95 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const code = request.nextUrl.searchParams.get('code');
+  const error = request.nextUrl.searchParams.get('error');
+  const errorDescription = request.nextUrl.searchParams.get('error_description');
+
+  if (error) {
+    const redirectUrl = new URL('/settings', request.url);
+    redirectUrl.searchParams.set('error', errorDescription || error);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (!code) {
+    return NextResponse.redirect(
+      new URL('/settings?error=no_code', request.url)
+    );
+  }
+
+  const clientId = process.env.TIKTOK_CLIENT_ID;
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/auth/tiktok/callback`;
+
+  if (!clientId || !clientSecret) {
+    return NextResponse.redirect(
+      new URL('/settings?error=no_tiktok_config', request.url)
+    );
+  }
+
   try {
-    const { code, platform } = await request.json();
-
-    if (!code || !platform) {
-      return NextResponse.json(
-        { error: 'Authorization code and platform are required' },
-        { status: 400 }
-      );
-    }
-
-    const clientId = process.env[`${platform.toUpperCase()}_CLIENT_ID`];
-    const clientSecret = process.env[`${platform.toUpperCase()}_CLIENT_SECRET`];
-
-    if (!clientId || !clientSecret) {
-      return NextResponse.json(
-        { error: `${platform} OAuth not configured. Please set environment variables.` },
-        { status: 503 }
-      );
-    }
-
-    // Platform-specific token exchange URLs and configs
-    const platformConfigs: Record<string, { tokenUrl: string; scope: string }> = {
-      tiktok: {
-        tokenUrl: 'https://open.tiktokapis.com/v2/oauth/token/',
-        scope: 'user.info.basic,video.upload,video.publish',
-      },
-      facebook: {
-        tokenUrl: 'https://graph.facebook.com/v18.0/oauth/access_token',
-        scope: 'pages_manage_posts,pages_read_engagement,instagram_basic,instagram_manage_insights',
-      },
-      instagram: {
-        tokenUrl: 'https://api.instagram.com/oauth/access_token',
-        scope: 'user_profile,user_media',
-      },
-      youtube: {
-        tokenUrl: 'https://oauth2.googleapis.com/token',
-        scope: 'https://www.googleapis.com/auth/youtube.upload,https://www.googleapis.com/auth/youtube',
-      },
-    };
-
-    const config = platformConfigs[platform];
-    if (!config) {
-      return NextResponse.json(
-        { error: 'Invalid platform' },
-        { status: 400 }
-      );
-    }
-
     // Exchange code for access token
-    const tokenResponse = await fetch(config.tokenUrl, {
+    const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        client_id: clientId,
+        client_key: clientId,
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/auth/${platform}/callback`,
+        redirect_uri: redirectUri,
       }),
     });
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error_description || errorData.error || 'Failed to get access token' },
-        { status: 400 }
-      );
+      const redirectUrl = new URL('/settings', request.url);
+      redirectUrl.searchParams.set('error', errorData.error_description || errorData.error || 'auth_failed');
+      return NextResponse.redirect(redirectUrl);
     }
 
     const tokenData = await tokenResponse.json();
 
-    // Return success with tokens (in production, you'd also fetch user profile data)
-    return NextResponse.json({
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      expiresIn: tokenData.expires_in,
-      platformUserId: tokenData.open_id || tokenData.user_id || 'unknown',
-      platformUsername: tokenData.username || '',
-      userId: 'current-user',
-      organizationId: 'default-org',
-      scopes: tokenData.scope?.split(' ') || config.scope.split(','),
+    // Redirect with success - tokens will be handled client-side
+    const redirectUrl = new URL('/settings', request.url);
+    redirectUrl.searchParams.set('connected', 'tiktok');
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Store tokens in httpOnly cookies
+    response.cookies.set('tt_access_token', tokenData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: tokenData.expires_in || 3600,
     });
-  } catch (error) {
-    console.error('OAuth error:', error);
-    return NextResponse.json(
-      { error: 'Failed to complete authentication' },
-      { status: 500 }
+
+    if (tokenData.refresh_token) {
+      response.cookies.set('tt_refresh_token', tokenData.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 60, // 60 days
+      });
+    }
+
+    return response;
+  } catch (err) {
+    return NextResponse.redirect(
+      new URL('/settings?error=auth_failed', request.url)
     );
   }
 }
