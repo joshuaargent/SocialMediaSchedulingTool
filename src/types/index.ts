@@ -586,11 +586,17 @@ export interface CalendarEvent {
   id: string;
   title: string;
   date: Date;
-  type: 'post' | 'filming' | 'milestone' | 'deadline';
+  type: 'post' | 'video' | 'filming' | 'milestone' | 'deadline';
   status?: PostStatus | ProductionStage;
   platforms?: SocialPlatform[];
   postId?: string;
   projectId?: string;
+  thumbnail?: string;
+  stats?: {
+    views: number;
+    likes: number;
+    comments: number;
+  };
 }
 
 export interface ComposeState {
