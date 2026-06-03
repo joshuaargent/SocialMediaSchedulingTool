@@ -152,7 +152,6 @@ function PlatformConnections({ platformConfigs }: PlatformConnectionsProps) {
         {platforms.map((platform) => {
           const isConnected = connectedPlatforms.includes(platform.id);
           const stats = platformStats[platform.id];
-          const hasConfig = platformOAuthConfigs[platform.id].clientId;
           
           return (
             <div 

@@ -333,7 +333,11 @@ function DashboardContent() {
                         </div>
                       </div>
                       {!isConnected && (
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => router.push('/settings')}
+                        >
                           Connect
                         </Button>
                       )}
