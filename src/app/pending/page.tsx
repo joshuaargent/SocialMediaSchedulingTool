@@ -1,13 +1,8 @@
-import { auth } from "@/auth"
-import { redirect } from "next/navigation"
+"use client"
+
 import { signOut } from "next-auth/react"
 
-export default async function PendingPage() {
-  const session = await auth()
-  
-  if (!session) redirect("/login")
-  if (session?.user?.approved) redirect("/dashboard")
-
+export default function PendingPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg-primary)]">
       <div className="text-center max-w-md mx-auto px-4">
@@ -17,9 +12,6 @@ export default async function PendingPage() {
           Your account has been created but is awaiting approval.<br />
           Please contact the administrator to get access.
         </p>
-        <div className="rounded-lg bg-[var(--color-bg-card)] p-6 border border-[var(--color-border)]">
-          <p className="text-sm text-[var(--color-text-secondary)]">Email: {session.user?.email}</p>
-        </div>
         <button 
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="mt-6 text-[var(--color-accent)] hover:underline"

@@ -5,17 +5,16 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db/prisma"
 
-// PrismaAdapter requires a non-null prisma client
-// If database is not configured, auth will fail at runtime
-const adapter = PrismaAdapter(prisma as NonNullable<typeof prisma>)
+// Create adapter only if prisma is available
+const adapter = prisma ? PrismaAdapter(prisma) : null
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter,
+  adapter: adapter as any,
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID ? [Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    })] : []),
     Credentials({
       name: "credentials",
       credentials: {
@@ -23,11 +22,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password || !prisma) {
           return null
         }
 
-        const user = await prisma?.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
         })
 
@@ -50,10 +49,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async session({ session, user }) {
-      if (session.user && user.id) {
+      if (session.user && user.id && prisma) {
         session.user.id = user.id
         // Get user's organization and approval status
-        const dbUser = await prisma?.user.findUnique({
+        const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
           select: { 
             organizationId: true,
