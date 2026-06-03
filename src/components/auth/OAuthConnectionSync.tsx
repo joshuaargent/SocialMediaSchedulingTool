@@ -38,8 +38,8 @@ export function OAuthConnectionSync() {
           });
           updateStats(platform as any, {
             followers: 0,
-            views: 0,
-            engagement: 0,
+            following: 0,
+            posts: 0,
           });
         }
       }
