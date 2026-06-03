@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 const DEFAULT_ORG_ID = 'default-org';
 
@@ -9,6 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured', post: null }, { status: 200 });
+    }
+
     const { id } = await params;
     
     const post = await prisma.post.findFirst({
@@ -36,6 +41,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -81,6 +91,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
+    }
+
     const { id } = await params;
 
     const post = await prisma.post.deleteMany({

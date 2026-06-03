@@ -6,7 +6,9 @@ import {
   MoreVertical, Play, Copy, Trash2, Edit3, CheckCircle, Plus 
 } from 'lucide-react';
 import { format } from 'date-fns';
-import Link from 'next/link';
+import { clsx } from 'clsx';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 interface Post {
   id: string;
@@ -119,133 +121,139 @@ export default function Queue() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="container py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Post Queue</h1>
-          <p className="text-gray-500 mt-1">Manage your scheduled posts</p>
+          <h1 className="text-2xl font-bold text-text-primary">Post Queue</h1>
+          <p className="text-text-secondary mt-1">Manage your scheduled posts</p>
         </div>
-        <Link
-          href="/dashboard"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        <Button
+          variant="primary"
+          onClick={() => {}}
+          leftIcon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           New Post
-        </Link>
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Clock className="w-6 h-6 text-blue-600" />
+            <div className="p-3 rounded-lg bg-accent/10 text-accent">
+              <Clock className="w-6 h-6" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-gray-500">Total Posts</p>
+              <p className="text-sm text-text-muted">Total Posts</p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Calendar className="w-6 h-6 text-green-600" />
+            <div className="p-3 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+              <Calendar className="w-6 h-6" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.scheduled}</p>
-              <p className="text-sm text-gray-500">Scheduled</p>
+              <p className="text-sm text-text-muted">Scheduled</p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <Edit3 className="w-6 h-6 text-yellow-600" />
+            <div className="p-3 rounded-lg bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+              <Edit3 className="w-6 h-6" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.draft}</p>
-              <p className="text-sm text-gray-500">Drafts</p>
+              <p className="text-sm text-text-muted">Drafts</p>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Filters & Bulk Actions */}
-      <div className="flex items-center justify-between bg-white rounded-lg border p-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-              filter === 'all' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-            }`}
-          >
-            All ({posts.length})
-          </button>
-          <button
-            onClick={() => setFilter('scheduled')}
-            className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-              filter === 'scheduled' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-            }`}
-          >
-            Scheduled
-          </button>
-          <button
-            onClick={() => setFilter('draft')}
-            className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-              filter === 'draft' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-            }`}
-          >
-            Drafts
-          </button>
-        </div>
-
-        {selectedPosts.size > 0 && (
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{selectedPosts.size} selected</span>
+            <Filter className="w-4 h-4 text-text-muted" />
             <button
-              onClick={bulkDelete}
-              className="px-3 py-1.5 text-sm bg-red-100 text-red-600 hover:bg-red-200 rounded-lg flex items-center gap-1"
+              onClick={() => setFilter('all')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-full transition-colors',
+                filter === 'all' ? 'bg-accent text-white' : 'hover:bg-bg-secondary text-text-secondary'
+              )}
             >
-              <Trash2 className="w-4 h-4" />
-              Delete
+              All ({posts.length})
+            </button>
+            <button
+              onClick={() => setFilter('scheduled')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-full transition-colors',
+                filter === 'scheduled' ? 'bg-accent text-white' : 'hover:bg-bg-secondary text-text-secondary'
+              )}
+            >
+              Scheduled
+            </button>
+            <button
+              onClick={() => setFilter('draft')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-full transition-colors',
+                filter === 'draft' ? 'bg-accent text-white' : 'hover:bg-bg-secondary text-text-secondary'
+              )}
+            >
+              Drafts
             </button>
           </div>
-        )}
-      </div>
+
+          {selectedPosts.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-text-muted">{selectedPosts.size} selected</span>
+              <button
+                onClick={bulkDelete}
+                className="px-3 py-1.5 text-sm bg-red-500/10 text-red-600 hover:bg-red-500/20 rounded-lg flex items-center gap-1"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Post List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="text-center py-12 text-text-muted">Loading...</div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No posts in queue</p>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
+        <Card className="p-12 text-center">
+          <Clock className="w-12 h-12 mx-auto mb-4 text-text-muted opacity-50" />
+          <p className="text-text-secondary">No posts in queue</p>
+          <Button variant="primary" className="mt-4">
             Create your first post
-          </Link>
-        </div>
+          </Button>
+        </Card>
       ) : (
         <div className="space-y-3">
           {/* Select All */}
-          <div className="flex items-center gap-3 px-4 py-2 text-sm text-gray-500">
+          <div className="flex items-center gap-3 px-4 py-2 text-sm text-text-muted">
             <input
               type="checkbox"
               checked={selectedPosts.size === posts.length && posts.length > 0}
               onChange={selectAll}
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded border-border"
             />
             <span>Select all</span>
           </div>
 
           {posts.map((post) => (
-            <div
+            <Card
               key={post.id}
-              className={`bg-white rounded-xl border p-4 hover:shadow-md transition-shadow ${
-                selectedPosts.has(post.id) ? 'ring-2 ring-blue-500' : ''
-              }`}
+              className={clsx(
+                'p-4 transition-all hover:shadow-md',
+                selectedPosts.has(post.id) ? 'ring-2 ring-accent' : ''
+              )}
             >
               <div className="flex items-start gap-4">
                 {/* Checkbox */}
@@ -253,15 +261,15 @@ export default function Queue() {
                   type="checkbox"
                   checked={selectedPosts.has(post.id)}
                   onChange={() => toggleSelect(post.id)}
-                  className="mt-2 w-4 h-4 rounded border-gray-300"
+                  className="mt-2 w-4 h-4 rounded border-border"
                 />
 
                 {/* Media Thumbnail */}
-                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-100 overflow-hidden">
+                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-bg-secondary overflow-hidden">
                   {post.mediaUrls.length > 0 ? (
                     <img src={post.mediaUrls[0]} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="w-full h-full flex items-center justify-center text-text-muted">
                       <Edit3 className="w-6 h-6" />
                     </div>
                   )}
@@ -269,7 +277,7 @@ export default function Queue() {
 
                 {/* Content  */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 line-clamp-2">{post.content}</p>
+                  <p className="text-text-primary line-clamp-2">{post.content}</p>
                   
                   <div className="flex items-center gap-3 mt-2">
                     {/* Platforms */}
@@ -277,7 +285,7 @@ export default function Queue() {
                       {post.platforms.map((p) => (
                         <div
                           key={p}
-                          className={`px-2 py-0.5 text-xs rounded text-white capitalize ${platformColors[p] || 'bg-gray-400'}`}
+                          className={clsx('px-2 py-0.5 text-xs rounded text-white capitalize', platformColors[p])}
                         >
                           {p}
                         </div>
@@ -285,12 +293,12 @@ export default function Queue() {
                     </div>
 
                     {/* Scheduled */}
-                    {post.scheduledAt && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                    {post.scheduledAt ? (
+                      <div className="flex items-center gap-1 text-xs text-text-muted">
                         <Clock className="w-3 h-3" />
                         {format(new Date(post.scheduledAt), 'MMM d, h:mm a')}
                       </div>
-                    ) || (
+                    ) : (
                       <div className="flex items-center gap-1 text-xs text-yellow-600">
                         <Edit3 className="w-3 h-3" />
                         Draft
@@ -302,7 +310,7 @@ export default function Queue() {
                   {post.tags.length > 0 && (
                     <div className="flex gap-1 mt-2">
                       {post.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                        <span key={tag} className="px-2 py-0.5 text-xs bg-bg-secondary text-text-secondary rounded">
                           #{tag}
                         </span>
                       ))}
@@ -312,34 +320,27 @@ export default function Queue() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                  <span className={clsx(
+                    'px-2 py-1 text-xs rounded-full',
                     post.status === 'scheduled' 
-                      ? 'bg-blue-100 text-blue-700' 
+                      ? 'bg-accent/10 text-accent' 
                       : post.status === 'published'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
+                      ? 'bg-green-500/10 text-green-600'
+                      : 'bg-yellow-500/10 text-yellow-600'
+                  )}>
                     {post.status}
                   </span>
                   
-                  <Link
-                    href={`/dashboard?edit=${post.id}`}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Edit"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Link>
-                  
                   <button
                     onClick={() => deletePost(post.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-text-muted hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 const DEFAULT_ORG_ID = 'default-org';
 const DEFAULT_USER_ID = 'default-user';
@@ -7,6 +7,14 @@ const DEFAULT_USER_ID = 'default-user';
 // GET /api/db/posts - List all posts
 export async function GET(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ 
+        posts: [], 
+        message: 'Database not configured. Using local storage.' 
+      }, { status: 200 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const platform = searchParams.get('platform');
@@ -30,13 +38,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ posts });
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
+    return NextResponse.json({ 
+      posts: [],
+      error: 'Failed to fetch posts',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
 // POST /api/db/posts - Create a new post
 export async function POST(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ 
+        post: null, 
+        message: 'Database not configured. Post saved locally.',
+        savedLocally: true 
+      }, { status: 200 });
+    }
+
     const body = await request.json();
     
     const post = await prisma.post.create({
@@ -64,6 +85,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ post }, { status: 201 });
   } catch (error) {
     console.error('Error creating post:', error);
-    return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to create post',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

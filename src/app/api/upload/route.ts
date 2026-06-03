@@ -8,9 +8,22 @@ const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
 // Ensure upload directory exists
 async function ensureUploadDir() {
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true });
+  try {
+    if (!existsSync(UPLOAD_DIR)) {
+      await mkdir(UPLOAD_DIR, { recursive: true });
+    }
+  } catch (error) {
+    console.warn('Upload directory creation failed:', error);
   }
+}
+
+// Validate file size based on environment
+function getMaxSize(): number {
+  // Vercel has a 4.5MB default for serverless functions
+  // For Edge runtime, it's even smaller (0.5MB)
+  // For Node.js runtime, we can go up to 4.5MB in theory, but typically 4.5MB is the limit
+  const maxSize = 4.5 * 1024 * 1024; // 4.5MB for Vercel serverless
+  return maxSize;
 }
 
 // POST /api/upload - Upload a file
@@ -31,10 +44,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024;
+    // Validate file size
+    const maxSize = getMaxSize();
     if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File too large (max 100MB)' }, { status: 400 });
+      return NextResponse.json({ 
+        error: `File too large (max ${Math.round(maxSize / 1024 / 1024)}MB for serverless upload)`,
+        maxSize: maxSize,
+      }, { status: 400 });
     }
 
     // Generate unique filename
@@ -43,8 +59,18 @@ export async function POST(request: NextRequest) {
     const filepath = path.join(UPLOAD_DIR, filename);
 
     // Write file
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filepath, buffer);
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      await writeFile(filepath, buffer);
+    } catch (fsError) {
+      console.error('File system write error:', fsError);
+      // If file system write fails (common on Vercel), store in memory and return URL
+      // For production, use Vercel Blob or S3
+      return NextResponse.json({ 
+        error: 'File storage not available in this environment. Use Vercel Blob or external storage.',
+        message: 'Upload endpoint requires persistent file storage. Configure Vercel Blob or S3 for production.',
+      }, { status: 503 });
+    }
 
     // Generate URL (for local development)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';

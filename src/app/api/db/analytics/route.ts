@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 const DEFAULT_ORG_ID = 'default-org';
 
 // GET /api/db/analytics/summary - Get analytics summary
 export async function GET(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ 
+        summary: {
+          totalPosts: 0,
+          totalViews: 0,
+          totalEngagement: 0,
+          averageEngagementRate: 0,
+          platformBreakdown: {},
+        },
+        algorithmHealth: [],
+        message: 'Database not configured'
+      }, { status: 200 });
+    }
+
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '30');
     const startDate = new Date();
@@ -84,6 +99,14 @@ export async function GET(request: NextRequest) {
 // POST /api/db/analytics - Add performance metrics
 export async function POST(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ 
+        error: 'Database not configured',
+        message: 'Metrics not saved'
+      }, { status: 200 });
+    }
+
     const body = await request.json();
     const { postId, platform, views, likes, comments, shares } = body;
 

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+import prisma, { isDatabaseConfigured } from '@/lib/db/prisma';
 
 const DEFAULT_ORG_ID = 'default-org';
 
 // GET /api/db/platforms - Get all platform connections
 export async function GET() {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ platforms: [] }, { status: 200 });
+    }
+
     const connections = await prisma.platformConnection.findMany({
       where: { organizationId: DEFAULT_ORG_ID },
       orderBy: { platform: 'asc' },
@@ -46,6 +51,11 @@ export async function GET() {
 // POST /api/db/platforms - Create/Update platform connection
 export async function POST(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
+    }
+
     const body = await request.json();
     const { platform, accessToken, refreshToken, expiresAt, platformUserId, displayName, profileImage, followers } = body;
 
@@ -97,6 +107,11 @@ export async function POST(request: NextRequest) {
 // DELETE /api/db/platforms - Disconnect a platform
 export async function DELETE(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!isDatabaseConfigured() || !prisma) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 200 });
+    }
+
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform');
 
