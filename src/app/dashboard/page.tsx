@@ -89,22 +89,21 @@ function DashboardContent() {
   const platformConnections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
 
-  // Fetch YouTube videos when YouTube is connected
+  // Fetch YouTube videos on page load (API checks for OAuth cookie)
   useEffect(() => {
-    const youtubeConnection = platformConnections.find((c) => c.platform === 'youtube');
-    if (!youtubeConnection) return;
-
     setLoadingVideos(true);
-    fetch('/api/analytics/youtube/videos')
+    // Use refresh=true to bypass cache and get fresh data
+    fetch('/api/analytics/youtube/videos?refresh=true')
       .then((res) => res.json())
       .then((data) => {
-        if (data.videos) {
+        console.log('YouTube API response:', data);
+        if (data.videos && data.videos.length > 0) {
           setYoutubeVideos(data.videos);
         }
       })
       .catch((err) => console.error('Failed to fetch YouTube videos:', err))
       .finally(() => setLoadingVideos(false));
-  }, [platformConnections]);
+  }, []);
 
   // Compute scheduled posts
   const scheduledPosts = useMemo(() => {

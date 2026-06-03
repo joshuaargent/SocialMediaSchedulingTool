@@ -10,24 +10,33 @@ export async function GET(request: NextRequest) {
 
   // Check cache (skip if force refresh)
   if (!forceRefresh && videoCache && Date.now() - videoCache.timestamp < CACHE_TTL) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       connected: true,
       platform: 'youtube',
       ...videoCache,
       cached: true,
     });
+    // Add debug header
+    response.headers.set('X-Cache-Status', 'hit');
+    return response;
   }
 
   // Get YouTube access token from cookie
   const accessToken = request.cookies.get('yt_access_token')?.value;
   const refreshToken = request.cookies.get('yt_refresh_token')?.value;
 
+  // Debug: log what we have
+  console.log('YouTube API called. Has access token:', !!accessToken, 'Has refresh token:', !!refreshToken);
+
   if (!accessToken) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       connected: false,
       platform: 'youtube',
       error: 'YouTube is not connected. Please connect your YouTube account in Settings.',
+      debug: 'No access token found in cookies',
     }, { status: 401 });
+    response.headers.set('X-Debug', 'no_token');
+    return response;
   }
 
   try {
