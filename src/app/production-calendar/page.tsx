@@ -93,7 +93,7 @@ export default function ProductionCalendar() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Production Calendar</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Production Calendar</h1>
           <p className="text-gray-500 mt-1">Track filming, editing, and milestone deadlines</p>
         </div>
         <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export default function ProductionCalendar() {
 
       {/* Upcoming Deadlines */}
       <div className="bg-white rounded-xl border p-6">
-        <h2 className="text-lg font-semibold mb-4">Upcoming Deadlines</h2>
+        <h2 className="text-base font-medium mb-3">Upcoming Deadlines</h2>
         <div className="space-y-3">
           {items.filter((i) => !i.completed).slice(0, 5).map((item) => (
             <div

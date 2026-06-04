@@ -49,7 +49,15 @@ interface YouTubeSummary {
   totalViews: number;
   totalLikes: number;
   totalComments: number;
+  totalFavorites?: number;
+  totalDuration?: number;
   avgViewsPerVideo: number;
+  avgLikesPerVideo?: number;
+  avgCommentsPerVideo?: number;
+  avgDurationSeconds?: number;
+  engagementRate?: number;
+  topVideo?: YouTubeVideo | null;
+  worstVideo?: YouTubeVideo | null;
 }
 
 interface DateRangeOption {
@@ -59,34 +67,132 @@ interface DateRangeOption {
 }
 
 // ============================================
-// Bar Chart Component
+// Line Chart Component
 // ============================================
 
-interface BarChartProps {
+interface LineChartProps {
   data: { label: string; value: number; color?: string }[];
   height?: number;
+  showArea?: boolean;
 }
 
-function BarChart({ data, height = 200 }: BarChartProps) {
+function LineChart({ data, height = 200, showArea = true }: LineChartProps) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
+  const minValue = 0;
+  const range = maxValue - minValue;
+  
+  const padding = { top: 10, right: 10, bottom: 30, left: 10 };
+  const chartHeight = height - padding.top - padding.bottom;
+  const chartWidth = 100; // percentage based
+  const pointCount = data.length;
+  
+  const getX = (index: number) => {
+    return padding.left + (index / (pointCount - 1 || 1)) * (100 - padding.left - padding.right);
+  };
+  
+  const getY = (value: number) => {
+    return padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
+  };
+  
+  // Generate path for line
+  const linePath = data.map((item, idx) => {
+    const x = getX(idx);
+    const y = getY(item.value);
+    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
+  
+  // Generate path for area (closes the path to bottom)
+  const areaPath = showArea 
+    ? `${linePath} L ${getX(pointCount - 1)} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`
+    : linePath;
+  
+  // Generate points for interactive circles
+  const points = data.map((item, idx) => ({
+    x: getX(idx),
+    y: getY(item.value),
+    ...item
+  }));
   
   return (
-    <div className="flex items-end gap-2" style={{ height }}>
-      {data.map((item, idx) => (
-        <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-          <div 
-            className="w-full rounded-t transition-all hover:opacity-80"
-            style={{ 
-              height: `${(item.value / maxValue) * (height - 30)}px`,
-              backgroundColor: item.color || 'var(--color-accent)'
-            }}
-            title={`${item.label}: ${item.value.toLocaleString()}`}
+    <div className="relative" style={{ height }}>
+      <svg 
+        className="w-full h-full" 
+        viewBox={`0 0 100 ${height}`} 
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+          <line
+            key={ratio}
+            x1={padding.left}
+            y1={padding.top + chartHeight * (1 - ratio)}
+            x2={100 - padding.right}
+            y2={padding.top + chartHeight * (1 - ratio)}
+            stroke="var(--color-border)"
+            strokeWidth="0.5"
+            strokeDasharray="2"
           />
-          <span className="text-xs text-[var(--color-text-muted)] truncate w-full text-center">
+        ))}
+        
+        {/* Area fill */}
+        {showArea && (
+          <path
+            d={areaPath}
+            fill="url(#lineGradient)"
+          />
+        )}
+        
+        {/* Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="var(--color-accent)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        
+        {/* Data points */}
+        {points.map((point, idx) => (
+          <g key={idx}>
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r="3"
+              fill="var(--color-bg-card)"
+              stroke="var(--color-accent)"
+              strokeWidth="2"
+              className="hover:r-4 transition-all cursor-pointer"
+            />
+            {/* Tooltip on hover */}
+            <title>{point.label}: {point.value.toLocaleString()}</title>
+          </g>
+        ))}
+      </svg>
+      
+      {/* X-axis labels */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
+        {data.map((item, idx) => (
+          <span 
+            key={idx} 
+            className="text-xs text-[var(--color-text-muted)] truncate"
+            style={{ 
+              width: `${100 / Math.min(data.length, 10)}%`,
+              textAlign: idx === 0 ? 'left' : idx === data.length - 1 ? 'right' : 'center'
+            }}
+          >
             {item.label}
           </span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -159,7 +265,7 @@ interface YouTubeStatsData {
   totalVideos: number;
 }
 
-function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo[], summary: YouTubeSummary } | null }) {
+function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo[], summary: YouTubeSummary, channelInfo?: any } | null }) {
   const connections = usePlatformStore((state) => state.connections);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
@@ -172,60 +278,114 @@ function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo
     totalViews: youtubeData.summary.totalViews,
     totalLikes: youtubeData.summary.totalLikes,
     totalComments: youtubeData.summary.totalComments,
+    totalFavorites: youtubeData.summary.totalFavorites || 0,
     avgViews: youtubeData.summary.avgViewsPerVideo,
+    avgLikes: youtubeData.summary.avgLikesPerVideo || 0,
+    avgComments: youtubeData.summary.avgCommentsPerVideo || 0,
+    avgDuration: youtubeData.summary.avgDurationSeconds || 0,
+    engagementRate: youtubeData.summary.engagementRate || 0,
+    subscribers: youtubeData.channelInfo?.subscribers || 0,
+    channelViews: youtubeData.channelInfo?.totalViews || 0,
   };
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
         <Video className="w-5 h-5 text-[#FF0000]" />
         YouTube Channel Stats
+        {youtubeData.channelInfo?.title && (
+          <span className="text-sm font-normal text-[var(--color-text-muted)]">
+            - {youtubeData.channelInfo.title}
+          </span>
+        )}
       </h2>
       
+      {/* Subscriber info if available */}
+      {stats.subscribers > 0 && (
+        <div className="mb-4 p-3 rounded-lg bg-[#FF0000]/10 border border-[#FF0000]/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#FF0000]" />
+              <span className="text-sm font-medium">Subscribers</span>
+            </div>
+            <span className="text-lg font-bold">{stats.subscribers.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between mt-2 text-sm text-[var(--color-text-secondary)]">
+            <span>Channel views</span>
+            <span>{stats.channelViews.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-          <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
-            <Users className="w-5 h-5" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-2 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
+            <Video className="w-4 h-4" />
           </div>
           <div>
             <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
-            <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
+            <p className="text-lg font-bold">{stats.totalVideos.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-          <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            <Eye className="w-5 h-5" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <Eye className="w-4 h-4" />
           </div>
           <div>
             <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
-            <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
+            <p className="text-lg font-bold">{stats.totalViews.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-          <div className="p-3 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400">
-            <ThumbsUp className="w-5 h-5" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400">
+            <ThumbsUp className="w-4 h-4" />
           </div>
           <div>
             <p className="text-xs text-[var(--color-text-muted)]">Likes</p>
-            <p className="text-xl font-bold">{stats.totalLikes.toLocaleString()}</p>
+            <p className="text-lg font-bold">{stats.totalLikes.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-          <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-            <MessageSquare className="w-5 h-5" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-2 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+            <MessageSquare className="w-4 h-4" />
           </div>
           <div>
             <p className="text-xs text-[var(--color-text-muted)]">Comments</p>
-            <p className="text-xl font-bold">{stats.totalComments.toLocaleString()}</p>
+            <p className="text-lg font-bold">{stats.totalComments.toLocaleString()}</p>
           </div>
         </div>
       </div>
       
-      <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-sm">
-        <p className="text-[var(--color-text-muted)]">
-          Average <span className="font-bold text-[var(--color-text-primary)]">{stats.avgViews.toLocaleString()}</span> views per video
-        </p>
+      {/* Averages and engagement rate */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
+          <p className="text-xs text-[var(--color-text-muted)]">Avg Views/Video</p>
+          <p className="text-lg font-bold">{stats.avgViews.toLocaleString()}</p>
+        </div>
+        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
+          <p className="text-xs text-[var(--color-text-muted)]">Avg Likes/Video</p>
+          <p className="text-lg font-bold">{stats.avgLikes.toLocaleString()}</p>
+        </div>
+        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
+          <p className="text-xs text-[var(--color-text-muted)]">Avg Comments/Video</p>
+          <p className="text-lg font-bold">{stats.avgComments.toLocaleString()}</p>
+        </div>
+        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
+          <p className="text-xs text-[var(--color-text-muted)]">Engagement Rate</p>
+          <p className="text-lg font-bold">{(stats.engagementRate * 100).toFixed(2)}%</p>
+        </div>
       </div>
+      
+      {/* Top performing video */}
+      {youtubeData.summary.topVideo && (
+        <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">🏆 Top Performing Video</p>
+          <p className="font-medium text-sm truncate">{youtubeData.summary.topVideo.title}</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            {youtubeData.summary.topVideo.stats.views.toLocaleString()} views
+          </p>
+        </div>
+      )}
     </Card>
   );
 }
@@ -317,7 +477,7 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('30');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshedPlatform, setRefreshedPlatform] = useState<string | null>(null);
-  const [youtubeData, setYoutubeData] = useState<{ videos: YouTubeVideo[], summary: YouTubeSummary } | null>(null);
+  const [youtubeData, setYoutubeData] = useState<{ videos: YouTubeVideo[], summary: YouTubeSummary, channelInfo?: any } | null>(null);
   const [isLoadingYoutube, setIsLoadingYoutube] = useState(false);
   const fetchingRef = useRef(false);
 
@@ -355,7 +515,11 @@ export default function AnalyticsPage() {
       const data = await response.json();
       
       if (data.videos && data.videos.length > 0) {
-        setYoutubeData({ videos: data.videos, summary: data.summary });
+        setYoutubeData({ 
+          videos: data.videos, 
+          summary: data.summary,
+          channelInfo: data.channelInfo 
+        });
       } else if (data.connected === false) {
         console.log('YouTube not connected');
       }
@@ -653,7 +817,7 @@ export default function AnalyticsPage() {
                   </span>
                 )}
               </div>
-              <BarChart data={viewsOverTimeData} height={250} />
+              <LineChart data={viewsOverTimeData} height={250} showArea={true} />
               <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
                 <span>Total: {totalViewsFromChart.toLocaleString()} views</span>
                 <span className={clsx(

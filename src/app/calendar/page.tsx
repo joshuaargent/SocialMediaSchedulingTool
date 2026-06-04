@@ -74,7 +74,7 @@ export default function Calendar() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Content Calendar</h1>
+          <h1 className="text-xl font-semibold text-text-primary">Content Calendar</h1>
           <p className="text-text-secondary mt-1">Visual overview of your scheduled posts</p>
         </div>
         <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export default function Calendar() {
 
       {/* Upcoming Posts */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <h2 className="text-base font-medium mb-3 flex items-center gap-2">
           <Clock className="w-5 h-5" />
           Upcoming Posts
         </h2>
