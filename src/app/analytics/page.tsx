@@ -67,7 +67,7 @@ interface DateRangeOption {
 }
 
 // ============================================
-// Line Chart Component (clean, no points)
+// Line Chart Component (clean, no points, with tooltip)
 // ============================================
 
 interface LineChartProps {
@@ -76,25 +76,30 @@ interface LineChartProps {
   showArea?: boolean;
   smooth?: boolean;
   gradient?: string;
+  valueLabel?: string;
 }
 
-function LineChart({ data, height = 200, showArea = true, smooth = true, gradient = 'var(--color-accent)' }: LineChartProps) {
+function LineChart({ data, height = 200, showArea = true, smooth = true, gradient = 'var(--color-accent)', valueLabel = 'views' }: LineChartProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [mouseX, setMouseX] = useState<number>(0);
+  const [mouseY, setMouseY] = useState<number>(0);
+  
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   
   const padding = { top: 15, right: 15, bottom: 25, left: 15 };
   const chartHeight = height - padding.top - padding.bottom;
+  const chartWidth = 100 - padding.left - padding.right;
   const pointCount = data.length;
   
   // Normalize points to SVG viewBox (0-100 width, 0-height height)
-  const getX = (index: number) => padding.left + (index / (pointCount - 1 || 1)) * (100 - padding.left - padding.right);
+  const getX = (index: number) => padding.left + (index / (pointCount - 1 || 1)) * chartWidth;
   const getY = (value: number) => padding.top + chartHeight - ((value / maxValue) * chartHeight);
   
   // Generate smooth curve using cardinal spline or simple line
-  const generatePath = (points: { x: number; y: number }[], tension: number = 0.3): string => {
+  const generatePath = (points: { x: number; y: number }[], tension: number = 0.4): string => {
     if (points.length < 2) return '';
     
     if (!smooth) {
-      // Simple straight lines
       return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
     }
     
@@ -102,10 +107,10 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
     let path = `M ${points[0].x} ${points[0].y}`;
     
     for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i - 1] || points[i];
+      const p0 = points[Math.max(0, i - 1)];
       const p1 = points[i];
       const p2 = points[i + 1];
-      const p3 = points[i + 2] || p2;
+      const p3 = points[Math.min(points.length - 1, i + 2)];
       
       const cp1x = p1.x + (p2.x - p0.x) * tension / 6;
       const cp1y = p1.y + (p2.y - p0.y) * tension / 6;
@@ -121,6 +126,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
   const points = data.map((item, idx) => ({
     x: getX(idx),
     y: getY(item.value),
+    ...item
   }));
   
   const linePath = generatePath(points);
@@ -128,12 +134,56 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
     ? `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
     : linePath;
   
+  // Calculate which label positions to show
+  const labelStep = Math.max(1, Math.floor(pointCount / 7));
+  const showLabel = (idx: number) => {
+    if (pointCount <= 8) return true;
+    return idx === 0 || idx === pointCount - 1 || idx % labelStep === 0;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * 100;
+    
+    // Calculate which point is closest to mouse
+    const relX = svgX - padding.left;
+    const step = chartWidth / (pointCount - 1 || 1);
+    let closestIdx = Math.round(relX / step);
+    closestIdx = Math.max(0, Math.min(pointCount - 1, closestIdx));
+    
+    setMouseX(e.clientX - rect.left);
+    setMouseY(e.clientY - rect.top);
+    setHoveredIndex(closestIdx);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
   return (
     <div className="relative" style={{ height }}>
+      {/* Tooltip */}
+      {hoveredIndex !== null && (
+        <div 
+          className="absolute z-10 px-2 py-1 text-xs bg-gray-900 text-white rounded shadow-lg pointer-events-none whitespace-nowrap"
+          style={{ 
+            left: mouseX + 10,
+            top: mouseY - 40,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className="font-semibold">{data[hoveredIndex]?.value.toLocaleString()}</div>
+          <div className="text-gray-400 text-[10px]">{valueLabel}</div>
+          <div className="text-gray-300 text-[10px] mt-0.5">{data[hoveredIndex]?.label}</div>
+        </div>
+      )}
+      
       <svg 
-        className="w-full h-full" 
+        className="w-full h-full cursor-crosshair" 
         viewBox={`0 0 100 ${height}`} 
         preserveAspectRatio="none"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         <defs>
           <linearGradient id="lineGradientFill" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -148,13 +198,37 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
             key={ratio}
             x1={padding.left}
             y1={padding.top + chartHeight * (1 - ratio)}
-            x2={100 - padding.right}
+            x2={padding.left + chartWidth}
             y2={padding.top + chartHeight * (1 - ratio)}
             stroke="var(--color-border)"
             strokeWidth="0.3"
             strokeDasharray="1"
           />
         ))}
+        
+        {/* Vertical hover indicator */}
+        {hoveredIndex !== null && (
+          <>
+            <line
+              x1={points[hoveredIndex].x}
+              y1={padding.top}
+              x2={points[hoveredIndex].x}
+              y2={padding.top + chartHeight}
+              stroke={gradient}
+              strokeWidth="1"
+              strokeDasharray="2"
+              opacity="0.5"
+            />
+            <circle
+              cx={points[hoveredIndex].x}
+              cy={points[hoveredIndex].y}
+              r="4"
+              fill="var(--color-bg-card)"
+              stroke={gradient}
+              strokeWidth="2"
+            />
+          </>
+        )}
         
         {/* Gradient area fill */}
         {showArea && (
@@ -173,18 +247,17 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
         />
       </svg>
       
-      {/* Labels */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
+      {/* Labels - positioned exactly at first and last points */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between">
         {data.map((item, idx) => {
-          const showLabel = pointCount <= 7 || idx % Math.ceil(pointCount / 7) === 0 || idx === pointCount - 1;
+          if (!showLabel(idx)) return <span key={idx} />;
           return (
             <span 
               key={idx} 
-              className="text-[10px] text-[var(--color-text-muted)] truncate"
+              className="text-[10px] text-[var(--color-text-muted)]"
               style={{ 
-                width: `${100 / Math.min(pointCount, 7)}%`,
-                textAlign: idx === 0 ? 'left' : idx === pointCount - 1 ? 'right' : 'center',
-                opacity: showLabel ? 1 : 0,
+                marginLeft: idx === 0 ? '0' : undefined,
+                marginRight: idx === pointCount - 1 ? '0' : undefined,
               }}
             >
               {item.label}
