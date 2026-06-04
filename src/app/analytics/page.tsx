@@ -1127,7 +1127,7 @@ export default function AnalyticsPage() {
               <Card className="p-6">
                 <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#FF0000]" />
-                  {dateRange === "all" ? "All Time" : `Last ${dateRange} Days`}
+                  Watch Time
                 </h2>
                 <LineChart 
                   data={youtubeAnalytics.overview.dailyData.map((d: any) => ({ 

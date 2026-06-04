@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
         return { rows: [], headers: [], raw: { error: errorText } };
       }
       const data = await response.json();
-      // Debug: log the raw response
-      console.log(`${name} raw response:`, JSON.stringify(data).substring(0, 500));
+      // Debug: log the full raw response for demographics
+      console.log(`${name} raw response:`, JSON.stringify(data));
       return { headers: data.columnHeaders || [], rows: data.rows || [], raw: data };
     };
 
