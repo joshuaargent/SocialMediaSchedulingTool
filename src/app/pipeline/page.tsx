@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, MoreVertical, Calendar, CheckCircle, 
   Clock, Edit3, Trash2, Film, FileText, Camera,
-  Palette, X, ChevronRight, Eye
+  Palette, X, ChevronRight, Eye, RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { usePostsStore, usePlatformStore } from '@/stores';
 
 interface ContentProject {
   id: string;
@@ -50,44 +51,32 @@ const STAGES: { id: Stage; label: string; icon: any; color: string; borderColor:
 ];
 
 export default function ContentPipeline() {
-  const [projects, setProjects] = useState<ContentProject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const posts = usePostsStore((s) => s.posts);
+  const addPost = usePostsStore((s) => s.addPost);
+  const connections = usePlatformStore((s) => s.connections);
+  const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ContentProject | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Fetch projects
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        // In production, this would fetch from /api/db/content-projects
-        // For now, use mock data
-        setProjects([
-          {
-            id: '1',
-            title: '10 Tips for Better Sleep',
-            description: 'Health and wellness content',
-            status: 'active',
-            productionStage: 'scripting',
-            thumbnailUrl: null,
-            ideaDate: new Date().toISOString(),
-            scriptDeadline: null,
-            filmedDate: null,
-            editedDate: null,
-            reviewDate: null,
-            seriesId: null,
-            series: undefined,
-            milestones: [],
-            createdAt: new Date().toISOString(),
-          },
-        ]);
-      } catch (error) {
-        console.error('Failed to fetch projects:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+  // Convert posts to content projects
+  const projects: ContentProject[] = posts.map((post) => ({
+    id: post.id,
+    title: post.content.slice(0, 100) || 'Untitled Post',
+    description: post.content || null,
+    status: post.status === 'published' ? 'published' : 'active',
+    productionStage: post.status === 'scheduled' ? 'scheduled' : 
+                     post.status === 'draft' ? 'idea' : 'ready',
+    thumbnailUrl: post.mediaUrls[0] || null,
+    ideaDate: post.createdAt ? new Date(post.createdAt).toISOString() : null,
+    scriptDeadline: null,
+    filmedDate: null,
+    editedDate: null,
+    reviewDate: null,
+    seriesId: null,
+    series: undefined,
+    milestones: [],
+    createdAt: post.createdAt ? new Date(post.createdAt).toISOString() : new Date().toISOString(),
+  }));
 
   // Group projects by stage
   const getProjectsByStage = (stage: Stage) => {
@@ -104,16 +93,27 @@ export default function ContentPipeline() {
     e.preventDefault();
   };
 
-  // Handle drop
+  // Handle drop - update the post's status
   const handleDrop = (e: React.DragEvent, newStage: Stage) => {
     e.preventDefault();
     const projectId = e.dataTransfer.getData('projectId');
     
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === projectId ? { ...p, productionStage: newStage } : p
-      )
-    );
+    // Map stage to post status
+    const statusMap: Record<Stage, string> = {
+      idea: 'draft',
+      scripting: 'draft',
+      filming: 'draft',
+      editing: 'draft',
+      review: 'draft',
+      ready: 'draft',
+      scheduled: 'scheduled',
+    };
+    
+    const post = posts.find(p => p.id === projectId);
+    if (post) {
+      const newStatus = newStage === 'scheduled' ? 'scheduled' : 'draft';
+      usePostsStore.getState().updatePost(projectId, { status: newStatus as any });
+    }
   };
 
   return (

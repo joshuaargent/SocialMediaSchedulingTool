@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { format, addDays, setHours, setMinutes } from 'date-fns';
-import { X, Image, Video, Calendar, Clock, RefreshCw, AlertCircle, Check, Eye, Sparkles, Upload } from 'lucide-react';
+import { X, Image, Video, Calendar, Clock, RefreshCw, AlertCircle, Check, Eye, Sparkles, Upload, Link2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { SocialPlatform, PostType, ContentType } from '@/types';
 import { PlatformIcon, platformColors, getOptimalTimes } from '../platforms/PlatformIcon';
@@ -15,7 +15,24 @@ interface PostComposerProps {
   initialDate?: Date;
 }
 
+// List of all available platforms
+const ALL_PLATFORMS: SocialPlatform[] = ['tiktok', 'facebook', 'instagram', 'youtube'];
+
+// Platform display info
+const platformInfo: Record<SocialPlatform, { name: string; description: string }> = {
+  tiktok: { name: 'TikTok', description: 'Short-form video content' },
+  facebook: { name: 'Facebook', description: 'Posts to your Facebook page' },
+  instagram: { name: 'Instagram', description: 'Posts to Instagram feed' },
+  youtube: { name: 'YouTube', description: 'Upload videos to YouTube' },
+};
+
 export function PostComposer({ onClose, onPublish, initialDate }: PostComposerProps) {
+  // Get connected platforms from platform store
+  const connections = usePlatformStore((s) => s.connections);
+  const connectedPlatforms = useMemo(() => {
+    return connections.map((c) => c.platform);
+  }, [connections]);
+  
   // Use individual selectors to avoid infinite loop
   const content = useComposeStore((s) => s.content);
   const mediaUrls = useComposeStore((s) => s.mediaUrls);
@@ -80,8 +97,6 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
 
   const hasCooldownWarning = cooldownWarnings && Object.keys(cooldownWarnings).length > 0;
 
-  const platformList: SocialPlatform[] = ['tiktok', 'facebook', 'instagram', 'youtube'];
-  
   const postTypes: { value: PostType; label: string }[] = [
     { value: 'social_post', label: 'Social Post' },
     { value: 'video_publish', label: 'Video Publish' },
@@ -217,50 +232,86 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
           {/* Platform Selection */}
           <div>
             <label className="block text-sm font-medium mb-3">Post to</label>
-            <div className="flex flex-wrap gap-3">
-              {platforms.map((platform) => {
-                const isSelected = platforms.includes(platform);
-                const optimalTimes = getOptimalTimes(platform);
-                const cooldownWarning = cooldownWarnings?.[platform];
-                
-                return (
-                  <button
-                    key={platform}
-                    onClick={() => handlePlatformToggle(platform)}
-                    className={clsx(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all',
-                      isSelected
-                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30'
-                        : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]'
-                    )}
-                  >
-                    <div className={clsx(
-                      'w-10 h-10 rounded-full flex items-center justify-center',
-                      platformColors[platform].bg
-                    )}>
-                      <PlatformIcon platform={platform} className="text-white" size={20} />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium capitalize">{platform}</div>
-                      {isSelected && (
-                        <div className="text-xs text-[var(--color-text-muted)]">
-                          Best: {optimalTimes[0]}
+            
+            {connectedPlatforms.length === 0 ? (
+              <div className="p-6 rounded-lg border-2 border-dashed border-[var(--color-border)] text-center">
+                <Link2 className="w-8 h-8 mx-auto mb-3 text-[var(--color-text-muted)]" />
+                <p className="text-[var(--color-text-secondary)] mb-3">No platforms connected</p>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Connect a platform in{' '}
+                  <a href="/settings" className="text-[var(--color-accent)] hover:underline">
+                    Settings
+                  </a>{' '}
+                  to start posting
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {ALL_PLATFORMS.map((platform) => {
+                  const isConnected = connectedPlatforms.includes(platform);
+                  const isSelected = platforms.includes(platform);
+                  const optimalTimes = getOptimalTimes(platform);
+                  const cooldownWarning = cooldownWarnings?.[platform];
+                  
+                  // Skip platforms that are not connected
+                  if (!isConnected) return null;
+                  
+                  return (
+                    <button
+                      key={platform}
+                      onClick={() => handlePlatformToggle(platform)}
+                      className={clsx(
+                        'flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all',
+                        isSelected
+                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30'
+                          : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+                        !isConnected && 'opacity-50 cursor-not-allowed'
+                      )}
+                      disabled={!isConnected}
+                    >
+                      <div className={clsx(
+                        'w-10 h-10 rounded-full flex items-center justify-center',
+                        platformColors[platform].bg
+                      )}>
+                        <PlatformIcon platform={platform} className="text-white" size={20} />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">{platformInfo[platform].name}</div>
+                        {isSelected && (
+                          <div className="text-xs text-[var(--color-text-muted)]">
+                            Best: {optimalTimes[0]}
+                          </div>
+                        )}
+                        {!isSelected && (
+                          <div className="text-xs text-[var(--color-text-muted)]">
+                            {platformInfo[platform].description}
+                          </div>
+                        )}
+                      </div>
+                      {isSelected && cooldownWarning && (
+                        <div className="ml-2 flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">
+                          <AlertCircle className="w-3 h-3" />
+                          {formatCooldownMinutes(cooldownWarning.minutes)}
                         </div>
                       )}
-                    </div>
-                    {isSelected && cooldownWarning && (
-                      <div className="ml-2 flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">
-                        <AlertCircle className="w-3 h-3" />
-                        {formatCooldownMinutes(cooldownWarning.minutes)}
-                      </div>
-                    )}
-                    {isSelected && (
-                      <Check className="w-5 h-5 text-[var(--color-accent)]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {isSelected && (
+                        <Check className="w-5 h-5 text-[var(--color-accent)]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Show disconnected platforms info */}
+            {connectedPlatforms.length > 0 && connectedPlatforms.length < ALL_PLATFORMS.length && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                <span>{connectedPlatforms.length} of {ALL_PLATFORMS.length} platforms connected</span>
+                <a href="/settings" className="text-[var(--color-accent)] hover:underline">
+                  Connect more →
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Cooldown Warning Banner */}

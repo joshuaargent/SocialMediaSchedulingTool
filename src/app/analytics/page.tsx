@@ -4,15 +4,20 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
+  TrendingDown,
   Eye, 
   Heart,
   Download,
   RefreshCw,
-  TrendingDown,
   Video,
-  Play
+  Play,
+  Users,
+  ThumbsUp,
+  MessageSquare,
+  BarChart2
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { subDays } from 'date-fns';
 import { useAnalyticsStore, usePostsStore, usePlatformStore } from '@/stores';
 import type { PlatformStats } from '@/types';
 import { Container } from '@/components/layout/Container';
@@ -126,6 +131,130 @@ interface YouTubeVideo {
 }
 
 // ============================================
+// YouTube Stats Card Component
+// ============================================
+
+interface YouTubeStatsData {
+  subscribers: number;
+  totalViews: number;
+  totalVideos: number;
+}
+
+function YouTubeStatsCard() {
+  const [stats, setStats] = useState<YouTubeStatsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const connections = usePlatformStore((state) => state.connections);
+  const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
+
+  const fetchStats = useCallback(async () => {
+    if (!isYouTubeConnected) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/analytics/youtube/stats');
+      const data = await response.json();
+
+      if (data.connected && data.stats) {
+        setStats({
+          subscribers: data.stats.subscribers || 0,
+          totalViews: data.stats.totalViews || 0,
+          totalVideos: data.stats.totalVideos || 0,
+        });
+
+        // Update platform stats store
+        const updateStats = usePlatformStore.getState().updateStats;
+        updateStats('youtube', {
+          platform: 'youtube',
+          followers: data.stats.subscribers || 0,
+          following: 0,
+          posts: data.stats.totalVideos || 0,
+          totalViews: data.stats.totalViews || 0,
+          totalPosts: data.stats.totalVideos || 0,
+        });
+      } else if (data.error) {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError('Failed to load YouTube stats');
+    } finally {
+      setLoading(false);
+    }
+  }, [isYouTubeConnected]);
+
+  useEffect(() => {
+    if (isYouTubeConnected) {
+      fetchStats();
+    }
+  }, [isYouTubeConnected, fetchStats]);
+
+  if (!isYouTubeConnected) {
+    return null;
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Video className="w-5 h-5 text-[#FF0000]" />
+          YouTube Channel Stats
+        </h2>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={fetchStats}
+          disabled={loading}
+        >
+          <RefreshCw className={clsx('w-4 h-4 mr-2', loading && 'animate-spin')} />
+          Refresh
+        </Button>
+      </div>
+
+      {loading && !stats ? (
+        <div className="grid grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-[var(--color-bg-secondary)] rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-4 text-red-500">{error}</div>
+      ) : stats ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+            <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-[var(--color-text-muted)]">Subscribers</p>
+              <p className="text-xl font-bold">{stats.subscribers.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <Eye className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
+              <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+            <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <Video className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+              <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+// ============================================
 // YouTube Videos Section
 // ============================================
 
@@ -143,10 +272,10 @@ function YouTubeVideosSection() {
     setError(null);
     
     try {
-      const response = await fetch('/api/analytics/youtube/videos?days=30');
+      const response = await fetch('/api/analytics/youtube/videos?days=365');
       const data = await response.json();
       
-      if (data.videos) {
+      if (data.videos && data.videos.length > 0) {
         setVideos(data.videos);
         
         // Update platform stats with real data
@@ -156,6 +285,8 @@ function YouTubeVideosSection() {
             followers: 0,
             following: 0,
             posts: data.summary.totalVideos,
+            totalViews: data.summary.totalViews,
+            totalPosts: data.summary.totalVideos,
           };
           updateStats('youtube', stats);
         }
@@ -167,7 +298,7 @@ function YouTubeVideosSection() {
     } finally {
       setLoading(false);
     }
-  }, [isYouTubeConnected]);
+  }, [isYouTubeConnected, updateStats]);
 
   // Fetch videos on mount
   useEffect(() => {
@@ -185,7 +316,7 @@ function YouTubeVideosSection() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Video className="w-5 h-5 text-[#FF0000]" />
-          YouTube Videos
+          Recent YouTube Videos
         </h2>
         <Button 
           size="sm" 
@@ -199,13 +330,13 @@ function YouTubeVideosSection() {
       </div>
       
       {loading && videos.length === 0 ? (
-        <div className="text-center py-8 text-[var(--color-text-muted)]">
-          Loading videos...
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-[var(--color-bg-secondary)] rounded-lg animate-pulse" />
+          ))}
         </div>
       ) : error ? (
-        <div className="text-center py-8 text-red-500">
-          {error}
-        </div>
+        <div className="text-center py-8 text-red-500">{error}</div>
       ) : videos.length === 0 ? (
         <div className="text-center py-8 text-[var(--color-text-muted)]">
           No videos found. Publish some videos to see analytics!
@@ -236,9 +367,18 @@ function YouTubeVideosSection() {
                   {new Date(video.publishedAt).toLocaleDateString()}
                 </p>
                 <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
-                  <span>{video.stats.views.toLocaleString()} views</span>
-                  <span>{video.stats.likes.toLocaleString()} likes</span>
-                  <span>{video.stats.comments.toLocaleString()} comments</span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {video.stats.views.toLocaleString()} views
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="w-3 h-3" />
+                    {video.stats.likes.toLocaleString()} likes
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" />
+                    {video.stats.comments.toLocaleString()} comments
+                  </span>
                 </div>
               </div>
             </div>
@@ -427,12 +567,47 @@ export default function AnalyticsPage() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Views Over Time</h2>
               <BarChart data={weeklyViewsData} height={250} />
-              <div className="flex items-center justify-between mt-4 text-sm text-text-muted">
+              <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
                 <span>Total: {totalWeeklyViews.toLocaleString()} views</span>
-                <span className="flex items-center gap-1 text-green-600">
-                  <TrendingUp className="w-4 h-4" />
-                  +{(Math.random() * 20 + 5).toFixed(0)}% vs last week
-                </span>
+                {(() => {
+                  // Calculate real trend based on analytics data
+                  const metrics = useAnalyticsStore.getState().metrics;
+                  const now = new Date();
+                  const thisWeekStart = subDays(now, 7);
+                  const lastWeekStart = subDays(now, 14);
+                  
+                  const thisWeekMetrics = metrics.filter(m => m.collectedAt >= thisWeekStart);
+                  const lastWeekMetrics = metrics.filter(m => m.collectedAt >= lastWeekStart && m.collectedAt < thisWeekStart);
+                  
+                  const thisWeekViews = thisWeekMetrics.reduce((sum, m) => sum + m.views, 0);
+                  const lastWeekViews = lastWeekMetrics.reduce((sum, m) => sum + m.views, 0);
+                  
+                  let trend = 0;
+                  let trendLabel = '0%';
+                  let trendClass = 'text-[var(--color-text-muted)]';
+                  
+                  if (lastWeekViews > 0) {
+                    trend = ((thisWeekViews - lastWeekViews) / lastWeekViews) * 100;
+                    const sign = trend >= 0 ? '+' : '';
+                    trendLabel = `${sign}${trend.toFixed(0)}% vs last week`;
+                    trendClass = trend >= 0 ? 'text-green-600' : 'text-red-600';
+                  } else if (thisWeekViews > 0) {
+                    trendLabel = 'New data this week';
+                    trendClass = 'text-[var(--color-accent)]';
+                  } else {
+                    trendLabel = 'No comparison data';
+                    trendClass = 'text-[var(--color-text-muted)]';
+                  }
+                  
+                  const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
+                  
+                  return (
+                    <span className={clsx('flex items-center gap-1', trendClass)}>
+                      <TrendIcon className="w-4 h-4" />
+                      {trendLabel}
+                    </span>
+                  );
+                })()}
               </div>
             </Card>
 
@@ -479,6 +654,9 @@ export default function AnalyticsPage() {
                 })}
               </div>
             </Card>
+
+            {/* YouTube Stats Card */}
+            <YouTubeStatsCard />
 
             {/* YouTube Videos Section */}
             <YouTubeVideosSection />

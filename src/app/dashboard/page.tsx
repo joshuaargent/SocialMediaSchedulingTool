@@ -81,6 +81,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const [showComposer, setShowComposer] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+  const [youtubeStats, setYoutubeStats] = useState<{ subscribers: number; totalViews: number; totalVideos: number } | null>(null);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const router = useRouter();
 
@@ -102,8 +103,15 @@ function DashboardContent() {
         console.log('YouTube stats:', statsData);
         console.log('YouTube videos:', videosData);
         
-        // Update platform store with stats
+        // Store YouTube stats for display
         if (statsData.connected && statsData.stats) {
+          setYoutubeStats({
+            subscribers: statsData.stats.subscribers || 0,
+            totalViews: statsData.stats.totalViews || 0,
+            totalVideos: statsData.stats.totalVideos || 0,
+          });
+          
+          // Update platform store with stats
           const existingStats = platformStats['youtube'];
           usePlatformStore.getState().updateStats('youtube', {
             platform: 'youtube',
@@ -119,6 +127,16 @@ function DashboardContent() {
         // Update videos if we got any
         if (videosData.videos && videosData.videos.length > 0) {
           setYoutubeVideos(videosData.videos);
+          
+          // If no stats, calculate from videos
+          if (!statsData.connected && videosData.summary) {
+            const summary = videosData.summary;
+            setYoutubeStats({
+              subscribers: 0,
+              totalViews: summary.totalViews || 0,
+              totalVideos: summary.totalVideos || 0,
+            });
+          }
         }
       })
       .catch((err) => console.error('Failed to fetch YouTube data:', err))
@@ -238,7 +256,11 @@ function DashboardContent() {
               </div>
               <div>
                 <p className="text-sm text-[var(--color-text-muted)]">Views</p>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">
+                  {youtubeStats?.totalViews 
+                    ? youtubeStats.totalViews.toLocaleString() 
+                    : (platformStats.youtube?.totalViews || 0).toLocaleString()}
+                </p>
               </div>
             </div>
           </Card>
@@ -249,8 +271,12 @@ function DashboardContent() {
                 <Heart className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Engagement</p>
-                <p className="text-2xl font-bold">0%</p>
+                <p className="text-sm text-[var(--color-text-muted)]">Subscribers</p>
+                <p className="text-2xl font-bold">
+                  {youtubeStats?.subscribers 
+                    ? youtubeStats.subscribers.toLocaleString() 
+                    : (platformStats.youtube?.followers || 0).toLocaleString()}
+                </p>
               </div>
             </div>
           </Card>

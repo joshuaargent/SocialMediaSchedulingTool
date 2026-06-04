@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus, MoreVertical, Film, Edit3, Trash2, 
-  ChevronLeft, ChevronRight, X, Play
+  ChevronLeft, ChevronRight, X, Play, RefreshCw
 } from 'lucide-react';
+import { usePostsStore, usePlatformStore } from '@/stores';
 
 interface Series {
   id: string;
@@ -22,43 +23,107 @@ export default function SeriesPage() {
   const [selectedSeries, setSelectedSeries] = useState<Series | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Fetch series
+  
+  // Get posts from store
+  const posts = usePostsStore((s) => s.posts);
+  const connections = usePlatformStore((s) => s.connections);
+  
+  // Fetch series from API
   useEffect(() => {
     const fetchSeries = async () => {
+      setLoading(true);
       try {
-        // Mock data
-        setSeries([
-          {
-            id: '1',
-            name: 'Health & Wellness Series',
-            description: 'Weekly tips for better health',
-            thumbnailUrl: null,
-            color: '#0D9488',
-            sortOrder: 0,
-            contentProjects: [
-              { id: '1', title: 'Better Sleep Tips', status: 'published', thumbnailUrl: null },
-              { id: '2', title: 'Morning Routine Guide', status: 'ready', thumbnailUrl: null },
-            ],
-          },
-          {
-            id: '2',
-            name: 'Tech Reviews',
-            description: 'Product reviews and comparisons',
-            thumbnailUrl: null,
-            color: '#8B5CF6',
-            sortOrder: 1,
-            contentProjects: [],
-          },
-        ]);
+        // Try to fetch from API first
+        const response = await fetch('/api/db/series');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.series && data.series.length > 0) {
+            setSeries(data.series);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // If no API data, generate series from posts grouped by tags or platforms
+        const generatedSeries = generateSeriesFromPosts(posts);
+        setSeries(generatedSeries);
       } catch (error) {
         console.error('Failed to fetch series:', error);
+        // Fallback to generated series from posts
+        const generatedSeries = generateSeriesFromPosts(posts);
+        setSeries(generatedSeries);
       } finally {
         setLoading(false);
       }
     };
     fetchSeries();
-  }, []);
+  }, [posts]);
+
+  // Generate series from posts data
+  function generateSeriesFromPosts(posts: typeof usePostsStore.getState extends () => infer S ? S extends { posts: infer P } ? P : never : never) {
+    // Group posts by platform for now - in future could use tags/campaigns
+    const platformGroups: Record<string, typeof posts> = {};
+    
+    posts.forEach(post => {
+      post.platforms.forEach(platform => {
+        if (!platformGroups[platform]) {
+          platformGroups[platform] = [];
+        }
+        platformGroups[platform].push(post);
+      });
+    });
+    
+    const platformColors: Record<string, string> = {
+      youtube: '#FF0000',
+      tiktok: '#000000',
+      facebook: '#1877F2',
+      instagram: '#E4405F',
+    };
+    
+    const platformNames: Record<string, string> = {
+      youtube: 'YouTube Videos',
+      tiktok: 'TikTok Videos',
+      facebook: 'Facebook Posts',
+      instagram: 'Instagram Posts',
+    };
+    
+    const generated: Series[] = [];
+    
+    // Create a series for each platform that has posts
+    Object.entries(platformGroups).forEach(([platform, platformPosts]) => {
+      if (platformPosts.length > 0) {
+        generated.push({
+          id: `platform-${platform}`,
+          name: platformNames[platform] || `${platform} Content`,
+          description: `All ${platform} content from your posts`,
+          thumbnailUrl: null,
+          color: platformColors[platform] || '#0D9488',
+          sortOrder: generated.length,
+          contentProjects: platformPosts.map((p, idx) => ({
+            id: p.id,
+            title: p.content.slice(0, 50) || `Post ${idx + 1}`,
+            status: p.status,
+            thumbnailUrl: p.mediaUrls[0] || null,
+          })),
+        });
+      }
+    });
+    
+    // If no posts, show sample series
+    if (generated.length === 0) {
+      generated.push({
+        id: 'sample-series',
+        name: 'Content Series',
+        description: 'Start creating posts to build your series',
+        thumbnailUrl: null,
+        color: '#0D9488',
+        sortOrder: 0,
+        contentProjects: [],
+      });
+    }
+    
+    return generated;
+  }
 
   const [newSeriesName, setNewSeriesName] = useState('');
   const [newSeriesColor, setNewSeriesColor] = useState('#0D9488');
@@ -74,6 +139,19 @@ export default function SeriesPage() {
       sortOrder: series.length,
       contentProjects: [],
     };
+    
+    // Try to save to API
+    try {
+      const response = await fetch('/api/db/series', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSeries),
+      });
+      if (!response.ok) throw new Error('Failed to save');
+    } catch (e) {
+      // Continue with local state if API fails
+    }
+    
     setSeries([...series, newSeries]);
     setShowCreateModal(false);
   };

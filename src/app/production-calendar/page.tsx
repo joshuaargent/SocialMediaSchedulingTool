@@ -9,6 +9,7 @@ import {
   format, startOfWeek, endOfWeek, eachDayOfInterval, 
   isSameDay, addWeeks, subWeeks, isToday
 } from 'date-fns';
+import { usePostsStore } from '@/stores';
 
 interface ProductionItem {
   id: string;
@@ -20,30 +21,35 @@ interface ProductionItem {
   completed: boolean;
 }
 
-// Mock data
-const mockItems: ProductionItem[] = [
-  {
-    id: '1',
-    title: 'Film intro section',
-    type: 'filming',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    projectTitle: '10 Tips for Better Sleep',
-    completed: false,
-  },
-  {
-    id: '2',
-    title: 'Script final review',
-    type: 'review',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    projectTitle: 'Morning Routine Guide',
-    completed: true,
-  },
-];
-
 export default function ProductionCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'week' | 'month'>('week');
-  const [items] = useState<ProductionItem[]>(mockItems);
+  
+  // Get posts from store to generate production items
+  const posts = usePostsStore((s) => s.posts);
+  
+  // Convert posts to production items
+  const items: ProductionItem[] = useMemo(() => {
+    return posts.map((post) => {
+      const scheduledDate = post.scheduledAt 
+        ? format(new Date(post.scheduledAt), 'yyyy-MM-dd')
+        : format(new Date(post.createdAt), 'yyyy-MM-dd');
+      
+      // Determine type based on post status
+      let type: ProductionItem['type'] = 'review';
+      if (post.status === 'draft') type = 'filming';
+      else if (post.status === 'scheduled') type = 'milestone';
+      
+      return {
+        id: post.id,
+        title: post.content.slice(0, 50) || 'Untitled Post',
+        type,
+        date: scheduledDate,
+        projectTitle: `Post to ${post.platforms.join(', ')}`,
+        completed: post.status === 'published',
+      };
+    });
+  }, [posts]);
 
   // Get week days
   const weekDays = useMemo(() => {
