@@ -127,15 +127,15 @@ export async function GET(request: NextRequest) {
         return { rows: [], headers: [], raw: { error: errorText } };
       }
       const data = await response.json();
-      // Debug: log the full raw response for demographics
-      console.log(`${name} raw response:`, JSON.stringify(data));
       return { headers: data.columnHeaders || [], rows: data.rows || [], raw: data };
     };
 
     const [overview, age, gender, traffic, devices, geo, locations] = await Promise.all([
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost&dimensions=day&sort=day`, 'overview'),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=ageGroup&sort=ageGroup`, 'age'),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=gender&sort=gender`, 'gender'),
+      // Note: ageGroup and gender dimensions not supported by YouTube Analytics API v2 for this channel
+      // These return 400 errors, so we return empty data
+      Promise.resolve({ rows: [], headers: [], raw: { error: 'Not supported' } }),
+      Promise.resolve({ rows: [], headers: [], raw: { error: 'Not supported' } }),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightTrafficSourceType&sort=-views`, 'traffic'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=deviceType&sort=-views`, 'devices'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=country&sort=-views&maxResults=10`, 'geo'),
