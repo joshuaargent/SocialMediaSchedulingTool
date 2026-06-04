@@ -322,7 +322,7 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
         </div>
         <div>
           <p className="text-xs text-[var(--color-text-muted)]">Rate</p>
-          <p className="text-xl font-bold">{(stats.engagementRate * 100).toFixed(1)}%</p>
+          <p className="text-xl font-bold">{(stats.engagementRate * 100).toFixed(2)}%</p>
         </div>
       </div>
     </Card>
@@ -1007,7 +1007,7 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const platformAnalytics = summary.platformBreakdown[platform];
-                  const rate = (platformAnalytics.engagementRate * 100).toFixed(1);
+                  const rate = (platformAnalytics.engagementRate * 100).toFixed(2);
                   
                   return (
                     <div 
@@ -1127,7 +1127,7 @@ export default function AnalyticsPage() {
               <Card className="p-6">
                 <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#FF0000]" />
-                  Watch Time (Last 30 Days)
+                  {dateRange === "all" ? "All Time" : `Last ${dateRange} Days`}
                 </h2>
                 <LineChart 
                   data={youtubeAnalytics.overview.dailyData.map((d: any) => ({ 
@@ -1171,7 +1171,7 @@ export default function AnalyticsPage() {
                   <div className="mb-3">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-[var(--color-text-muted)]">Retention</span>
-                      <span className="font-bold">{youtubeAnalytics.overview.avgViewPercentage.toFixed(1)}%</span>
+                      <span className="font-bold">{youtubeAnalytics.overview.avgViewPercentage.toFixed(2)}%</span>
                     </div>
                     <div className="h-1 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
                       <div 
@@ -1194,7 +1194,7 @@ export default function AnalyticsPage() {
                             <div className="w-10 h-1 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
                               <div className="h-full bg-purple-500 rounded-full" style={{ width: `${item.percentage}%` }} />
                             </div>
-                            <span className="text-[10px] text-[var(--color-text-muted)] w-6 text-right">{item.percentage.toFixed(0)}%</span>
+                            <span className="text-[10px] text-[var(--color-text-muted)] w-6 text-right">{item.percentage.toFixed(2)}%</span>
                           </div>
                         </div>
                       ))}
@@ -1210,7 +1210,7 @@ export default function AnalyticsPage() {
                       {youtubeAnalytics.demographics.gender.map((item: any) => (
                         <div key={item.gender} className="flex-1 p-1 rounded bg-[var(--color-bg-secondary)] text-center">
                           <p className="text-[10px] capitalize text-[var(--color-text-muted)]">{item.gender}</p>
-                          <p className="font-bold text-sm">{item.percentage.toFixed(0)}%</p>
+                          <p className="font-bold text-sm">{item.percentage.toFixed(2)}%</p>
                         </div>
                       ))}
                     </div>
