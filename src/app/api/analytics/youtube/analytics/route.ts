@@ -120,16 +120,12 @@ export async function GET(request: NextRequest) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`${name} API error:`, response.status, errorText);
-        return { rows: [], headers: [], error: { status: response.status, message: errorText } };
+        return { rows: [], headers: [], raw: { error: errorText } };
       }
       const data = await response.json();
       // Debug: log the raw response
-      console.log(`${name} response:`, { 
-        hasRows: !!data.rows?.length, 
-        rowCount: data.rows?.length, 
-        headers: data.columnHeaders?.map((h: any) => h.name)
-      });
-      return { headers: data.columnHeaders || [], rows: data.rows || [] };
+      console.log(`${name} raw response:`, JSON.stringify(data).substring(0, 500));
+      return { headers: data.columnHeaders || [], rows: data.rows || [], raw: data };
     };
 
     const [overview, age, gender, traffic, devices, geo, locations] = await Promise.all([
@@ -141,13 +137,6 @@ export async function GET(request: NextRequest) {
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=country&sort=-views&maxResults=10`, 'geo'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightPlaybackLocationType&sort=-views`, 'locations'),
     ]);
-
-    // Log any errors from the API calls
-    [overview, age, gender, traffic, devices, geo, locations].forEach((result, idx) => {
-      if (result.error) {
-        console.error(`API call ${idx} failed:`, result.error);
-      }
-    });
 
     const overviewData = { totalViews: 0, totalMinutesWatched: 0, avgViewDuration: 0, avgViewPercentage: 0, subscribersGained: 0, subscribersLost: 0, dailyData: [] as any[] };
     
@@ -191,6 +180,15 @@ export async function GET(request: NextRequest) {
       }));
     };
 
+    // Add raw API response for debugging
+    const rawApiResponses: Record<string, any> = {};
+    const responses = { overview, age, gender, traffic, devices, geo, locations };
+    Object.entries(responses).forEach(([key, value]: [string, any]) => {
+      if (value.raw) {
+        rawApiResponses[key] = value.raw;
+      }
+    });
+    
     const result = {
       connected: true,
       overview: overviewData,
@@ -210,6 +208,7 @@ export async function GET(request: NextRequest) {
         devicesRows: devices.rows?.length || 0,
         geoRows: geo.rows?.length || 0,
         locationsRows: locations.rows?.length || 0,
+        rawResponses: rawApiResponses,
       }
     };
 
