@@ -130,19 +130,15 @@ export async function GET(request: NextRequest) {
       return { headers: data.columnHeaders || [], rows: data.rows || [], raw: data };
     };
 
-    const [overview, age, gender, traffic, devices, geo, locations] = await Promise.all([
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost&dimensions=day&sort=day`, 'overview'),
-      // Note: ageGroup and gender dimensions not supported by YouTube Analytics API v2 for this channel
-      // These return 400 errors, so we return empty data
-      Promise.resolve({ rows: [], headers: [], raw: { error: 'Not supported' } }),
-      Promise.resolve({ rows: [], headers: [], raw: { error: 'Not supported' } }),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightTrafficSourceType&sort=-views`, 'traffic'),
+    const [overview, traffic, devices, geo, locations] = await Promise.all([
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost,likes,comments,shares&dimensions=day&sort=day`, 'overview'),
+parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightTrafficSourceType&sort=-views`, 'traffic'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=deviceType&sort=-views`, 'devices'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=country&sort=-views&maxResults=10`, 'geo'),
       parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightPlaybackLocationType&sort=-views`, 'locations'),
     ]);
 
-    const overviewData = { totalViews: 0, totalMinutesWatched: 0, avgViewDuration: 0, avgViewPercentage: 0, subscribersGained: 0, subscribersLost: 0, dailyData: [] as any[] };
+    const overviewData = { totalViews: 0, totalMinutesWatched: 0, avgViewDuration: 0, avgViewPercentage: 0, subscribersGained: 0, subscribersLost: 0, totalLikes: 0, totalComments: 0, totalShares: 0, dailyData: [] as any[] };
     
     if (overview.rows?.length && overview.headers?.length) {
       const h = overview.headers.map((x: any) => x.name);
@@ -153,6 +149,13 @@ export async function GET(request: NextRequest) {
         
         overviewData.totalViews += parseInt(row[viewsIdx >= 0 ? viewsIdx : 0] || 0);
         overviewData.totalMinutesWatched += parseInt(row[minsIdx >= 0 ? minsIdx : 1] || 0);
+
+        const likesIdx = h.indexOf('likes');
+        const commentsIdx = h.indexOf('comments');
+        const sharesIdx = h.indexOf('shares');
+        if (likesIdx >= 0) overviewData.totalLikes += parseInt(row[likesIdx] || 0);
+        if (commentsIdx >= 0) overviewData.totalComments += parseInt(row[commentsIdx] || 0);
+        if (sharesIdx >= 0) overviewData.totalShares += parseInt(row[sharesIdx] || 0);
         overviewData.dailyData.push({ 
           date: row[dayIdx >= 0 ? dayIdx : 0] || '', 
           views: parseInt(row[viewsIdx >= 0 ? viewsIdx : 0] || 0), 
