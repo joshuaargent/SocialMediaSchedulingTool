@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`/settings?error=${encodeURIComponent(errorReason || error)}`, request.url)
+      new URL('/settings?error=' + encodeURIComponent(errorReason || error), request.url)
     );
   }
 
@@ -28,7 +29,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Exchange code for access token
     const tokenResponse = await fetch(
       `https://graph.facebook.com/v18.0/oauth/access_token?client_id=${clientId}&client_secret=${clientSecret}&code=${code}&redirect_uri=${redirectUri}`
     );
@@ -38,19 +38,45 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenData = await tokenResponse.json();
-
-    // Store the token in a cookie or redirect with it
-    // For security, tokens should be stored server-side
     const response = NextResponse.redirect(
       new URL('/settings?connected=facebook', request.url)
     );
 
-    // Set a secure cookie with the token (in production, use encrypted cookies)
+    // Store in database if configured
+    const orgId = request.cookies.get('current_org_id')?.value;
+    if (orgId && isDatabaseConfigured()) {
+      try {
+        await requirePrisma().platformConnection.upsert({
+          where: {
+            organizationId_platform: {
+              organizationId: orgId,
+              platform: 'facebook',
+            },
+          },
+          update: {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+          },
+          create: {
+            organizationId: orgId,
+            platform: 'facebook',
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+          },
+        });
+      } catch (dbError) {
+        console.error('Failed to save Facebook connection to database:', dbError);
+      }
+    }
+
+    // Also set cookies for backward compatibility
     response.cookies.set('fb_access_token', tokenData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 3600, // 1 hour
+      maxAge: 3600,
     });
 
     if (tokenData.refresh_token) {
@@ -58,7 +84,7 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 60, // 60 days
+        maxAge: 60 * 60 * 24 * 60,
       });
     }
 

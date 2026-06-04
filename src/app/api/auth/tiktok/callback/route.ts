@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -51,13 +52,40 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenData = await tokenResponse.json();
-
-    // Redirect with success - tokens will be handled client-side
     const redirectUrl = new URL('/settings', request.url);
     redirectUrl.searchParams.set('connected', 'tiktok');
     const response = NextResponse.redirect(redirectUrl);
 
-    // Store tokens in httpOnly cookies
+    // Store in database if configured
+    const orgId = request.cookies.get('current_org_id')?.value;
+    if (orgId && isDatabaseConfigured()) {
+      try {
+        await requirePrisma().platformConnection.upsert({
+          where: {
+            organizationId_platform: {
+              organizationId: orgId,
+              platform: 'tiktok',
+            },
+          },
+          update: {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: new Date(Date.now() + (tokenData.expires_in * 1000)),
+          },
+          create: {
+            organizationId: orgId,
+            platform: 'tiktok',
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: new Date(Date.now() + (tokenData.expires_in * 1000)),
+          },
+        });
+      } catch (dbError) {
+        console.error('Failed to save TikTok connection to database:', dbError);
+      }
+    }
+
+    // Also set cookies for backward compatibility
     response.cookies.set('tt_access_token', tokenData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -70,7 +98,7 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 60, // 60 days
+        maxAge: 60 * 60 * 24 * 60,
       });
     }
 
