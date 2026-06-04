@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
 const CACHE_TTL = 5 * 60 * 1000;
 let videoCache: { videos: any[]; summary: any; channelInfo: any; timestamp: number } | null = null;
@@ -19,12 +20,37 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Get tokens
+  // Get organization ID
+  const orgId = request.cookies.get('current_org_id')?.value;
+
+  // Get tokens from database first (if org exists), then fall back to cookies
   let accessToken = request.cookies.get('yt_access_token')?.value;
-  const refreshToken = request.cookies.get('yt_refresh_token')?.value;
-  const ytStatsCookie = request.cookies.get('yt_stats')?.value;
+  let refreshToken = request.cookies.get('yt_refresh_token')?.value;
+
+  // Try to get tokens from database if org is logged in
+  if (orgId && isDatabaseConfigured()) {
+    try {
+      const db = requirePrisma();
+      const dbConnection = await db.platformConnection.findUnique({
+        where: {
+          organizationId_platform: {
+            organizationId: orgId,
+            platform: 'youtube',
+          },
+        },
+      });
+      
+      if (dbConnection?.accessToken) {
+        accessToken = dbConnection.accessToken;
+        refreshToken = dbConnection.refreshToken || refreshToken;
+      }
+    } catch (err) {
+      console.error('Failed to fetch tokens from DB:', err);
+    }
+  }
 
   // Parse channel ID from yt_stats cookie
+  const ytStatsCookie = request.cookies.get('yt_stats')?.value;
   let channelId: string | null = null;
   let channelStatsFromCookie: any = null;
   if (ytStatsCookie) {
@@ -58,6 +84,26 @@ export async function GET(request: NextRequest) {
         if (refreshResponse.ok) {
           const tokenData = await refreshResponse.json();
           accessToken = tokenData.access_token;
+          
+          // Update DB with new token
+          if (orgId && isDatabaseConfigured()) {
+            try {
+              await requirePrisma().platformConnection.update({
+                where: {
+                  organizationId_platform: {
+                    organizationId: orgId,
+                    platform: 'youtube',
+                  },
+                },
+                data: {
+                  accessToken: tokenData.access_token,
+                  expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+                },
+              });
+            } catch (e) {
+              console.error('Failed to update token in DB:', e);
+            }
+          }
         }
       } catch (e) {
         console.error('Token refresh failed:', e);

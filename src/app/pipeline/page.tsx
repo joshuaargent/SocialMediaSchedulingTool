@@ -53,34 +53,121 @@ const STAGES: { id: Stage; label: string; icon: any; color: string; borderColor:
 export default function ContentPipeline() {
   const posts = usePostsStore((s) => s.posts);
   const addPost = usePostsStore((s) => s.addPost);
+  const updatePost = usePostsStore((s) => s.updatePost);
+  const deletePost = usePostsStore((s) => s.deletePost);
   const connections = usePlatformStore((s) => s.connections);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ContentProject | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [dbProjects, setDbProjects] = useState<any[]>([]);
 
-  // Convert posts to content projects
-  const projects: ContentProject[] = posts.map((post) => ({
-    id: post.id,
-    title: post.content.slice(0, 100) || 'Untitled Post',
-    description: post.content || null,
-    status: post.status === 'published' ? 'published' : 'active',
-    productionStage: post.status === 'scheduled' ? 'scheduled' : 
-                     post.status === 'draft' ? 'idea' : 'ready',
-    thumbnailUrl: post.mediaUrls[0] || null,
-    ideaDate: post.createdAt ? new Date(post.createdAt).toISOString() : null,
-    scriptDeadline: null,
-    filmedDate: null,
-    editedDate: null,
-    reviewDate: null,
-    seriesId: null,
-    series: undefined,
-    milestones: [],
-    createdAt: post.createdAt ? new Date(post.createdAt).toISOString() : new Date().toISOString(),
-  }));
+  // Fetch projects from database
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/pipeline');
+      const data = await res.json();
+      if (data.projects) {
+        setDbProjects(data.projects);
+      }
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  // Use database projects if available, otherwise fall back to posts
+  const projects: ContentProject[] = dbProjects.length > 0 
+    ? dbProjects.map((p) => ({
+        id: p.id,
+        title: p.title || 'Untitled',
+        description: p.description || null,
+        status: p.status || 'active',
+        productionStage: p.productionStage || 'idea',
+        thumbnailUrl: p.thumbnailUrl || null,
+        ideaDate: p.ideaDate ? new Date(p.ideaDate).toISOString() : null,
+        scriptDeadline: p.scriptDeadline ? new Date(p.scriptDeadline).toISOString() : null,
+        filmedDate: p.filmedDate ? new Date(p.filmedDate).toISOString() : null,
+        editedDate: p.editedDate ? new Date(p.editedDate).toISOString() : null,
+        reviewDate: p.reviewDate ? new Date(p.reviewDate).toISOString() : null,
+        seriesId: p.seriesId || null,
+        series: p.series,
+        milestones: p.milestones || [],
+        createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+      }))
+    : posts.map((post) => ({
+        id: post.id,
+        title: post.content.slice(0, 100) || 'Untitled Post',
+        description: post.content || null,
+        status: post.status === 'published' ? 'published' : 'active',
+        productionStage: post.status === 'scheduled' ? 'scheduled' : 
+                         post.status === 'draft' ? 'idea' : 'ready',
+        thumbnailUrl: post.mediaUrls[0] || null,
+        ideaDate: post.createdAt ? new Date(post.createdAt).toISOString() : null,
+        scriptDeadline: null,
+        filmedDate: null,
+        editedDate: null,
+        reviewDate: null,
+        seriesId: null,
+        series: undefined,
+        milestones: [],
+        createdAt: post.createdAt ? new Date(post.createdAt).toISOString() : new Date().toISOString(),
+      }));
 
   // Group projects by stage
   const getProjectsByStage = (stage: Stage) => {
     return projects.filter((p) => p.productionStage === stage);
+  };
+
+  // Create new project
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectTitle.trim()) return;
+
+    try {
+      const res = await fetch('/api/pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: projectTitle,
+          description: projectDescription,
+          status: 'active',
+          productionStage: 'idea',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProjectTitle('');
+        setProjectDescription('');
+        setShowModal(false);
+        fetchProjects();
+      }
+    } catch (err) {
+      console.error('Failed to create project:', err);
+    }
+  };
+
+  // Delete project
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm('Delete this project?')) return;
+    
+    try {
+      const res = await fetch(`/api/pipeline?id=${projectId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchProjects();
+      }
+    } catch (err) {
+      console.error('Failed to delete project:', err);
+    }
   };
 
   // Handle drag start
@@ -93,26 +180,26 @@ export default function ContentPipeline() {
     e.preventDefault();
   };
 
-  // Handle drop - update the post's status
-  const handleDrop = (e: React.DragEvent, newStage: Stage) => {
+  // Handle drop - update the project's stage
+  const handleDrop = async (e: React.DragEvent, newStage: Stage) => {
     e.preventDefault();
     const projectId = e.dataTransfer.getData('projectId');
     
-    // Map stage to post status
-    const statusMap: Record<Stage, string> = {
-      idea: 'draft',
-      scripting: 'draft',
-      filming: 'draft',
-      editing: 'draft',
-      review: 'draft',
-      ready: 'draft',
-      scheduled: 'scheduled',
-    };
-    
-    const post = posts.find(p => p.id === projectId);
-    if (post) {
-      const newStatus = newStage === 'scheduled' ? 'scheduled' : 'draft';
-      usePostsStore.getState().updatePost(projectId, { status: newStatus as any });
+    try {
+      const res = await fetch('/api/pipeline', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: projectId,
+          productionStage: newStage,
+          status: newStage === 'scheduled' ? 'scheduled' : 'active',
+        }),
+      });
+      if (res.ok) {
+        fetchProjects();
+      }
+    } catch (err) {
+      console.error('Failed to update project:', err);
     }
   };
 
@@ -209,7 +296,10 @@ export default function ContentPipeline() {
                     <button className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    <button className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-error)]">
+                    <button 
+                      onClick={() => handleDeleteProject(project.id)}
+                      className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-error)]"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -247,11 +337,13 @@ export default function ContentPipeline() {
               </button>
             </div>
 
-            <form className="space-y-4">
+            <form onSubmit={handleCreateProject} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">Title</label>
                 <input
                   type="text"
+                  value={projectTitle}
+                  onChange={(e) => setProjectTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent)]"
                   placeholder="What is this content about?"
                 />
@@ -261,6 +353,8 @@ export default function ContentPipeline() {
                 <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">Description</label>
                 <textarea
                   rows={3}
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent)]"
                   placeholder="Brief description or notes..."
                 />
