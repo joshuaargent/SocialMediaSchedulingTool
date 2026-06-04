@@ -86,13 +86,16 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
   
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   
-  const padding = { top: 15, right: 15, bottom: 25, left: 15 };
+  const padding = { top: 15, right: 20, bottom: 30, left: 20 };
   const chartHeight = height - padding.top - padding.bottom;
   const chartWidth = 100 - padding.left - padding.right;
   const pointCount = data.length;
   
   // Normalize points to SVG viewBox (0-100 width, 0-height height)
-  const getX = (index: number) => padding.left + (index / (pointCount - 1 || 1)) * chartWidth;
+  const getX = (index: number) => {
+    if (pointCount <= 1) return padding.left + chartWidth / 2;
+    return padding.left + (index / (pointCount - 1)) * chartWidth;
+  };
   const getY = (value: number) => padding.top + chartHeight - ((value / maxValue) * chartHeight);
   
   // Generate smooth curve using cardinal spline or simple line
@@ -135,7 +138,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
     : linePath;
   
   // Calculate which label positions to show
-  const labelStep = Math.max(1, Math.floor(pointCount / 7));
+  const labelStep = Math.max(1, Math.floor(pointCount / 6));
   const showLabel = (idx: number) => {
     if (pointCount <= 8) return true;
     return idx === 0 || idx === pointCount - 1 || idx % labelStep === 0;
@@ -215,17 +218,16 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
               x2={points[hoveredIndex].x}
               y2={padding.top + chartHeight}
               stroke={gradient}
-              strokeWidth="1"
+              strokeWidth="0.8"
               strokeDasharray="2"
-              opacity="0.5"
+              opacity="0.6"
             />
+            {/* Clean dot on hover */}
             <circle
               cx={points[hoveredIndex].x}
               cy={points[hoveredIndex].y}
-              r="4"
-              fill="var(--color-bg-card)"
-              stroke={gradient}
-              strokeWidth="2"
+              r="2"
+              fill={gradient}
             />
           </>
         )}
@@ -240,25 +242,24 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
           d={linePath}
           fill="none"
           stroke={gradient}
-          strokeWidth="2.5"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
       
-      {/* Labels - positioned exactly at first and last points */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between">
+      {/* Labels - positioned exactly at chart edges */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 flex justify-between"
+        style={{ paddingLeft: `${padding.left}%`, paddingRight: `${padding.right}%` }}
+      >
         {data.map((item, idx) => {
-          if (!showLabel(idx)) return <span key={idx} />;
+          if (!showLabel(idx)) return <span key={idx} className="invisible" />;
           return (
             <span 
               key={idx} 
               className="text-[10px] text-[var(--color-text-muted)]"
-              style={{ 
-                marginLeft: idx === 0 ? '0' : undefined,
-                marginRight: idx === pointCount - 1 ? '0' : undefined,
-              }}
             >
               {item.label}
             </span>
@@ -550,8 +551,10 @@ export default function AnalyticsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshedPlatform, setRefreshedPlatform] = useState<string | null>(null);
   const [youtubeData, setYoutubeData] = useState<{ videos: YouTubeVideo[], summary: YouTubeSummary, channelInfo?: any } | null>(null);
+  const [youtubeAnalytics, setYoutubeAnalytics] = useState<any>(null);
   const [isLoadingYoutube, setIsLoadingYoutube] = useState(false);
   const fetchingRef = useRef(false);
+  const analyticsRef = useRef(false);
 
   const metrics = useAnalyticsStore((state) => state.metrics);
   const posts = usePostsStore((state) => state.posts);
@@ -567,6 +570,26 @@ export default function AnalyticsPage() {
     { label: '90d', value: '90', days: 90 },
     { label: 'All', value: 'all', days: null },
   ];
+
+  // Fetch YouTube analytics data (watch time, audience, etc.)
+  const fetchYouTubeAnalytics = useCallback(async () => {
+    if (analyticsRef.current) return;
+    const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
+    if (!isYouTubeConnected) return;
+    
+    analyticsRef.current = true;
+    try {
+      const response = await fetch('/api/analytics/youtube/analytics?refresh=true');
+      const data = await response.json();
+      if (data.connected && data.overview) {
+        setYoutubeAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch YouTube analytics:', error);
+    } finally {
+      analyticsRef.current = false;
+    }
+  }, [connections]);
 
   // Fetch YouTube data with current date range
   const fetchYouTubeData = useCallback(async (days: number | null) => {
@@ -606,7 +629,8 @@ export default function AnalyticsPage() {
   // Fetch on mount and when date range changes
   useEffect(() => {
     fetchYouTubeData(dateRange === 'all' ? null : parseInt(dateRange));
-  }, [dateRange, fetchYouTubeData]);
+    fetchYouTubeAnalytics();
+  }, [dateRange, fetchYouTubeData, fetchYouTubeAnalytics]);
 
   const refreshPlatformAnalytics = useCallback(async (platform: string) => {
     setIsRefreshing(true);
@@ -1005,6 +1029,122 @@ export default function AnalyticsPage() {
                 })}
               </div>
             </Card>
+
+            {/* YouTube Analytics Deep Dive */}
+            {youtubeAnalytics && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Video className="w-5 h-5 text-[#FF0000]" />
+                  Watch Time & Audience
+                </h2>
+                
+                {/* Watch Time Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+                    <p className="text-xs text-[var(--color-text-muted)]">Watch Time</p>
+                    <p className="text-lg font-bold">{Math.round(youtubeAnalytics.overview.totalMinutesWatched / 60).toLocaleString()} hrs</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+                    <p className="text-xs text-[var(--color-text-muted)]">Avg Duration</p>
+                    <p className="text-lg font-bold">{Math.round(youtubeAnalytics.overview.avgViewDuration / 60)}m {youtubeAnalytics.overview.avgViewDuration % 60}s</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+                    <p className="text-xs text-green-600 dark:text-green-400">Subs Gained</p>
+                    <p className="text-lg font-bold text-green-600">+{youtubeAnalytics.overview.subscribersGained.toLocaleString()}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <p className="text-xs text-red-600 dark:text-red-400">Subs Lost</p>
+                    <p className="text-lg font-bold text-red-600">-{youtubeAnalytics.overview.subscribersLost.toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Retention */}
+                <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-[var(--color-text-muted)]">Avg Retention</span>
+                    <span className="text-sm font-bold">{youtubeAnalytics.overview.avgViewPercentage?.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#FF0000] rounded-full transition-all"
+                      style={{ width: `${youtubeAnalytics.overview.avgViewPercentage || 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Age Demographics */}
+                {youtubeAnalytics.demographics?.age?.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Audience Age</h3>
+                    <div className="space-y-1">
+                      {youtubeAnalytics.demographics.age.slice(0, 5).map((item: any) => (
+                        <div key={item.group} className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--color-text-secondary)]">{item.group}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-purple-500 rounded-full"
+                                style={{ width: `${item.percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-[var(--color-text-muted)] w-12 text-right">{item.percentage.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gender */}
+                {youtubeAnalytics.demographics?.gender?.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Gender</h3>
+                    <div className="flex gap-2">
+                      {youtubeAnalytics.demographics.gender.map((item: any) => (
+                        <div key={item.gender} className="flex-1 p-2 rounded-lg bg-[var(--color-bg-secondary)] text-center">
+                          <p className="text-xs capitalize text-[var(--color-text-muted)]">{item.gender}</p>
+                          <p className="font-bold">{item.percentage.toFixed(0)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Traffic Sources */}
+                {youtubeAnalytics.trafficSources?.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Traffic Sources</h3>
+                    <div className="space-y-2">
+                      {youtubeAnalytics.trafficSources.slice(0, 4).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--color-text-secondary)] text-xs capitalize">
+                            {item.source.replace(/_/g, ' ').toLowerCase()}
+                          </span>
+                          <span className="text-xs font-medium">{item.views.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Countries */}
+                {youtubeAnalytics.topCountries?.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Top Countries</h3>
+                    <div className="flex flex-wrap gap-1">
+                      {youtubeAnalytics.topCountries.slice(0, 5).map((item: any, idx: number) => (
+                        <span 
+                          key={idx} 
+                          className="px-2 py-1 text-xs rounded-full bg-[var(--color-bg-secondary)]"
+                        >
+                          {item.country}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         </div>
       </Container>
