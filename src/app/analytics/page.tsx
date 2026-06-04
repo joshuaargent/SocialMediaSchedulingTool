@@ -362,14 +362,14 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
   const filteredTotalViews = filteredVideos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
   const filteredTotalLikes = filteredVideos.reduce((sum, v) => sum + (v.stats?.likes || 0), 0);
   const filteredTotalComments = filteredVideos.reduce((sum, v) => sum + (v.stats?.comments || 0), 0);
-  const filteredTotalFavorites = filteredVideos.reduce((sum, v) => sum + (v.stats?.favorites || 0), 0);
+  // favorites not available in video stats
   
   const stats = {
     totalVideos: filteredVideos.length,
     totalViews: filteredTotalViews,
     totalLikes: filteredTotalLikes,
     totalComments: filteredTotalComments,
-    totalFavorites: filteredTotalFavorites,
+    totalFavorites: 0,
     avgViews: filteredVideos.length > 0 ? filteredTotalViews / filteredVideos.length : 0,
     avgLikes: filteredVideos.length > 0 ? filteredTotalLikes / filteredVideos.length : 0,
     avgComments: filteredVideos.length > 0 ? filteredTotalComments / filteredVideos.length : 0,
