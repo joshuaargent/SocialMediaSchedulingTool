@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch pipeline (content projects) for organization
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     // If not logged in, return empty array (not 401)
     if (!orgId) {
-      return NextResponse.json({ projects: [], message: 'Not logged in' });
+      return NextResponse.json({ projects: [], message: 'Not logged in - using local data' });
     }
 
     if (!isDatabaseConfigured()) {

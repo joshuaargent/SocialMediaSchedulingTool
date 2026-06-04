@@ -180,15 +180,6 @@ export async function GET(request: NextRequest) {
       }));
     };
 
-    // Add raw API response for debugging
-    const rawApiResponses: Record<string, any> = {};
-    const responses = { overview, age, gender, traffic, devices, geo, locations };
-    Object.entries(responses).forEach(([key, value]: [string, any]) => {
-      if (value.raw) {
-        rawApiResponses[key] = value.raw;
-      }
-    });
-    
     const result = {
       connected: true,
       overview: overviewData,
@@ -198,21 +189,7 @@ export async function GET(request: NextRequest) {
       topCountries: geo.rows?.map((row: any[]) => { const h = geo.headers.map((x: any) => x.name); return { country: row[h.indexOf('country')] || 'Unknown', views: parseInt(row[h.indexOf('views')] || 0), minutes: parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0) }; }) || [],
       playbackLocations: locations.rows?.map((row: any[]) => { const h = locations.headers.map((x: any) => x.name); return { location: row[h.indexOf('insightPlaybackLocationType')] || 'Unknown', views: parseInt(row[h.indexOf('views')] || 0), minutes: parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0) }; }) || [],
       dateRange: { startDate, endDate },
-      // Debug info
-      _debug: {
-        overviewRows: overview.rows?.length || 0,
-        overviewHeaders: overview.headers?.map((h: any) => h.name) || [],
-        ageRows: age.rows?.length || 0,
-        genderRows: gender.rows?.length || 0,
-        trafficRows: traffic.rows?.length || 0,
-        devicesRows: devices.rows?.length || 0,
-        geoRows: geo.rows?.length || 0,
-        locationsRows: locations.rows?.length || 0,
-        rawResponses: rawApiResponses,
-      }
     };
-
-    console.log('Final result:', JSON.stringify(result, null, 2));
 
     analyticsCache = { data: result, timestamp: Date.now() };
     return NextResponse.json(result);
