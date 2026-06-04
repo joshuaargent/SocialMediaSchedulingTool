@@ -3,9 +3,9 @@
 // ============================================
 
 export const siteConfig = {
-  name: 'ContentHub',
-  description: 'Social Media Command Center for content creators',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://contenthub.app',
+  name: 'SMST',
+  description: 'Social Media Scheduling Tool for content creators',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://smst.app',
   ogImage: '/og-image.png',
   location: 'Surrey, United Kingdom',
   links: {
@@ -27,10 +27,10 @@ export const siteConfig = {
 // ============================================
 
 export const meta = {
-  title: 'ContentHub - Social Media Command Center',
+  title: 'SMST - Social Media Scheduling Tool',
   description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube',
   keywords: ['social media', 'content scheduling', 'tiktok', 'youtube', 'instagram', 'facebook'] as string[],
-  siteName: 'ContentHub',
+  siteName: 'SMST',
   twitter: '@joshua_argent',
   instagramHandle: '@joshua_argent',
 };
@@ -63,6 +63,10 @@ export const footerNav = {
     { label: 'GitHub', href: siteConfig.links.github },
     { label: 'Instagram', href: siteConfig.links.instagram },
     { label: 'Facebook', href: siteConfig.links.facebook },
+  ],
+  legal: [
+    { label: 'Privacy Policy', href: '/privacy-policy' },
+    { label: 'Terms and Conditions', href: '/terms-and-conditions' },
   ],
 };
 

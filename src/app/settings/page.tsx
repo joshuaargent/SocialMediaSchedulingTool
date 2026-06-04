@@ -348,7 +348,7 @@ function AppearanceSettings() {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Appearance</h2>
-      <p className="text-sm text-[var(--color-text-muted)] mb-6">Customize how ContentHub looks</p>
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">Customize how SMST looks</p>
       <div className="space-y-6">
         <div>
           <h3 className="font-medium mb-3">Theme</h3>
@@ -379,7 +379,7 @@ function AppearanceSettings() {
       <div className="mt-6 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
         <h3 className="font-medium mb-2">About</h3>
         <p className="text-sm text-[var(--color-text-secondary)]">
-          ContentHub v1.0.0 - Social Media Command Center
+          SMST v1.0.0 - Social Media Scheduling Tool
         </p>
         <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Built with Next.js, TypeScript, Tailwind CSS, and Zustand

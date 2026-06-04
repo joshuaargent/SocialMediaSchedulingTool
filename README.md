@@ -1,4 +1,4 @@
-# ContentHub - Social Media Command Center
+# SMST - Social Media Scheduling Tool
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black)
 ![React](https://img.shields.io/badge/React-19.2-blue)

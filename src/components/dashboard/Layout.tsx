@@ -53,10 +53,10 @@ export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps)
       <div className="p-4 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[var(--color-accent)] flex items-center justify-center">
-            <span className="text-white font-bold text-lg">C</span>
+            <span className="text-white font-bold text-lg">S</span>
           </div>
           <div>
-            <h1 className="font-semibold">ContentHub</h1>
+            <h1 className="font-semibold">SMST</h1>
             <p className="text-xs text-[var(--color-text-muted)]">Creator Studio</p>
           </div>
         </div>

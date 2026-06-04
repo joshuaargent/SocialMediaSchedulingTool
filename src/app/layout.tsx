@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'ContentHub - Social Media Command Center',
+  title: 'SMST - Social Media Scheduling Tool',
   description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube',
   icons: {
     icon: '/favicon.ico',

@@ -83,7 +83,16 @@ function DashboardContent() {
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
   const [youtubeStats, setYoutubeStats] = useState<{ subscribers: number; totalViews: number; totalVideos: number } | null>(null);
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [dashboardDateRange, setDashboardDateRange] = useState('30');
   const router = useRouter();
+
+  const dashboardDateRangeOptions = [
+    { label: '7d', value: '7' },
+    { label: '14d', value: '14' },
+    { label: '30d', value: '30' },
+    { label: '90d', value: '90' },
+    { label: 'All', value: 'all' },
+  ];
 
   // Use selectors to get raw state
   const posts = usePostsStore((state) => state.posts);
@@ -212,13 +221,31 @@ function DashboardContent() {
         description="Your content command center"
         align="left"
         actions={
-          <Button
-            variant="primary"
-            onClick={() => setShowComposer(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Create Post
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-1">
+              {dashboardDateRangeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setDashboardDateRange(option.value)}
+                  className={clsx(
+                    'px-3 py-1.5 text-sm rounded-md transition-colors',
+                    dashboardDateRange === option.value
+                      ? 'bg-[var(--color-accent)] text-white'
+                      : 'hover:bg-[var(--color-bg-secondary)]'
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => setShowComposer(true)}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Create Post
+            </Button>
+          </div>
         }
       />
 
