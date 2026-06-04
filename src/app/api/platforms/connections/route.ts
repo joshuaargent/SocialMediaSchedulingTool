@@ -7,23 +7,28 @@ let connectionsCache: { data: any; timestamp: number } | null = null;
 // GET - Fetch all platform connections for the organization
 export async function GET(request: NextRequest) {
   try {
-    // Get organization from cookie/session
     const orgId = request.cookies.get('current_org_id')?.value;
     
+    // If no org ID, return empty (user not logged in)
+    // The OAuthConnectionSync will fall back to cookies
     if (!orgId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 401 });
+      return NextResponse.json({ 
+        connections: [], 
+        message: 'Not logged in - using cookie-based connections' 
+      });
     }
 
     if (!isDatabaseConfigured()) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+      return NextResponse.json({ 
+        connections: [], 
+        error: 'Database not configured' 
+      }, { status: 500 });
     }
 
-    // Fetch connections from database
     const connections = await requirePrisma().platformConnection.findMany({
       where: { organizationId: orgId },
     });
 
-    // Format for frontend
     const formattedConnections = connections.map((conn) => ({
       id: conn.id,
       platform: conn.platform,
@@ -32,20 +37,20 @@ export async function GET(request: NextRequest) {
       displayName: conn.displayName,
       profileImage: conn.profileImage,
       followers: conn.followers,
-      accessToken: conn.accessToken, // This would be decrypted in production
+      accessToken: conn.accessToken,
       refreshToken: conn.refreshToken,
       expiresAt: conn.expiresAt,
     }));
 
     return NextResponse.json({
       connections: formattedConnections,
-      platformStats: {}, // Will be populated from analytics
+      platformStats: {},
     });
 
   } catch (error) {
     console.error('Failed to fetch platform connections:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch connections' },
+      { error: 'Failed to fetch connections', connections: [] },
       { status: 500 }
     );
   }
@@ -67,7 +72,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { platform, accessToken, refreshToken, platformUserId, displayName, profileImage, followers, expiresAt } = body;
 
-    // Upsert connection (update if exists, create if not)
     const connection = await requirePrisma().platformConnection.upsert({
       where: {
         organizationId_platform: {

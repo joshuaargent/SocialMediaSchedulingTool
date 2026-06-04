@@ -139,28 +139,43 @@ export async function GET(request: NextRequest) {
 
     const overviewData = { totalViews: 0, totalMinutesWatched: 0, avgViewDuration: 0, avgViewPercentage: 0, subscribersGained: 0, subscribersLost: 0, dailyData: [] as any[] };
     
-    if (overview.rows && overview.headers) {
+    if (overview.rows?.length && overview.headers?.length) {
       const h = overview.headers.map((x: any) => x.name);
       overview.rows.forEach((row: any[]) => {
-        overviewData.totalViews += parseInt(row[h.indexOf('views')] || 0);
-        overviewData.totalMinutesWatched += parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0);
-        overviewData.dailyData.push({ date: row[h.indexOf('day')] || '', views: parseInt(row[h.indexOf('views')] || 0), minutes: parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0) });
+        const viewsIdx = h.indexOf('views');
+        const minsIdx = h.indexOf('estimatedMinutesWatched');
+        const dayIdx = h.indexOf('day');
+        
+        overviewData.totalViews += parseInt(row[viewsIdx >= 0 ? viewsIdx : 0] || 0);
+        overviewData.totalMinutesWatched += parseInt(row[minsIdx >= 0 ? minsIdx : 1] || 0);
+        overviewData.dailyData.push({ 
+          date: row[dayIdx >= 0 ? dayIdx : 0] || '', 
+          views: parseInt(row[viewsIdx >= 0 ? viewsIdx : 0] || 0), 
+          minutes: parseInt(row[minsIdx >= 0 ? minsIdx : 1] || 0) 
+        });
       });
       const last = overview.rows[overview.rows.length - 1];
-      overviewData.avgViewDuration = parseInt(last[h.indexOf('averageViewDuration')] || 0);
-      overviewData.avgViewPercentage = parseFloat(last[h.indexOf('averageViewPercentage')] || 0);
-      overviewData.subscribersGained = overview.rows.reduce((s: number, r: any[]) => s + parseInt(r[h.indexOf('subscribersGained')] || 0), 0);
-      overviewData.subscribersLost = overview.rows.reduce((s: number, r: any[]) => s + parseInt(r[h.indexOf('subscribersLost')] || 0), 0);
+      const avgDurIdx = h.indexOf('averageViewDuration');
+      const avgPctIdx = h.indexOf('averageViewPercentage');
+      const subGainedIdx = h.indexOf('subscribersGained');
+      const subLostIdx = h.indexOf('subscribersLost');
+      
+      overviewData.avgViewDuration = parseInt(last[avgDurIdx >= 0 ? avgDurIdx : 2] || 0);
+      overviewData.avgViewPercentage = parseFloat(last[avgPctIdx >= 0 ? avgPctIdx : 3] || 0);
+      overviewData.subscribersGained = overview.rows.reduce((s: number, r: any[]) => s + parseInt(r[subGainedIdx >= 0 ? subGainedIdx : 4] || 0), 0);
+      overviewData.subscribersLost = overview.rows.reduce((s: number, r: any[]) => s + parseInt(r[subLostIdx >= 0 ? subLostIdx : 5] || 0), 0);
     }
 
     const processRows = (data: any) => {
-      if (!data.rows?.length) return [];
+      if (!data.rows?.length || !data.headers?.length) return [];
       const total = data.rows.reduce((s: number, r: any[]) => s + parseInt(r[0] || 0), 0);
       const h = data.headers.map((x: any) => x.name);
+      const firstColIdx = 0;
+      const viewsIdx = h.indexOf('views');
       return data.rows.map((row: any[]) => ({
-        label: row[h.indexOf(data.headers[0]?.name || '')] || 'Unknown',
-        views: parseInt(row[h.indexOf('views')] || 0),
-        percentage: total > 0 ? (parseInt(row[h.indexOf('views')] || 0) / total) * 100 : 0,
+        label: row[firstColIdx] || 'Unknown',
+        views: parseInt(row[viewsIdx >= 0 ? viewsIdx : 1] || 0),
+        percentage: total > 0 ? (parseInt(row[viewsIdx >= 0 ? viewsIdx : 1] || 0) / total) * 100 : 0,
       }));
     };
 
