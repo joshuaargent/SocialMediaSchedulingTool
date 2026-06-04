@@ -65,22 +65,33 @@ export async function GET(request: NextRequest) {
 
     const headers = { 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' };
 
-    const parseResponse = async (url: string) => {
+    const parseResponse = async (url: string, name: string) => {
       const response = await fetch(url, { headers });
-      if (!response.ok) return { rows: [], headers: [] };
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`${name} API error:`, response.status, errorText);
+        return { rows: [], headers: [], error: { status: response.status, message: errorText } };
+      }
       const data = await response.json();
       return { headers: data.columnHeaders || [], rows: data.rows || [] };
     };
 
     const [overview, age, gender, traffic, devices, geo, locations] = await Promise.all([
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost&dimensions=day&sort=day`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=ageGroup&sort=ageGroup`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=gender&sort=gender`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightTrafficSourceType&sort=-views`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=deviceType&sort=-views`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=country&sort=-views&maxResults=10`),
-      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightPlaybackLocationType&sort=-views`),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost&dimensions=day&sort=day`, 'overview'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=ageGroup&sort=ageGroup`, 'age'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=gender&sort=gender`, 'gender'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightTrafficSourceType&sort=-views`, 'traffic'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=deviceType&sort=-views`, 'devices'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=country&sort=-views&maxResults=10`, 'geo'),
+      parseResponse(`${ANALYTICS_API}?ids=${channelId}&startDate=${startDate}&endDate=${endDate}&metrics=views,estimatedMinutesWatched&dimensions=insightPlaybackLocationType&sort=-views`, 'locations'),
     ]);
+
+    // Log any errors from the API calls
+    [overview, age, gender, traffic, devices, geo, locations].forEach((result, idx) => {
+      if (result.error) {
+        console.error(`API call ${idx} failed:`, result.error);
+      }
+    });
 
     const overviewData = { totalViews: 0, totalMinutesWatched: 0, avgViewDuration: 0, avgViewPercentage: 0, subscribersGained: 0, subscribersLost: 0, dailyData: [] as any[] };
     
@@ -123,6 +134,11 @@ export async function GET(request: NextRequest) {
     analyticsCache = { data: result, timestamp: Date.now() };
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ connected: false, error: 'Failed to fetch analytics' }, { status: 500 });
+    console.error('YouTube Analytics API error:', error);
+    return NextResponse.json({ 
+      connected: false, 
+      error: 'Failed to fetch analytics: ' + (error instanceof Error ? error.message : 'Unknown error'),
+      details: error
+    }, { status: 500 });
   }
 }
