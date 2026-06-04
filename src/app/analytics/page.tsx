@@ -627,7 +627,7 @@ export default function AnalyticsPage() {
       const data = await response.json();
       console.log('YouTube Analytics response:', data);
       // Check if we have analytics data
-      if (data.overview || data.demographics || data.trafficSources) {
+      if (data.overview || data.trafficSources) {
         setYoutubeAnalytics(data);
       }
     } catch (error) {
@@ -1145,7 +1145,7 @@ export default function AnalyticsPage() {
             )}
 
             {/* YouTube Analytics Deep Dive */}
-            {(youtubeAnalytics && (youtubeAnalytics.overview || youtubeAnalytics.demographics || youtubeAnalytics.trafficSources || youtubeAnalytics.topCountries)) && (
+            {(youtubeAnalytics && (youtubeAnalytics.overview || youtubeAnalytics.trafficSources || youtubeAnalytics.topCountries)) && (
               <Card className="p-4">
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <Video className="w-4 h-4 text-[#FF0000]" />
@@ -1182,42 +1182,7 @@ export default function AnalyticsPage() {
                   </div>
                 )}
 
-                {/* Age Demographics */}
-                {youtubeAnalytics.demographics?.age?.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1">AGE</p>
-                    <div className="space-y-0.5">
-                      {youtubeAnalytics.demographics.age.slice(0, 4).map((item: any) => (
-                        <div key={item.group} className="flex items-center justify-between text-xs">
-                          <span className="text-[var(--color-text-secondary)]">{item.group}</span>
-                          <div className="flex items-center gap-1">
-                            <div className="w-10 h-1 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
-                              <div className="h-full bg-purple-500 rounded-full" style={{ width: `${item.percentage}%` }} />
-                            </div>
-                            <span className="text-[10px] text-[var(--color-text-muted)] w-6 text-right">{item.percentage.toFixed(2)}%</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {/* Gender */}
-                {youtubeAnalytics.demographics?.gender?.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1">GENDER</p>
-                    <div className="flex gap-1">
-                      {youtubeAnalytics.demographics.gender.map((item: any) => (
-                        <div key={item.gender} className="flex-1 p-1 rounded bg-[var(--color-bg-secondary)] text-center">
-                          <p className="text-[10px] capitalize text-[var(--color-text-muted)]">{item.gender}</p>
-                          <p className="font-bold text-sm">{item.percentage.toFixed(2)}%</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Traffic Sources */}
                 {youtubeAnalytics.trafficSources?.length > 0 && (
                   <div className="mb-2">
                     <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1">TRAFFIC</p>

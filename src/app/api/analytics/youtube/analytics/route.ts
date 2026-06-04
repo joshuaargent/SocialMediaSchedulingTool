@@ -187,7 +187,6 @@ export async function GET(request: NextRequest) {
     const result = {
       connected: true,
       overview: overviewData,
-      demographics: { age: processRows(age).map((r: any) => ({ group: r.label, ...r })), gender: processRows(gender).map((r: any) => ({ gender: r.label, ...r })) },
       trafficSources: traffic.rows?.map((row: any[]) => { const h = traffic.headers.map((x: any) => x.name); const views = parseInt(row[h.indexOf('views')] || 0); return { source: row[h.indexOf('insightTrafficSourceType')] || 'Unknown', views, minutes: parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0), percentage: 0 }; }) || [],
       deviceTypes: devices.rows?.map((row: any[]) => { const h = devices.headers.map((x: any) => x.name); return { device: row[h.indexOf('deviceType')] || 'Unknown', views: parseInt(row[h.indexOf('views')] || 0), percentage: 0 }; }) || [],
       topCountries: geo.rows?.map((row: any[]) => { const h = geo.headers.map((x: any) => x.name); return { country: row[h.indexOf('country')] || 'Unknown', views: parseInt(row[h.indexOf('views')] || 0), minutes: parseInt(row[h.indexOf('estimatedMinutesWatched')] || 0) }; }) || [],
