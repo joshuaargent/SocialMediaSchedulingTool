@@ -19,7 +19,7 @@ import {
   Clock
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { subDays, format, eachDayOfInterval, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { subDays, format, eachDayOfInterval, subMonths, startOfMonth, endOfMonth, isAfter } from 'date-fns';
 import { useAnalyticsStore, usePostsStore, usePlatformStore } from '@/stores';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -661,34 +661,64 @@ export default function AnalyticsPage() {
   }, [dateRange, updateStats]);
 
   const summary = useMemo(() => {
-    const totalViews = metrics.reduce((sum, m) => sum + m.views, 0);
-    const totalEngagement = metrics.reduce(
+    const days = dateRange === 'all' ? 365 : parseInt(dateRange);
+    const startDate = subDays(new Date(), days);
+
+    // Filter metrics by date range
+    const filteredMetrics = dateRange === 'all'
+      ? metrics
+      : metrics.filter(m => isAfter(new Date(m.collectedAt), startDate) || new Date(m.collectedAt).getTime() === startDate.getTime());
+
+    // Filter posts by date range
+    const filteredPosts = dateRange === 'all'
+      ? posts.filter((p) => p.status === 'published')
+      : posts.filter((p) => {
+          if (p.status !== 'published') return false;
+          const publishedAt = new Date(p.publishedAt || p.createdAt);
+          return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+        });
+
+    const totalViews = filteredMetrics.reduce((sum, m) => sum + m.views, 0);
+    const totalEngagement = filteredMetrics.reduce(
       (sum, m) => sum + m.likes + m.comments + m.shares,
       0
     );
     const avgEngagementRate =
-      metrics.length > 0
-        ? metrics.reduce((sum, m) => sum + m.engagementRate, 0) / metrics.length
+      filteredMetrics.length > 0
+        ? filteredMetrics.reduce((sum, m) => sum + m.engagementRate, 0) / filteredMetrics.length
         : 0;
-    const publishedPosts = posts.filter((p) => p.status === 'published');
 
-    // Get YouTube data if available
-    const ytSummary = youtubeData?.summary;
-    const ytViews = ytSummary?.totalViews || 0;
-    const ytLikes = ytSummary?.totalLikes || 0;
-    const ytComments = ytSummary?.totalComments || 0;
-    
+    // Get YouTube data and filter by date range
+    const ytVideos = youtubeData?.videos || [];
+    const filteredYtVideos = dateRange === 'all'
+      ? ytVideos
+      : ytVideos.filter(v => {
+          const publishedAt = new Date(v.publishedAt);
+          return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+        });
+
+    // Calculate YouTube stats from filtered videos
+    const ytViews = filteredYtVideos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
+    const ytLikes = filteredYtVideos.reduce((sum, v) => sum + (v.stats?.likes || 0), 0);
+    const ytComments = filteredYtVideos.reduce((sum, v) => sum + (v.stats?.comments || 0), 0);
+
     // Calculate engagement rate from YouTube data
     const ytEngagementRate = ytViews > 0 ? (ytLikes + ytComments) / ytViews : 0;
 
+    // Calculate posts per platform from filtered posts
+    const tiktokPosts = filteredPosts.filter(p => p.platforms.includes('tiktok'));
+    const facebookPosts = filteredPosts.filter(p => p.platforms.includes('facebook'));
+    const instagramPosts = filteredPosts.filter(p => p.platforms.includes('instagram'));
+    const youtubePosts = filteredPosts.filter(p => p.platforms.includes('youtube'));
+
     const platformBreakdown = {
-      tiktok: { posts: publishedPosts.filter(p => p.platforms.includes('tiktok')).length, views: 0, engagement: 0, engagementRate: 0 },
-      facebook: { posts: publishedPosts.filter(p => p.platforms.includes('facebook')).length, views: 0, engagement: 0, engagementRate: 0 },
-      instagram: { posts: publishedPosts.filter(p => p.platforms.includes('instagram')).length, views: 0, engagement: 0, engagementRate: 0 },
-      youtube: { 
-        posts: ytSummary?.totalVideos || publishedPosts.filter(p => p.platforms.includes('youtube')).length, 
-        views: ytViews, 
-        engagement: ytLikes + ytComments, 
+      tiktok: { posts: tiktokPosts.length, views: 0, engagement: 0, engagementRate: 0 },
+      facebook: { posts: facebookPosts.length, views: 0, engagement: 0, engagementRate: 0 },
+      instagram: { posts: instagramPosts.length, views: 0, engagement: 0, engagementRate: 0 },
+      youtube: {
+        posts: filteredYtVideos.length + youtubePosts.length,
+        views: ytViews,
+        engagement: ytLikes + ytComments,
         engagementRate: ytEngagementRate
       },
     };
@@ -698,13 +728,13 @@ export default function AnalyticsPage() {
     const combinedEngagement = totalEngagement > 0 ? totalEngagement + (ytLikes + ytComments) : (ytLikes + ytComments);
 
     return { 
-      totalPosts: publishedPosts.length, 
+      totalPosts: filteredPosts.length + filteredYtVideos.length, 
       totalViews: combinedViews, 
       totalEngagement: combinedEngagement, 
       averageEngagementRate: avgEngagementRate || ytEngagementRate, 
       platformBreakdown 
     };
-  }, [metrics, posts, youtubeData]);
+  }, [metrics, posts, youtubeData, dateRange]);
 
   // Calculate views over time based on date range and YouTube data
   const viewsOverTimeData = useMemo(() => {
