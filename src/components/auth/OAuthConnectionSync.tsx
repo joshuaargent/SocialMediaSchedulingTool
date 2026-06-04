@@ -2,111 +2,69 @@
 
 import { useEffect } from 'react';
 import { usePlatformStore } from '@/stores';
-
-// Cookie names for each platform
-const COOKIE_MAP: Record<string, { access: string; stats?: string }> = {
-  tiktok: { access: 'tt_access_token' },
-  youtube: { access: 'yt_access_token', stats: 'yt_stats' },
-  facebook: { access: 'fb_access_token' },
-  instagram: { access: 'ig_access_token' },
-};
+import type { SocialPlatform } from '@/types';
 
 /**
- * Parse a cookie value by name
- */
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-/**
- * This component syncs OAuth connections from cookies AND database to the store.
+ * This component syncs OAuth connections from database AND checks server-side cookies.
  * It runs automatically when the app loads.
- * Add this to your root layout to enable auto-sync on all pages.
  */
 export function OAuthConnectionSync() {
   const addConnection = usePlatformStore((state) => state.addConnection);
-  const updateStats = usePlatformStore((state) => state.updateStats);
   const connections = usePlatformStore((state) => state.connections);
 
   useEffect(() => {
-    // Sync from database (if logged in, connections are stored there)
-    const syncFromDatabase = async () => {
+    const syncConnections = async () => {
+      const currentPlatforms = connections.map(c => c.platform) as SocialPlatform[];
+      
+      // 1. Check DB connections (if logged in, tokens stored there)
       try {
-        const response = await fetch('/api/platforms/connections');
-        if (!response.ok) return;
-        
-        const data = await response.json();
-        if (!data.connections?.length) return;
-        
-        const currentPlatforms = connections.map(c => c.platform);
-        
-        data.connections.forEach((conn: any) => {
-          if (currentPlatforms.includes(conn.platform)) return;
-          
-          addConnection({
-            platform: conn.platform,
-            accessToken: conn.accessToken,
-            refreshToken: conn.refreshToken,
-            platformUserId: conn.platformUserId,
-            platformUsername: conn.displayName,
-            platformProfileImage: conn.profileImage,
-            organizationId: conn.organizationId,
-          });
-        });
+        const dbResponse = await fetch('/api/platforms/connections');
+        if (dbResponse.ok) {
+          const dbData = await dbResponse.json();
+          if (dbData.connections?.length) {
+            for (const conn of dbData.connections) {
+              if (!currentPlatforms.includes(conn.platform as SocialPlatform)) {
+                addConnection({
+                  platform: conn.platform as SocialPlatform,
+                  accessToken: conn.accessToken,
+                  refreshToken: conn.refreshToken,
+                  platformUserId: conn.platformUserId,
+                  platformUsername: conn.displayName,
+                  platformProfileImage: conn.profileImage,
+                  organizationId: conn.organizationId,
+                });
+              }
+            }
+            return; // DB has connections, no need to check cookies
+          }
+        }
       } catch (error) {
-        // Silently fail - connections might just be in cookies
+        console.error('DB sync failed:', error);
+      }
+      
+      // 2. Check httpOnly cookies via server (for non-logged-in users)
+      try {
+        const cookieResponse = await fetch('/api/platforms/check');
+        if (cookieResponse.ok) {
+          const { platforms } = await cookieResponse.json();
+          for (const [platform, hasToken] of Object.entries(platforms)) {
+            if (hasToken && !currentPlatforms.includes(platform as SocialPlatform)) {
+              addConnection({
+                platform: platform as SocialPlatform,
+                accessToken: 'cookie_based',
+                platformUserId: 'oauth_user',
+                permissions: [],
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Cookie sync failed:', error);
       }
     };
 
-    // Sync from cookies (fallback for non-logged-in users)
-    const syncFromCookies = () => {
-      const timeout = setTimeout(() => {
-        const currentPlatforms = connections.map(c => c.platform);
-        
-        for (const [platform, cookies] of Object.entries(COOKIE_MAP)) {
-          if (currentPlatforms.includes(platform as any)) continue;
-          
-          const accessToken = getCookie(cookies.access);
-          if (!accessToken) continue;
-          
-          // Parse stats cookie if exists
-          let stats = { followers: 0, following: 0, posts: 0 };
-          if (cookies.stats) {
-            const statsCookie = getCookie(cookies.stats);
-            if (statsCookie) {
-              try {
-                const parsed = JSON.parse(statsCookie);
-                stats = {
-                  followers: parsed.subscribers || 0,
-                  following: 0,
-                  posts: 0,
-                };
-              } catch (e) {
-                // ignore parse errors
-              }
-            }
-          }
-          
-          addConnection({
-            platform: platform as any,
-            accessToken,
-            platformUserId: 'oauth_user',
-            permissions: [],
-          });
-          updateStats(platform as any, {
-            platform: platform as any,
-            ...stats,
-          });
-        }
-      }, 100);
-      
-      return () => clearTimeout(timeout);
-    };
-
-    // Try database first, then cookies
-    syncFromDatabase().then(syncFromCookies);
-  }, [addConnection, updateStats, connections]);
+    syncConnections();
+  }, [addConnection, connections]);
 
   return null;
 }
