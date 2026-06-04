@@ -13,7 +13,7 @@ import {
   Image,
   Plus
 } from 'lucide-react';
-import { format, isToday, isTomorrow } from 'date-fns';
+import { format, isToday, isTomorrow, subDays, isAfter } from 'date-fns';
 import { clsx } from 'clsx';
 import { usePostsStore, usePlatformStore } from '@/stores';
 import { Container } from '@/components/layout/Container';
@@ -94,19 +94,24 @@ function DashboardContent() {
     { label: 'All', value: 'all' },
   ];
 
+  // Calculate date range for filtering
+  const days = dashboardDateRange === 'all' ? 365 : parseInt(dashboardDateRange);
+  const startDate = subDays(new Date(), days);
+
   // Use selectors to get raw state
   const posts = usePostsStore((state) => state.posts);
   const platformConnections = usePlatformStore((state) => state.connections);
   const platformStats = usePlatformStore((state) => state.platformStats);
 
-  // Fetch YouTube videos and stats on page load
+  // Fetch YouTube videos and stats on page load and when date range changes
   useEffect(() => {
     setLoadingVideos(true);
     
-    // Fetch stats first, then videos
+    const daysParam = dashboardDateRange === 'all' ? 365 : parseInt(dashboardDateRange);
+
     Promise.all([
       fetch('/api/analytics/youtube/stats').then(r => r.json()),
-      fetch('/api/analytics/youtube/videos?refresh=true&days=365').then(r => r.json()),
+      fetch(`/api/analytics/youtube/videos?refresh=true&days=${daysParam}`).then(r => r.json()),
     ])
       .then(([statsData, videosData]) => {
         console.log('YouTube stats:', statsData);
@@ -150,21 +155,64 @@ function DashboardContent() {
       })
       .catch((err) => console.error('Failed to fetch YouTube data:', err))
       .finally(() => setLoadingVideos(false));
-  }, []);
+  }, [dashboardDateRange]);
 
-  // Compute scheduled posts
+  // Filter YouTube videos by date range
+  const filteredYoutubeVideos = useMemo(() => {
+    if (dashboardDateRange === 'all') return youtubeVideos;
+    
+    return youtubeVideos.filter(video => {
+      const publishedAt = new Date(video.publishedAt);
+      return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+    });
+  }, [youtubeVideos, startDate, dashboardDateRange]);
+
+  // Calculate filtered stats from YouTube videos
+  const filteredYoutubeStats = useMemo(() => {
+    const videos = filteredYoutubeVideos;
+    
+    if (videos.length === 0) {
+      return {
+        totalViews: youtubeStats?.totalViews || 0,
+        totalVideos: youtubeStats?.totalVideos || 0,
+      };
+    }
+    
+    const totalViews = videos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
+    const totalLikes = videos.reduce((sum, v) => sum + (v.stats?.likes || 0), 0);
+    const totalComments = videos.reduce((sum, v) => sum + (v.stats?.comments || 0), 0);
+    
+    return {
+      totalViews,
+      totalVideos: videos.length,
+      totalLikes,
+      totalComments,
+    };
+  }, [filteredYoutubeVideos, youtubeStats]);
+
+  // Compute scheduled posts (within date range)
   const scheduledPosts = useMemo(() => {
-    return posts.filter((p) => p.status === 'scheduled');
-  }, [posts]);
+    return posts.filter((p) => {
+      if (p.status !== 'scheduled') return false;
+      if (dashboardDateRange === 'all') return true;
+      const scheduledAt = new Date(p.scheduledAt || p.createdAt);
+      return isAfter(scheduledAt, startDate) || scheduledAt.getTime() === startDate.getTime();
+    });
+  }, [posts, startDate, dashboardDateRange]);
 
-  // Compute published posts
+  // Compute published posts (within date range)
   const publishedPosts = useMemo(() => {
-    return posts.filter((p) => p.status === 'published');
-  }, [posts]);
+    return posts.filter((p) => {
+      if (p.status !== 'published') return false;
+      if (dashboardDateRange === 'all') return true;
+      const publishedAt = new Date(p.publishedAt || p.createdAt);
+      return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+    });
+  }, [posts, startDate, dashboardDateRange]);
 
-  // Convert YouTube videos to calendar events
+  // Convert filtered YouTube videos to calendar events
   const videoCalendarEvents = useMemo(() => {
-    return youtubeVideos.map((video) => ({
+    return filteredYoutubeVideos.map((video) => ({
       id: video.id,
       title: video.title,
       date: new Date(video.publishedAt),
@@ -172,11 +220,19 @@ function DashboardContent() {
       thumbnail: video.thumbnail,
       stats: video.stats,
     }));
-  }, [youtubeVideos]);
+  }, [filteredYoutubeVideos]);
 
   // Compute calendar events (posts + videos)
   const calendarEvents = useMemo(() => {
-    const postEvents = posts.map((post) => ({
+    // Filter posts by date range if not "all"
+    const filteredPosts = dashboardDateRange === 'all' 
+      ? posts 
+      : posts.filter(p => {
+          const date = new Date(p.scheduledAt || p.publishedAt || p.createdAt);
+          return isAfter(date, startDate) || date.getTime() === startDate.getTime();
+        });
+    
+    const postEvents = filteredPosts.map((post) => ({
       id: post.id,
       title: post.content.slice(0, 50) + (post.content.length > 50 ? '...' : ''),
       date: post.scheduledAt || post.publishedAt || post.createdAt,
@@ -192,7 +248,7 @@ function DashboardContent() {
     }));
 
     return [...postEvents, ...videoEvents];
-  }, [posts, videoCalendarEvents]);
+  }, [posts, videoCalendarEvents, startDate, dashboardDateRange]);
 
   // Get today's and tomorrow's posts
   const todaysPosts = useMemo(() => {
@@ -285,7 +341,7 @@ function DashboardContent() {
                 <p className="text-sm text-[var(--color-text-muted)]">Views</p>
                 <p className="text-2xl font-bold">
                   {youtubeStats?.totalViews 
-                    ? youtubeStats.totalViews.toLocaleString() 
+                    ? filteredYoutubeStats.totalViews.toLocaleString() 
                     : (platformStats.youtube?.totalViews || 0).toLocaleString()}
                 </p>
               </div>
