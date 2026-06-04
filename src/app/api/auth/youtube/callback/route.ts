@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -73,21 +74,57 @@ export async function GET(request: NextRequest) {
       console.error('Failed to fetch YouTube channel info:', ytError);
     }
 
-    // Encode stats in a visible cookie for client to read
+    // Decode stats for cookie
     const statsCookie = JSON.stringify(youtubeStats);
     const response = NextResponse.redirect(
       new URL('/settings?connected=youtube', request.url)
     );
 
-    response.cookies.set('yt_access_token', tokenData!.access_token, {
+    // Store in database if configured
+    const orgId = request.cookies.get('current_org_id')?.value;
+    if (orgId && isDatabaseConfigured()) {
+      try {
+        await requirePrisma().platformConnection.upsert({
+          where: {
+            organizationId_platform: {
+              organizationId: orgId,
+              platform: 'youtube',
+            },
+          },
+          update: {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+            platformUserId: youtubeStats.channelId,
+            displayName: youtubeStats.channelTitle,
+            followers: youtubeStats.subscribers,
+          },
+          create: {
+            organizationId: orgId,
+            platform: 'youtube',
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+            platformUserId: youtubeStats.channelId,
+            displayName: youtubeStats.channelTitle,
+            followers: youtubeStats.subscribers,
+          },
+        });
+      } catch (dbError) {
+        console.error('Failed to save YouTube connection to database:', dbError);
+      }
+    }
+
+    // Also set cookies for backward compatibility
+    response.cookies.set('yt_access_token', tokenData.access_token, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 3600,
     });
 
-    if (tokenData!.refresh_token) {
-      response.cookies.set('yt_refresh_token', tokenData!.refresh_token, {
+    if (tokenData.refresh_token) {
+      response.cookies.set('yt_refresh_token', tokenData.refresh_token, {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -95,7 +132,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Store stats in cookie for client sync
     response.cookies.set('yt_stats', statsCookie, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',

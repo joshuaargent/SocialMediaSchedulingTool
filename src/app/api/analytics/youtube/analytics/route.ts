@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 
 const ANALYTICS_API = 'https://youtubeanalytics.googleapis.com/v2/reports';
 const CACHE_TTL = 5 * 60 * 1000;
@@ -11,13 +12,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ connected: true, ...analyticsCache.data, cached: true });
   }
 
+  // Get organization
+  const orgId = request.cookies.get('current_org_id')?.value;
+  
+  // Get tokens from database first (if org exists), then fall back to cookies
   let accessToken = request.cookies.get('yt_access_token')?.value;
-  const refreshToken = request.cookies.get('yt_refresh_token')?.value;
+  let refreshToken = request.cookies.get('yt_refresh_token')?.value;
+  let channelId = 'channel==MINE';
+
+  // If org exists and has database configured, try to get tokens from DB
+  if (orgId && isDatabaseConfigured()) {
+    try {
+      const db = requirePrisma();
+      const dbConnection = await db.platformConnection.findUnique({
+        where: {
+          organizationId_platform: {
+            organizationId: orgId,
+            platform: 'youtube',
+          },
+        },
+      });
+      
+      if (dbConnection?.accessToken) {
+        accessToken = dbConnection.accessToken;
+        refreshToken = dbConnection.refreshToken || refreshToken;
+      }
+    } catch (err) {
+      console.error('Failed to fetch tokens from DB:', err);
+    }
+  }
 
   if (!accessToken && !refreshToken) {
     return NextResponse.json({ connected: false, error: 'YouTube not connected' }, { status: 401 });
   }
 
+  // Refresh token if needed
   if (!accessToken && refreshToken) {
     const clientId = process.env.YOUTUBE_CLIENT_ID;
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
@@ -36,6 +65,22 @@ export async function GET(request: NextRequest) {
         if (refreshResponse.ok) {
           const tokenData = await refreshResponse.json();
           accessToken = tokenData.access_token;
+          
+          // Update DB with new token
+          if (orgId && isDatabaseConfigured()) {
+            await requirePrisma().platformConnection.update({
+              where: {
+                organizationId_platform: {
+                  organizationId: orgId,
+                  platform: 'youtube',
+                },
+              },
+              data: {
+                accessToken: tokenData.access_token,
+                expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at * 1000) : null,
+              },
+            });
+          }
         }
       } catch (e) {
         console.error('Token refresh failed:', e);
@@ -55,7 +100,6 @@ export async function GET(request: NextRequest) {
     const endDate = today.toISOString().split('T')[0];
 
     const ytStatsCookie = request.cookies.get('yt_stats')?.value;
-    let channelId = 'channel==MINE';
     if (ytStatsCookie) {
       try {
         const stats = JSON.parse(ytStatsCookie);
