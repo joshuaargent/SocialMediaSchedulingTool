@@ -461,15 +461,15 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
           <p className="text-xs text-[var(--color-text-muted)]">Avg Views/Video</p>
-          <p className="text-lg font-bold">{stats.avgViews.toLocaleString()}</p>
+          <p className="text-lg font-bold">{stats.avgViews.toFixed(2)}</p>
         </div>
         <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
           <p className="text-xs text-[var(--color-text-muted)]">Avg Likes/Video</p>
-          <p className="text-lg font-bold">{stats.avgLikes.toLocaleString()}</p>
+          <p className="text-lg font-bold">{stats.avgLikes.toFixed(2)}</p>
         </div>
         <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
           <p className="text-xs text-[var(--color-text-muted)]">Avg Comments/Video</p>
-          <p className="text-lg font-bold">{stats.avgComments.toLocaleString()}</p>
+          <p className="text-lg font-bold">{stats.avgComments.toFixed(2)}</p>
         </div>
         <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
           <p className="text-xs text-[var(--color-text-muted)]">Engagement Rate</p>
