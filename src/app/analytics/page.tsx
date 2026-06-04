@@ -1099,6 +1099,9 @@ export default function AnalyticsPage() {
                 })()}
               </div>
             </Card>
+
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Platform Stats</h2>
               <div className="space-y-4">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const stats = platformStats[platform];
