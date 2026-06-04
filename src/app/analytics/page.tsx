@@ -145,6 +145,7 @@ function YouTubeStatsCard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const connections = usePlatformStore((state) => state.connections);
+  const updateStats = usePlatformStore((state) => state.updateStats);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
   const fetchStats = useCallback(async () => {
@@ -157,14 +158,14 @@ function YouTubeStatsCard() {
       const data = await response.json();
 
       if (data.connected && data.stats) {
-        setStats({
+        const newStats = {
           subscribers: data.stats.subscribers || 0,
           totalViews: data.stats.totalViews || 0,
           totalVideos: data.stats.totalVideos || 0,
-        });
-
+        };
+        setStats(newStats);
+        
         // Update platform stats store
-        const updateStats = usePlatformStore.getState().updateStats;
         updateStats('youtube', {
           platform: 'youtube',
           followers: data.stats.subscribers || 0,
@@ -181,7 +182,7 @@ function YouTubeStatsCard() {
     } finally {
       setLoading(false);
     }
-  }, [isYouTubeConnected]);
+  }, [isYouTubeConnected, updateStats]);
 
   useEffect(() => {
     if (isYouTubeConnected) {
@@ -275,9 +276,7 @@ function YouTubeVideosSection() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiResponse, setApiResponse] = useState<any>(null);
   const connections = usePlatformStore((state) => state.connections);
-  const updateStats = usePlatformStore((state) => state.updateStats);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
   const fetchVideos = useCallback(async () => {
@@ -289,11 +288,6 @@ function YouTubeVideosSection() {
       const response = await fetch('/api/analytics/youtube/videos?days=365');
       const data = await response.json();
       
-      // Store raw response for debugging
-      setApiResponse(data);
-      
-      console.log('YouTube videos API response:', data);
-      
       // Check for connection issues first
       if (data.connected === false && data.error) {
         setError(data.error);
@@ -303,19 +297,7 @@ function YouTubeVideosSection() {
       // Check if we have videos
       if (data.videos && Array.isArray(data.videos) && data.videos.length > 0) {
         setVideos(data.videos);
-        
-        // Update platform stats with real data
-        if (data.summary) {
-          const stats: PlatformStats = {
-            platform: 'youtube',
-            followers: 0,
-            following: 0,
-            posts: data.summary.totalVideos,
-            totalViews: data.summary.totalViews,
-            totalPosts: data.summary.totalVideos,
-          };
-          updateStats('youtube', stats);
-        }
+        // Note: Don't call updateStats here - the main page handles YouTube data
       } else if (data.error) {
         setError(data.error);
       } else {
@@ -328,14 +310,14 @@ function YouTubeVideosSection() {
     } finally {
       setLoading(false);
     }
-  }, [isYouTubeConnected, updateStats]);
+  }, [isYouTubeConnected]);
 
   // Fetch videos on mount
   useEffect(() => {
-    if (isYouTubeConnected) {
+    if (isYouTubeConnected && videos.length === 0) {
       fetchVideos();
     }
-  }, [isYouTubeConnected, fetchVideos]);
+  }, [isYouTubeConnected, fetchVideos, videos.length]);
 
   if (!isYouTubeConnected) {
     return null;
@@ -369,11 +351,6 @@ function YouTubeVideosSection() {
         <div className="text-center py-8">
           <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
             <p className="font-medium">{error}</p>
-            {apiResponse && (
-              <p className="text-sm mt-2 opacity-75">
-                Response: {JSON.stringify({ connected: apiResponse.connected, videos: apiResponse.videos?.length, error: apiResponse.error })}
-              </p>
-            )}
           </div>
           <Button 
             size="sm" 
@@ -389,11 +366,6 @@ function YouTubeVideosSection() {
           <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">No videos found</p>
           <p className="text-sm mt-1">Your YouTube channel might not have any videos, or there may be an issue with the connection.</p>
-          {apiResponse && (
-            <p className="text-xs mt-2 opacity-50">
-              Debug: {JSON.stringify(apiResponse)}
-            </p>
-          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -452,12 +424,28 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('7');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshedPlatform, setRefreshedPlatform] = useState<string | null>(null);
+  const [youtubeData, setYoutubeData] = useState<{ videos: any[], summary: any } | null>(null);
 
   const metrics = useAnalyticsStore((state) => state.metrics);
   const posts = usePostsStore((state) => state.posts);
   const platformStats = usePlatformStore((state) => state.platformStats);
   const connections = usePlatformStore((state) => state.connections);
   const updateStats = usePlatformStore((state) => state.updateStats);
+
+  // Fetch YouTube data once on mount
+  useEffect(() => {
+    const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
+    if (isYouTubeConnected && !youtubeData) {
+      fetch('/api/analytics/youtube/videos?days=365')
+        .then(res => res.json())
+        .then(data => {
+          if (data.videos && data.videos.length > 0) {
+            setYoutubeData({ videos: data.videos, summary: data.summary });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [connections, youtubeData]);
 
   const refreshPlatformAnalytics = useCallback(async (platform: string) => {
     setIsRefreshing(true);
@@ -496,18 +484,58 @@ export default function AnalyticsPage() {
         : 0;
     const publishedPosts = posts.filter((p) => p.status === 'published');
 
+    // Get YouTube data if available
+    const ytSummary = youtubeData?.summary;
+    const ytViews = ytSummary?.totalViews || 0;
+    const ytLikes = ytSummary?.totalLikes || 0;
+    const ytComments = ytSummary?.totalComments || 0;
+    
+    // Use YouTube views if no other views data
+    const finalTotalViews = totalViews > 0 ? totalViews : ytViews;
+    const finalEngagement = totalEngagement > 0 ? totalEngagement : (ytLikes + ytComments);
+
     const platformBreakdown = {
       tiktok: { posts: publishedPosts.filter(p => p.platforms.includes('tiktok')).length, views: 0, engagement: 0, engagementRate: 0 },
       facebook: { posts: publishedPosts.filter(p => p.platforms.includes('facebook')).length, views: 0, engagement: 0, engagementRate: 0 },
       instagram: { posts: publishedPosts.filter(p => p.platforms.includes('instagram')).length, views: 0, engagement: 0, engagementRate: 0 },
-      youtube: { posts: publishedPosts.filter(p => p.platforms.includes('youtube')).length, views: 0, engagement: 0, engagementRate: 0 },
+      youtube: { 
+        posts: ytSummary?.totalVideos || publishedPosts.filter(p => p.platforms.includes('youtube')).length, 
+        views: ytViews, 
+        engagement: ytLikes + ytComments, 
+        engagementRate: ytViews > 0 ? ((ytLikes + ytComments) / ytViews) : 0 
+      },
     };
 
-    return { totalPosts: publishedPosts.length, totalViews, totalEngagement, averageEngagementRate: avgEngagementRate, platformBreakdown };
-  }, [metrics, posts]);
+    return { totalPosts: publishedPosts.length, totalViews: finalTotalViews, totalEngagement: finalEngagement, averageEngagementRate: avgEngagementRate, platformBreakdown };
+  }, [metrics, posts, youtubeData]);
 
-  // Calculate views from actual metrics
+  // Calculate views - use YouTube data if available
   const weeklyViewsData = useMemo(() => {
+    // If we have YouTube videos, aggregate by day
+    if (youtubeData?.videos && youtubeData.videos.length > 0) {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const today = new Date();
+      
+      return days.map((label, idx) => {
+        const dayStart = new Date(today);
+        dayStart.setDate(today.getDate() - (6 - idx));
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        // Count videos published on this day and aggregate views
+        const dayVideos = youtubeData.videos.filter(v => {
+          const publishedAt = new Date(v.publishedAt);
+          return publishedAt >= dayStart && publishedAt <= dayEnd;
+        });
+        
+        const dayViews = dayVideos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
+        
+        return { label, value: dayViews, color: 'var(--color-accent)' };
+      });
+    }
+    
+    // Fallback to metrics data
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const today = new Date();
     return days.map((label, idx) => {
@@ -526,7 +554,7 @@ export default function AnalyticsPage() {
       
       return { label, value: dayViews, color: 'var(--color-accent)' };
     });
-  }, [metrics]);
+  }, [metrics, youtubeData]);
 
   const totalWeeklyViews = weeklyViewsData.reduce((sum, d) => sum + d.value, 0);
 
