@@ -5,9 +5,10 @@ import { isDatabaseConfigured, requirePrisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const orgId = request.cookies.get('current_org_id')?.value;
-    
+
+    // If not logged in, return empty array (not 401)
     if (!orgId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 401 });
+      return NextResponse.json({ projects: [], message: 'Not logged in' });
     }
 
     if (!isDatabaseConfigured()) {
@@ -29,18 +30,18 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Failed to fetch pipeline:', error);
-    return NextResponse.json({ error: 'Failed to fetch pipeline' }, { status: 500 });
+    return NextResponse.json({ projects: [], error: 'Failed to fetch pipeline' }, { status: 500 });
   }
 }
 
-// POST - Create a new pipeline item (content project)
+// POST - Create a new pipeline item (content project) - requires auth
 export async function POST(request: NextRequest) {
   try {
     const orgId = request.cookies.get('current_org_id')?.value;
     const userId = request.cookies.get('current_user_id')?.value;
-    
+
     if (!orgId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 401 });
+      return NextResponse.json({ error: 'Please log in to create pipeline items' }, { status: 401 });
     }
 
     if (!isDatabaseConfigured()) {
@@ -77,13 +78,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH - Update pipeline item (move between stages)
+// PATCH - Update pipeline item (move between stages) - requires auth
 export async function PATCH(request: NextRequest) {
   try {
     const orgId = request.cookies.get('current_org_id')?.value;
-    
+
     if (!orgId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 401 });
+      return NextResponse.json({ error: 'Please log in to update pipeline items' }, { status: 401 });
     }
 
     if (!isDatabaseConfigured()) {
@@ -115,14 +116,14 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE - Delete pipeline item
+// DELETE - Delete pipeline item - requires auth
 export async function DELETE(request: NextRequest) {
   try {
     const orgId = request.cookies.get('current_org_id')?.value;
     const projectId = request.nextUrl.searchParams.get('id');
-    
+
     if (!orgId) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 401 });
+      return NextResponse.json({ error: 'Please log in to delete pipeline items' }, { status: 401 });
     }
 
     if (!projectId) {
