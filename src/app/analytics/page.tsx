@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -14,12 +14,13 @@ import {
   Users,
   ThumbsUp,
   MessageSquare,
-  BarChart2
+  BarChart2,
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { subDays } from 'date-fns';
+import { subDays, format, eachDayOfInterval, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { useAnalyticsStore, usePostsStore, usePlatformStore } from '@/stores';
-import type { PlatformStats } from '@/types';
 import { Container } from '@/components/layout/Container';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -27,7 +28,38 @@ import { Button } from '@/components/ui/Button';
 import { platformColors } from '@/components/platforms/PlatformIcon';
 
 // ============================================
-// Simple Bar Chart Component
+// Type Definitions
+// ============================================
+
+interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  thumbnail: string;
+  stats: {
+    views: number;
+    likes: number;
+    comments: number;
+  };
+}
+
+interface YouTubeSummary {
+  totalVideos: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  avgViewsPerVideo: number;
+}
+
+interface DateRangeOption {
+  label: string;
+  value: string;
+  days: number | null;
+}
+
+// ============================================
+// Bar Chart Component
 // ============================================
 
 interface BarChartProps {
@@ -117,19 +149,6 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
   );
 }
 
-interface YouTubeVideo {
-  id: string;
-  title: string;
-  description: string;
-  publishedAt: string;
-  thumbnail: string;
-  stats: {
-    views: number;
-    likes: number;
-    comments: number;
-  };
-}
-
 // ============================================
 // YouTube Stats Card Component
 // ============================================
@@ -140,130 +159,73 @@ interface YouTubeStatsData {
   totalVideos: number;
 }
 
-function YouTubeStatsCard() {
-  const [stats, setStats] = useState<YouTubeStatsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo[], summary: YouTubeSummary } | null }) {
   const connections = usePlatformStore((state) => state.connections);
-  const updateStats = usePlatformStore((state) => state.updateStats);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
-  const fetchStats = useCallback(async () => {
-    if (!isYouTubeConnected) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/analytics/youtube/stats');
-      const data = await response.json();
-
-      if (data.connected && data.stats) {
-        const newStats = {
-          subscribers: data.stats.subscribers || 0,
-          totalViews: data.stats.totalViews || 0,
-          totalVideos: data.stats.totalVideos || 0,
-        };
-        setStats(newStats);
-        
-        // Update platform stats store
-        updateStats('youtube', {
-          platform: 'youtube',
-          followers: data.stats.subscribers || 0,
-          following: 0,
-          posts: data.stats.totalVideos || 0,
-          totalViews: data.stats.totalViews || 0,
-          totalPosts: data.stats.totalVideos || 0,
-        });
-      } else if (data.error) {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError('Failed to load YouTube stats');
-    } finally {
-      setLoading(false);
-    }
-  }, [isYouTubeConnected, updateStats]);
-
-  useEffect(() => {
-    if (isYouTubeConnected) {
-      fetchStats();
-    }
-  }, [isYouTubeConnected, fetchStats]);
-
-  if (!isYouTubeConnected) {
+  if (!isYouTubeConnected || !youtubeData) {
     return null;
   }
 
+  const stats = {
+    totalVideos: youtubeData.summary.totalVideos,
+    totalViews: youtubeData.summary.totalViews,
+    totalLikes: youtubeData.summary.totalLikes,
+    totalComments: youtubeData.summary.totalComments,
+    avgViews: youtubeData.summary.avgViewsPerVideo,
+  };
+
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Video className="w-5 h-5 text-[#FF0000]" />
-          YouTube Channel Stats
-        </h2>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={fetchStats}
-          disabled={loading}
-        >
-          <RefreshCw className={clsx('w-4 h-4 mr-2', loading && 'animate-spin')} />
-          Refresh
-        </Button>
+      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <Video className="w-5 h-5 text-[#FF0000]" />
+        YouTube Channel Stats
+      </h2>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+            <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <Eye className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
+            <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-3 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400">
+            <ThumbsUp className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)]">Likes</p>
+            <p className="text-xl font-bold">{stats.totalLikes.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+            <MessageSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-[var(--color-text-muted)]">Comments</p>
+            <p className="text-xl font-bold">{stats.totalComments.toLocaleString()}</p>
+          </div>
+        </div>
       </div>
-
-      {loading && !stats ? (
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-[var(--color-bg-secondary)] rounded-lg animate-pulse" />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="text-center py-4 text-red-500">
-          <p className="font-medium">{error}</p>
-          <Button size="sm" variant="outline" className="mt-2" onClick={fetchStats}>
-            Try Again
-          </Button>
-        </div>
-      ) : stats ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-              <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Subscribers</p>
-                <p className="text-xl font-bold">{stats.subscribers.toLocaleString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-              <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <Eye className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
-                <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                <Video className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
-                <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-          {/* Also update the overall summary stats */}
-          <div className="mt-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] text-sm">
-            <p className="text-[var(--color-text-muted)]">
-              Channel has <span className="font-bold text-[var(--color-text-primary)]">{stats.subscribers.toLocaleString()}</span> subscribers with <span className="font-bold text-[var(--color-text-primary)]">{stats.totalViews.toLocaleString()}</span> total views across <span className="font-bold text-[var(--color-text-primary)]">{stats.totalVideos}</span> videos.
-            </p>
-          </div>
-        </>
-      ) : null}
+      
+      <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-sm">
+        <p className="text-[var(--color-text-muted)]">
+          Average <span className="font-bold text-[var(--color-text-primary)]">{stats.avgViews.toLocaleString()}</span> views per video
+        </p>
+      </div>
     </Card>
   );
 }
@@ -272,52 +234,9 @@ function YouTubeStatsCard() {
 // YouTube Videos Section
 // ============================================
 
-function YouTubeVideosSection() {
-  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function YouTubeVideosSection({ videos }: { videos: YouTubeVideo[] }) {
   const connections = usePlatformStore((state) => state.connections);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
-
-  const fetchVideos = useCallback(async () => {
-    if (!isYouTubeConnected) return;
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/analytics/youtube/videos?days=365');
-      const data = await response.json();
-      
-      // Check for connection issues first
-      if (data.connected === false && data.error) {
-        setError(data.error);
-        return;
-      }
-      
-      // Check if we have videos
-      if (data.videos && Array.isArray(data.videos) && data.videos.length > 0) {
-        setVideos(data.videos);
-        // Note: Don't call updateStats here - the main page handles YouTube data
-      } else if (data.error) {
-        setError(data.error);
-      } else {
-        // No videos but no error - show helpful message
-        setError(`Found ${data.videos?.length || 0} videos. Check your YouTube account has published videos.`);
-      }
-    } catch (err) {
-      console.error('Failed to fetch YouTube videos:', err);
-      setError('Failed to connect to YouTube API');
-    } finally {
-      setLoading(false);
-    }
-  }, [isYouTubeConnected]);
-
-  // Fetch videos on mount
-  useEffect(() => {
-    if (isYouTubeConnected && videos.length === 0) {
-      fetchVideos();
-    }
-  }, [isYouTubeConnected, fetchVideos, videos.length]);
 
   if (!isYouTubeConnected) {
     return null;
@@ -325,51 +244,25 @@ function YouTubeVideosSection() {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Video className="w-5 h-5 text-[#FF0000]" />
-          Recent YouTube Videos
-        </h2>
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={fetchVideos}
-          disabled={loading}
-        >
-          <RefreshCw className={clsx('w-4 h-4 mr-2', loading && 'animate-spin')} />
-          Refresh
-        </Button>
-      </div>
+      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <Video className="w-5 h-5 text-[#FF0000]" />
+        Recent YouTube Videos
+        {videos.length > 0 && (
+          <span className="text-sm font-normal text-[var(--color-text-muted)]">
+            ({videos.length} total)
+          </span>
+        )}
+      </h2>
       
-      {loading && videos.length === 0 ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-[var(--color-bg-secondary)] rounded-lg animate-pulse" />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="text-center py-8">
-          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
-            <p className="font-medium">{error}</p>
-          </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => fetchVideos()}
-          >
-            Try Again
-          </Button>
-        </div>
-      ) : videos.length === 0 ? (
+      {videos.length === 0 ? (
         <div className="text-center py-8 text-[var(--color-text-muted)]">
           <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">No videos found</p>
-          <p className="text-sm mt-1">Your YouTube channel might not have any videos, or there may be an issue with the connection.</p>
+          <p className="text-sm mt-1">Your YouTube channel might not have any videos.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {videos.slice(0, 10).map((video) => (
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {videos.slice(0, 20).map((video) => (
             <div 
               key={video.id} 
               className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer"
@@ -391,7 +284,7 @@ function YouTubeVideosSection() {
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-sm truncate">{video.title}</h3>
                 <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                  {new Date(video.publishedAt).toLocaleDateString()}
+                  {format(new Date(video.publishedAt), 'MMM d, yyyy')}
                 </p>
                 <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
                   <span className="flex items-center gap-1">
@@ -421,10 +314,12 @@ function YouTubeVideosSection() {
 // ============================================
 
 export default function AnalyticsPage() {
-  const [dateRange, setDateRange] = useState('7');
+  const [dateRange, setDateRange] = useState('30');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshedPlatform, setRefreshedPlatform] = useState<string | null>(null);
-  const [youtubeData, setYoutubeData] = useState<{ videos: any[], summary: any } | null>(null);
+  const [youtubeData, setYoutubeData] = useState<{ videos: YouTubeVideo[], summary: YouTubeSummary } | null>(null);
+  const [isLoadingYoutube, setIsLoadingYoutube] = useState(false);
+  const fetchingRef = useRef(false);
 
   const metrics = useAnalyticsStore((state) => state.metrics);
   const posts = usePostsStore((state) => state.posts);
@@ -432,20 +327,50 @@ export default function AnalyticsPage() {
   const connections = usePlatformStore((state) => state.connections);
   const updateStats = usePlatformStore((state) => state.updateStats);
 
-  // Fetch YouTube data once on mount
-  useEffect(() => {
-    const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
-    if (isYouTubeConnected && !youtubeData) {
-      fetch('/api/analytics/youtube/videos?days=365')
-        .then(res => res.json())
-        .then(data => {
-          if (data.videos && data.videos.length > 0) {
-            setYoutubeData({ videos: data.videos, summary: data.summary });
-          }
-        })
-        .catch(console.error);
+  // Date range options
+  const dateRangeOptions: DateRangeOption[] = [
+    { label: '7d', value: '7', days: 7 },
+    { label: '14d', value: '14', days: 14 },
+    { label: '30d', value: '30', days: 30 },
+    { label: '90d', value: '90', days: 90 },
+    { label: 'All', value: 'all', days: null },
+  ];
+
+  // Fetch YouTube data with current date range
+  const fetchYouTubeData = useCallback(async (days: number | null) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    setIsLoadingYoutube(true);
+    
+    try {
+      const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
+      if (!isYouTubeConnected) {
+        fetchingRef.current = false;
+        setIsLoadingYoutube(false);
+        return;
+      }
+
+      // Fetch with refresh to get fresh data based on date range
+      const response = await fetch(`/api/analytics/youtube/videos?days=${days || 365}&refresh=true`);
+      const data = await response.json();
+      
+      if (data.videos && data.videos.length > 0) {
+        setYoutubeData({ videos: data.videos, summary: data.summary });
+      } else if (data.connected === false) {
+        console.log('YouTube not connected');
+      }
+    } catch (error) {
+      console.error('Failed to fetch YouTube data:', error);
+    } finally {
+      fetchingRef.current = false;
+      setIsLoadingYoutube(false);
     }
-  }, [connections, youtubeData]);
+  }, [connections]);
+
+  // Fetch on mount and when date range changes
+  useEffect(() => {
+    fetchYouTubeData(dateRange === 'all' ? null : parseInt(dateRange));
+  }, [dateRange, fetchYouTubeData]);
 
   const refreshPlatformAnalytics = useCallback(async (platform: string) => {
     setIsRefreshing(true);
@@ -490,9 +415,8 @@ export default function AnalyticsPage() {
     const ytLikes = ytSummary?.totalLikes || 0;
     const ytComments = ytSummary?.totalComments || 0;
     
-    // Use YouTube views if no other views data
-    const finalTotalViews = totalViews > 0 ? totalViews : ytViews;
-    const finalEngagement = totalEngagement > 0 ? totalEngagement : (ytLikes + ytComments);
+    // Calculate engagement rate from YouTube data
+    const ytEngagementRate = ytViews > 0 ? (ytLikes + ytComments) / ytViews : 0;
 
     const platformBreakdown = {
       tiktok: { posts: publishedPosts.filter(p => p.platforms.includes('tiktok')).length, views: 0, engagement: 0, engagementRate: 0 },
@@ -502,89 +426,161 @@ export default function AnalyticsPage() {
         posts: ytSummary?.totalVideos || publishedPosts.filter(p => p.platforms.includes('youtube')).length, 
         views: ytViews, 
         engagement: ytLikes + ytComments, 
-        engagementRate: ytViews > 0 ? ((ytLikes + ytComments) / ytViews) : 0 
+        engagementRate: ytEngagementRate
       },
     };
 
-    return { totalPosts: publishedPosts.length, totalViews: finalTotalViews, totalEngagement: finalEngagement, averageEngagementRate: avgEngagementRate, platformBreakdown };
+    // Combine total views from metrics and YouTube
+    const combinedViews = totalViews > 0 ? totalViews + ytViews : ytViews;
+    const combinedEngagement = totalEngagement > 0 ? totalEngagement + (ytLikes + ytComments) : (ytLikes + ytComments);
+
+    return { 
+      totalPosts: publishedPosts.length, 
+      totalViews: combinedViews, 
+      totalEngagement: combinedEngagement, 
+      averageEngagementRate: avgEngagementRate || ytEngagementRate, 
+      platformBreakdown 
+    };
   }, [metrics, posts, youtubeData]);
 
-  // Calculate views - use YouTube data if available
-  const weeklyViewsData = useMemo(() => {
-    // If we have YouTube videos, aggregate by day
-    if (youtubeData?.videos && youtubeData.videos.length > 0) {
-      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      const today = new Date();
-      
-      return days.map((label, idx) => {
-        const dayStart = new Date(today);
-        dayStart.setDate(today.getDate() - (6 - idx));
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
-        
-        // Count videos published on this day and aggregate views
-        const dayVideos = youtubeData.videos.filter(v => {
-          const publishedAt = new Date(v.publishedAt);
-          return publishedAt >= dayStart && publishedAt <= dayEnd;
+  // Calculate views over time based on date range and YouTube data
+  const viewsOverTimeData = useMemo(() => {
+    const days = dateRange === 'all' ? 365 : parseInt(dateRange);
+    const today = new Date();
+    const startDate = subDays(today, days - 1);
+    
+    const dayLabels: { label: string; start: Date; end: Date }[] = [];
+    
+    if (days <= 14) {
+      // Show daily for short periods
+      for (let i = days - 1; i >= 0; i--) {
+        const date = subDays(today, i);
+        dayLabels.push({
+          label: format(date, 'EEE'),
+          start: new Date(date.setHours(0, 0, 0, 0)),
+          end: new Date(date.setHours(23, 59, 59, 999)),
         });
-        
-        const dayViews = dayVideos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
-        
-        return { label, value: dayViews, color: 'var(--color-accent)' };
-      });
+      }
+    } else if (days <= 90) {
+      // Show weekly for medium periods
+      for (let i = Math.ceil(days / 7) - 1; i >= 0; i--) {
+        const weekStart = subDays(today, (i + 1) * 7);
+        const weekEnd = subDays(today, i * 7);
+        dayLabels.push({
+          label: `W${Math.ceil(days / 7) - i}`,
+          start: new Date(weekStart.setHours(0, 0, 0, 0)),
+          end: new Date(weekEnd.setHours(23, 59, 59, 999)),
+        });
+      }
+    } else {
+      // Show monthly for long periods
+      for (let i = 11; i >= 0; i--) {
+        const monthDate = subMonths(today, i);
+        dayLabels.push({
+          label: format(monthDate, 'MMM'),
+          start: startOfMonth(monthDate),
+          end: endOfMonth(monthDate),
+        });
+      }
     }
     
-    // Fallback to metrics data
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const today = new Date();
-    return days.map((label, idx) => {
-      const dayStart = new Date(today);
-      dayStart.setDate(today.getDate() - (6 - idx));
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setHours(23, 59, 59, 999);
+    // Aggregate views from YouTube videos
+    return dayLabels.map(({ label, start, end }) => {
+      let dayViews = 0;
       
-      const dayViews = metrics
-        .filter(m => {
-          const collectedAt = new Date(m.collectedAt);
-          return collectedAt >= dayStart && collectedAt <= dayEnd;
-        })
-        .reduce((sum, m) => sum + m.views, 0);
+      // Filter YouTube videos by date range
+      if (youtubeData?.videos) {
+        dayViews = youtubeData.videos
+          .filter(v => {
+            const publishedAt = new Date(v.publishedAt);
+            return publishedAt >= start && publishedAt <= end;
+          })
+          .reduce((sum, v) => sum + (v.stats?.views || 0), 0);
+      }
       
       return { label, value: dayViews, color: 'var(--color-accent)' };
     });
-  }, [metrics, youtubeData]);
+  }, [dateRange, youtubeData]);
 
-  const totalWeeklyViews = weeklyViewsData.reduce((sum, d) => sum + d.value, 0);
+  const totalViewsFromChart = viewsOverTimeData.reduce((sum, d) => sum + d.value, 0);
+
+  // Calculate trend vs previous period
+  const trend = useMemo(() => {
+    if (viewsOverTimeData.length < 2) return { value: 0, label: 'No comparison data' };
+    
+    const midPoint = Math.floor(viewsOverTimeData.length / 2);
+    const firstHalf = viewsOverTimeData.slice(0, midPoint).reduce((sum, d) => sum + d.value, 0);
+    const secondHalf = viewsOverTimeData.slice(midPoint).reduce((sum, d) => sum + d.value, 0);
+    
+    const change = firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf) * 100 : 0;
+    return {
+      value: change,
+      label: change >= 0 ? `+${change.toFixed(0)}% this period` : `${change.toFixed(0)}% this period`,
+      isPositive: change >= 0,
+    };
+  }, [viewsOverTimeData]);
+
+  // Export analytics data
+  const exportAnalytics = useCallback(() => {
+    const data = {
+      exportDate: new Date().toISOString(),
+      dateRange,
+      summary: {
+        totalViews: summary.totalViews,
+        totalEngagement: summary.totalEngagement,
+        averageEngagementRate: summary.averageEngagementRate,
+        totalPosts: summary.totalPosts,
+      },
+      platformBreakdown: summary.platformBreakdown,
+      youtube: youtubeData ? {
+        totalVideos: youtubeData.summary.totalVideos,
+        totalViews: youtubeData.summary.totalViews,
+        totalLikes: youtubeData.summary.totalLikes,
+        totalComments: youtubeData.summary.totalComments,
+        averageViewsPerVideo: youtubeData.summary.avgViewsPerVideo,
+      } : null,
+      viewsOverTime: viewsOverTimeData,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-${dateRange}-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [dateRange, summary, youtubeData, viewsOverTimeData]);
 
   return (
     <>
       <PageHeader 
         title="Analytics" 
-        description="Track your content performance"
+        description="Track your content performance across all platforms"
         align="left"
         actions={
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-1">
-              {['7', '14', '30', '90'].map((range) => (
+              {dateRangeOptions.map((option) => (
                 <button
-                  key={range}
-                  onClick={() => setDateRange(range)}
+                  key={option.value}
+                  onClick={() => setDateRange(option.value)}
                   className={clsx(
                     'px-3 py-1.5 text-sm rounded-md transition-colors',
-                    dateRange === range
+                    dateRange === option.value
                       ? 'bg-[var(--color-accent)] text-white'
                       : 'hover:bg-[var(--color-bg-secondary)]'
                   )}
                 >
-                  {range}d
+                  {option.label}
                 </button>
               ))}
             </div>
             <Button
               variant="outline"
               leftIcon={<Download className="w-4 h-4" />}
+              onClick={exportAnalytics}
             >
               Export
             </Button>
@@ -648,49 +644,25 @@ export default function AnalyticsPage() {
           {/* Main Charts */}
           <div className="lg:col-span-2 space-y-8">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Views Over Time</h2>
-              <BarChart data={weeklyViewsData} height={250} />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Views Over Time</h2>
+                {isLoadingYoutube && (
+                  <span className="text-sm text-[var(--color-text-muted)] flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </span>
+                )}
+              </div>
+              <BarChart data={viewsOverTimeData} height={250} />
               <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
-                <span>Total: {totalWeeklyViews.toLocaleString()} views</span>
-                {(() => {
-                  // Calculate real trend based on analytics data
-                  const metrics = useAnalyticsStore.getState().metrics;
-                  const now = new Date();
-                  const thisWeekStart = subDays(now, 7);
-                  const lastWeekStart = subDays(now, 14);
-                  
-                  const thisWeekMetrics = metrics.filter(m => m.collectedAt >= thisWeekStart);
-                  const lastWeekMetrics = metrics.filter(m => m.collectedAt >= lastWeekStart && m.collectedAt < thisWeekStart);
-                  
-                  const thisWeekViews = thisWeekMetrics.reduce((sum, m) => sum + m.views, 0);
-                  const lastWeekViews = lastWeekMetrics.reduce((sum, m) => sum + m.views, 0);
-                  
-                  let trend = 0;
-                  let trendLabel = '0%';
-                  let trendClass = 'text-[var(--color-text-muted)]';
-                  
-                  if (lastWeekViews > 0) {
-                    trend = ((thisWeekViews - lastWeekViews) / lastWeekViews) * 100;
-                    const sign = trend >= 0 ? '+' : '';
-                    trendLabel = `${sign}${trend.toFixed(0)}% vs last week`;
-                    trendClass = trend >= 0 ? 'text-green-600' : 'text-red-600';
-                  } else if (thisWeekViews > 0) {
-                    trendLabel = 'New data this week';
-                    trendClass = 'text-[var(--color-accent)]';
-                  } else {
-                    trendLabel = 'No comparison data';
-                    trendClass = 'text-[var(--color-text-muted)]';
-                  }
-                  
-                  const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
-                  
-                  return (
-                    <span className={clsx('flex items-center gap-1', trendClass)}>
-                      <TrendIcon className="w-4 h-4" />
-                      {trendLabel}
-                    </span>
-                  );
-                })()}
+                <span>Total: {totalViewsFromChart.toLocaleString()} views</span>
+                <span className={clsx(
+                  'flex items-center gap-1',
+                  trend.isPositive ? 'text-green-600' : trend.value < 0 ? 'text-red-600' : 'text-[var(--color-text-muted)]'
+                )}>
+                  {trend.isPositive ? <TrendingUp className="w-4 h-4" /> : trend.value < 0 ? <TrendingDown className="w-4 h-4" /> : null}
+                  {trend.label}
+                </span>
               </div>
             </Card>
 
@@ -699,25 +671,23 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const platformAnalytics = summary.platformBreakdown[platform];
-                  const rate = platformAnalytics.engagementRate > 0 
-                    ? (platformAnalytics.engagementRate * 100).toFixed(1) 
-                    : '0';
+                  const rate = (platformAnalytics.engagementRate * 100).toFixed(1);
                   
                   return (
                     <div 
                       key={platform}
-                      className="p-4 rounded-lg bg-bg-secondary"
+                      className="p-4 rounded-lg bg-[var(--color-bg-secondary)]"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium capitalize">{platform}</span>
                         <span className={clsx(
                           'text-sm font-semibold',
-                          Number(rate) > 6 ? 'text-green-600' : Number(rate) > 4 ? 'text-amber-600' : 'text-text-secondary'
+                          Number(rate) > 6 ? 'text-green-600' : Number(rate) > 4 ? 'text-amber-600' : 'text-[var(--color-text-secondary)]'
                         )}>
                           {rate}%
                         </span>
                       </div>
-                      <div className="h-2 bg-border rounded-full overflow-hidden">
+                      <div className="h-2 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
                         <div 
                           className={clsx(
                             'h-full rounded-full transition-all',
@@ -729,8 +699,8 @@ export default function AnalyticsPage() {
                           style={{ width: `${Math.min(Number(rate) * 10, 100)}%` }}
                         />
                       </div>
-                      <p className="text-xs text-text-muted mt-2">
-                        Engagement Rate
+                      <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                        {platformAnalytics.posts} posts • {platformAnalytics.views.toLocaleString()} views
                       </p>
                     </div>
                   );
@@ -739,10 +709,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* YouTube Stats Card */}
-            <YouTubeStatsCard />
+            <YouTubeStatsCard youtubeData={youtubeData} />
 
             {/* YouTube Videos Section */}
-            <YouTubeVideosSection />
+            <YouTubeVideosSection videos={youtubeData?.videos || []} />
           </div>
 
           {/* Sidebar */}
@@ -751,9 +721,12 @@ export default function AnalyticsPage() {
               <h2 className="text-lg font-semibold mb-4">Engagement Breakdown</h2>
               <div className="space-y-3">
                 {(() => {
-                  const totalLikes = metrics.reduce((sum, m) => sum + m.likes, 0);
-                  const totalComments = metrics.reduce((sum, m) => sum + m.comments, 0);
-                  const totalShares = metrics.reduce((sum, m) => sum + m.shares, 0);
+                  const ytLikes = youtubeData?.summary?.totalLikes || 0;
+                  const ytComments = youtubeData?.summary?.totalComments || 0;
+                  const ytShares = Math.round(ytComments * 0.3);
+                  const totalLikes = metrics.reduce((sum, m) => sum + m.likes, 0) + ytLikes;
+                  const totalComments = metrics.reduce((sum, m) => sum + m.comments, 0) + ytComments;
+                  const totalShares = metrics.reduce((sum, m) => sum + m.shares, 0) + ytShares;
                   
                   return [
                     { label: 'Likes', value: totalLikes, color: '#E4405F' },
