@@ -218,37 +218,50 @@ function YouTubeStatsCard() {
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-4 text-red-500">{error}</div>
-      ) : stats ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-            <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--color-text-muted)]">Subscribers</p>
-              <p className="text-xl font-bold">{stats.subscribers.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-            <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-              <Eye className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
-              <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
-            <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-              <Video className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
-              <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
-            </div>
-          </div>
+        <div className="text-center py-4 text-red-500">
+          <p className="font-medium">{error}</p>
+          <Button size="sm" variant="outline" className="mt-2" onClick={fetchStats}>
+            Try Again
+          </Button>
         </div>
+      ) : stats ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+              <div className="p-3 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)]">Subscribers</p>
+                <p className="text-xl font-bold">{stats.subscribers.toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+              <div className="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
+                <p className="text-xl font-bold">{stats.totalViews.toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+              <div className="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <Video className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+                <p className="text-xl font-bold">{stats.totalVideos.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          {/* Also update the overall summary stats */}
+          <div className="mt-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] text-sm">
+            <p className="text-[var(--color-text-muted)]">
+              Channel has <span className="font-bold text-[var(--color-text-primary)]">{stats.subscribers.toLocaleString()}</span> subscribers with <span className="font-bold text-[var(--color-text-primary)]">{stats.totalViews.toLocaleString()}</span> total views across <span className="font-bold text-[var(--color-text-primary)]">{stats.totalVideos}</span> videos.
+            </p>
+          </div>
+        </>
       ) : null}
     </Card>
   );
@@ -262,6 +275,7 @@ function YouTubeVideosSection() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiResponse, setApiResponse] = useState<any>(null);
   const connections = usePlatformStore((state) => state.connections);
   const updateStats = usePlatformStore((state) => state.updateStats);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
@@ -275,7 +289,19 @@ function YouTubeVideosSection() {
       const response = await fetch('/api/analytics/youtube/videos?days=365');
       const data = await response.json();
       
-      if (data.videos && data.videos.length > 0) {
+      // Store raw response for debugging
+      setApiResponse(data);
+      
+      console.log('YouTube videos API response:', data);
+      
+      // Check for connection issues first
+      if (data.connected === false && data.error) {
+        setError(data.error);
+        return;
+      }
+      
+      // Check if we have videos
+      if (data.videos && Array.isArray(data.videos) && data.videos.length > 0) {
         setVideos(data.videos);
         
         // Update platform stats with real data
@@ -292,9 +318,13 @@ function YouTubeVideosSection() {
         }
       } else if (data.error) {
         setError(data.error);
+      } else {
+        // No videos but no error - show helpful message
+        setError(`Found ${data.videos?.length || 0} videos. Check your YouTube account has published videos.`);
       }
     } catch (err) {
-      setError('Failed to load videos');
+      console.error('Failed to fetch YouTube videos:', err);
+      setError('Failed to connect to YouTube API');
     } finally {
       setLoading(false);
     }
@@ -336,17 +366,42 @@ function YouTubeVideosSection() {
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-8 text-red-500">{error}</div>
+        <div className="text-center py-8">
+          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
+            <p className="font-medium">{error}</p>
+            {apiResponse && (
+              <p className="text-sm mt-2 opacity-75">
+                Response: {JSON.stringify({ connected: apiResponse.connected, videos: apiResponse.videos?.length, error: apiResponse.error })}
+              </p>
+            )}
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => fetchVideos()}
+          >
+            Try Again
+          </Button>
+        </div>
       ) : videos.length === 0 ? (
         <div className="text-center py-8 text-[var(--color-text-muted)]">
-          No videos found. Publish some videos to see analytics!
+          <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p className="font-medium">No videos found</p>
+          <p className="text-sm mt-1">Your YouTube channel might not have any videos, or there may be an issue with the connection.</p>
+          {apiResponse && (
+            <p className="text-xs mt-2 opacity-50">
+              Debug: {JSON.stringify(apiResponse)}
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
           {videos.slice(0, 10).map((video) => (
             <div 
               key={video.id} 
-              className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+              className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer"
+              onClick={() => window.open(`https://youtube.com/watch?v=${video.id}`, '_blank')}
             >
               <div className="relative w-32 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-800">
                 {video.thumbnail ? (
