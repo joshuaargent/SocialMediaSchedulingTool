@@ -86,7 +86,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
   
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   
-  const padding = { top: 15, right: 20, bottom: 30, left: 20 };
+  const padding = { top: 15, right: 12, bottom: 30, left: 12 };
   const chartHeight = height - padding.top - padding.bottom;
   const chartWidth = 100 - padding.left - padding.right;
   const pointCount = data.length;
@@ -226,7 +226,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
             <circle
               cx={points[hoveredIndex].x}
               cy={points[hoveredIndex].y}
-              r="2"
+              r="1.5"
               fill={gradient}
             />
           </>
@@ -1030,43 +1030,57 @@ export default function AnalyticsPage() {
               </div>
             </Card>
 
+            {/* YouTube Watch Time Chart */}
+            {youtubeAnalytics && youtubeAnalytics.overview?.dailyData?.length > 0 && (
+              <Card className="p-6">
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#FF0000]" />
+                  Watch Time (Last 30 Days)
+                </h2>
+                <LineChart 
+                  data={youtubeAnalytics.overview.dailyData.map((d: any) => ({ 
+                    label: d.date.slice(5), 
+                    value: d.minutes 
+                  }))} 
+                  height={180} 
+                  valueLabel="minutes"
+                  gradient="#FF0000"
+                />
+                <div className="mt-2 text-center text-xs text-[var(--color-text-muted)]">
+                  Total: {Math.round(youtubeAnalytics.overview.totalMinutesWatched / 60).toLocaleString()} hours watched
+                </div>
+              </Card>
+            )}
+
             {/* YouTube Analytics Deep Dive */}
             {youtubeAnalytics && (
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Video className="w-5 h-5 text-[#FF0000]" />
-                  Watch Time & Audience
+              <Card className="p-5">
+                <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+                  <Video className="w-4 h-4 text-[#FF0000]" />
+                  Audience & Traffic
                 </h2>
                 
-                {/* Watch Time Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)]">
-                    <p className="text-xs text-[var(--color-text-muted)]">Watch Time</p>
-                    <p className="text-lg font-bold">{Math.round(youtubeAnalytics.overview.totalMinutesWatched / 60).toLocaleString()} hrs</p>
+                {/* Subscriber Changes */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
+                    <p className="text-[10px] text-green-600 dark:text-green-400">Subs Gained</p>
+                    <p className="text-lg font-bold text-green-600">+{youtubeAnalytics.overview.subscribersGained?.toLocaleString() || 0}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)]">
-                    <p className="text-xs text-[var(--color-text-muted)]">Avg Duration</p>
-                    <p className="text-lg font-bold">{Math.round(youtubeAnalytics.overview.avgViewDuration / 60)}m {youtubeAnalytics.overview.avgViewDuration % 60}s</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
-                    <p className="text-xs text-green-600 dark:text-green-400">Subs Gained</p>
-                    <p className="text-lg font-bold text-green-600">+{youtubeAnalytics.overview.subscribersGained.toLocaleString()}</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
-                    <p className="text-xs text-red-600 dark:text-red-400">Subs Lost</p>
-                    <p className="text-lg font-bold text-red-600">-{youtubeAnalytics.overview.subscribersLost.toLocaleString()}</p>
+                  <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-center">
+                    <p className="text-[10px] text-red-600 dark:text-red-400">Subs Lost</p>
+                    <p className="text-lg font-bold text-red-600">-{youtubeAnalytics.overview.subscribersLost?.toLocaleString() || 0}</p>
                   </div>
                 </div>
 
-                {/* Retention */}
-                <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-[var(--color-text-muted)]">Avg Retention</span>
-                    <span className="text-sm font-bold">{youtubeAnalytics.overview.avgViewPercentage?.toFixed(1)}%</span>
+                {/* Retention Bar */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-[var(--color-text-muted)]">Avg Retention</span>
+                    <span className="font-bold">{youtubeAnalytics.overview.avgViewPercentage?.toFixed(1) || 0}%</span>
                   </div>
-                  <div className="h-2 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-[#FF0000] rounded-full transition-all"
+                      className="h-full bg-[#FF0000] rounded-full"
                       style={{ width: `${youtubeAnalytics.overview.avgViewPercentage || 0}%` }}
                     />
                   </div>
@@ -1074,20 +1088,17 @@ export default function AnalyticsPage() {
 
                 {/* Age Demographics */}
                 {youtubeAnalytics.demographics?.age?.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Audience Age</h3>
-                    <div className="space-y-1">
-                      {youtubeAnalytics.demographics.age.slice(0, 5).map((item: any) => (
-                        <div key={item.group} className="flex items-center justify-between text-sm">
+                  <div className="mb-3">
+                    <h3 className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1 uppercase">Audience Age</h3>
+                    <div className="space-y-0.5">
+                      {youtubeAnalytics.demographics.age.slice(0, 4).map((item: any) => (
+                        <div key={item.group} className="flex items-center justify-between text-xs">
                           <span className="text-[var(--color-text-secondary)]">{item.group}</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-1.5 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-purple-500 rounded-full"
-                                style={{ width: `${item.percentage}%` }}
-                              />
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-12 h-1 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                              <div className="h-full bg-purple-500 rounded-full" style={{ width: `${item.percentage}%` }} />
                             </div>
-                            <span className="text-xs text-[var(--color-text-muted)] w-12 text-right">{item.percentage.toFixed(1)}%</span>
+                            <span className="text-[10px] text-[var(--color-text-muted)] w-8 text-right">{item.percentage.toFixed(0)}%</span>
                           </div>
                         </div>
                       ))}
@@ -1097,13 +1108,13 @@ export default function AnalyticsPage() {
 
                 {/* Gender */}
                 {youtubeAnalytics.demographics?.gender?.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Gender</h3>
-                    <div className="flex gap-2">
+                  <div className="mb-3">
+                    <h3 className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1 uppercase">Gender</h3>
+                    <div className="flex gap-1">
                       {youtubeAnalytics.demographics.gender.map((item: any) => (
-                        <div key={item.gender} className="flex-1 p-2 rounded-lg bg-[var(--color-bg-secondary)] text-center">
-                          <p className="text-xs capitalize text-[var(--color-text-muted)]">{item.gender}</p>
-                          <p className="font-bold">{item.percentage.toFixed(0)}%</p>
+                        <div key={item.gender} className="flex-1 p-1.5 rounded bg-[var(--color-bg-secondary)] text-center">
+                          <p className="text-[10px] capitalize text-[var(--color-text-muted)]">{item.gender}</p>
+                          <p className="font-bold text-sm">{item.percentage.toFixed(0)}%</p>
                         </div>
                       ))}
                     </div>
@@ -1112,15 +1123,15 @@ export default function AnalyticsPage() {
 
                 {/* Traffic Sources */}
                 {youtubeAnalytics.trafficSources?.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Traffic Sources</h3>
-                    <div className="space-y-2">
-                      {youtubeAnalytics.trafficSources.slice(0, 4).map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <span className="text-[var(--color-text-secondary)] text-xs capitalize">
+                  <div className="mb-3">
+                    <h3 className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1 uppercase">Traffic Sources</h3>
+                    <div className="space-y-0.5">
+                      {youtubeAnalytics.trafficSources.slice(0, 5).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--color-text-secondary)] capitalize">
                             {item.source.replace(/_/g, ' ').toLowerCase()}
                           </span>
-                          <span className="text-xs font-medium">{item.views.toLocaleString()}</span>
+                          <span className="font-medium">{item.views.toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
@@ -1130,13 +1141,10 @@ export default function AnalyticsPage() {
                 {/* Top Countries */}
                 {youtubeAnalytics.topCountries?.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Top Countries</h3>
+                    <h3 className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1 uppercase">Top Countries</h3>
                     <div className="flex flex-wrap gap-1">
-                      {youtubeAnalytics.topCountries.slice(0, 5).map((item: any, idx: number) => (
-                        <span 
-                          key={idx} 
-                          className="px-2 py-1 text-xs rounded-full bg-[var(--color-bg-secondary)]"
-                        >
+                      {youtubeAnalytics.topCountries.slice(0, 6).map((item: any, idx: number) => (
+                        <span key={idx} className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--color-bg-secondary)]">
                           {item.country}
                         </span>
                       ))}
