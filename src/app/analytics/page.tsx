@@ -339,7 +339,7 @@ interface YouTubeStatsData {
   totalVideos: number;
 }
 
-function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo[], summary: YouTubeSummary, channelInfo?: any } | null }) {
+function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: YouTubeVideo[], summary: YouTubeSummary, channelInfo?: any } | null, dateRange: string }) {
   const connections = usePlatformStore((state) => state.connections);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
@@ -347,26 +347,53 @@ function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo
     return null;
   }
 
+  // Filter videos by date range
+  const days = dateRange === 'all' ? 365 : parseInt(dateRange);
+  const startDate = subDays(new Date(), days);
+  
+  const filteredVideos = dateRange === 'all'
+    ? youtubeData.videos
+    : youtubeData.videos.filter(v => {
+        const publishedAt = new Date(v.publishedAt);
+        return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+      });
+
+  // Calculate stats from filtered videos
+  const filteredTotalViews = filteredVideos.reduce((sum, v) => sum + (v.stats?.views || 0), 0);
+  const filteredTotalLikes = filteredVideos.reduce((sum, v) => sum + (v.stats?.likes || 0), 0);
+  const filteredTotalComments = filteredVideos.reduce((sum, v) => sum + (v.stats?.comments || 0), 0);
+  const filteredTotalFavorites = filteredVideos.reduce((sum, v) => sum + (v.stats?.favorites || 0), 0);
+  
   const stats = {
-    totalVideos: youtubeData.summary.totalVideos,
-    totalViews: youtubeData.summary.totalViews,
-    totalLikes: youtubeData.summary.totalLikes,
-    totalComments: youtubeData.summary.totalComments,
-    totalFavorites: youtubeData.summary.totalFavorites || 0,
-    avgViews: youtubeData.summary.avgViewsPerVideo,
-    avgLikes: youtubeData.summary.avgLikesPerVideo || 0,
-    avgComments: youtubeData.summary.avgCommentsPerVideo || 0,
-    avgDuration: youtubeData.summary.avgDurationSeconds || 0,
-    engagementRate: youtubeData.summary.engagementRate || 0,
+    totalVideos: filteredVideos.length,
+    totalViews: filteredTotalViews,
+    totalLikes: filteredTotalLikes,
+    totalComments: filteredTotalComments,
+    totalFavorites: filteredTotalFavorites,
+    avgViews: filteredVideos.length > 0 ? filteredTotalViews / filteredVideos.length : 0,
+    avgLikes: filteredVideos.length > 0 ? filteredTotalLikes / filteredVideos.length : 0,
+    avgComments: filteredVideos.length > 0 ? filteredTotalComments / filteredVideos.length : 0,
+    avgDuration: 0,
+    engagementRate: filteredTotalViews > 0 ? (filteredTotalLikes + filteredTotalComments) / filteredTotalViews : 0,
     subscribers: youtubeData.channelInfo?.subscribers || 0,
     channelViews: youtubeData.channelInfo?.totalViews || 0,
   };
+
+  // Find top performing video from filtered videos
+  const topVideo = filteredVideos.length > 0 
+    ? filteredVideos.reduce((top, v) => (!top || (v.stats?.views || 0) > (top.stats?.views || 0) ? v : top), null as YouTubeVideo | null)
+    : null;
 
   return (
     <Card className="p-6">
       <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
         <Video className="w-5 h-5 text-[#FF0000]" />
         YouTube Channel Stats
+        {dateRange !== 'all' && (
+          <span className="text-xs font-normal text-[var(--color-text-muted)]">
+            (Last {dateRange === '7' ? '7' : dateRange === '14' ? '14' : dateRange === '30' ? '30' : dateRange === '90' ? '90' : '365'} days)
+          </span>
+        )}
         {youtubeData.channelInfo?.title && (
           <span className="text-sm font-normal text-[var(--color-text-muted)]">
             - {youtubeData.channelInfo.title}
@@ -451,12 +478,12 @@ function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo
       </div>
       
       {/* Top performing video */}
-      {youtubeData.summary.topVideo && (
+      {topVideo && (
         <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">🏆 Top Performing Video</p>
-          <p className="font-medium text-sm truncate">{youtubeData.summary.topVideo.title}</p>
+          <p className="font-medium text-sm truncate">{topVideo.title}</p>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
-            {youtubeData.summary.topVideo.stats.views.toLocaleString()} views
+            {topVideo.stats.views.toLocaleString()} views
           </p>
         </div>
       )}
@@ -468,7 +495,7 @@ function YouTubeStatsCard({ youtubeData }: { youtubeData: { videos: YouTubeVideo
 // YouTube Videos Section
 // ============================================
 
-function YouTubeVideosSection({ videos }: { videos: YouTubeVideo[] }) {
+function YouTubeVideosSection({ videos, dateRange }: { videos: YouTubeVideo[], dateRange: string }) {
   const connections = usePlatformStore((state) => state.connections);
   const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
 
@@ -476,27 +503,43 @@ function YouTubeVideosSection({ videos }: { videos: YouTubeVideo[] }) {
     return null;
   }
 
+  // Filter videos by date range
+  const days = dateRange === 'all' ? 365 : parseInt(dateRange);
+  const startDate = subDays(new Date(), days);
+  
+  const filteredVideos = dateRange === 'all'
+    ? videos
+    : videos.filter(v => {
+        const publishedAt = new Date(v.publishedAt);
+        return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+      });
+
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <Video className="w-5 h-5 text-[#FF0000]" />
-        Recent YouTube Videos
-        {videos.length > 0 && (
+        YouTube Videos
+        {dateRange !== 'all' && (
+          <span className="text-xs font-normal text-[var(--color-text-muted)]">
+            (Last {dateRange === '7' ? '7' : dateRange === '14' ? '14' : dateRange === '30' ? '30' : dateRange === '90' ? '90' : '365'} days)
+          </span>
+        )}
+        {filteredVideos.length > 0 && (
           <span className="text-sm font-normal text-[var(--color-text-muted)]">
-            ({videos.length} total)
+            ({filteredVideos.length} videos)
           </span>
         )}
       </h2>
       
-      {videos.length === 0 ? (
+      {filteredVideos.length === 0 ? (
         <div className="text-center py-8 text-[var(--color-text-muted)]">
           <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">No videos found</p>
-          <p className="text-sm mt-1">Your YouTube channel might not have any videos.</p>
+          <p className="text-sm mt-1">Your YouTube channel might not have any videos in this period.</p>
         </div>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          {videos.slice(0, 20).map((video) => (
+          {filteredVideos.slice(0, 20).map((video) => (
             <div 
               key={video.id} 
               className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer"
@@ -573,14 +616,14 @@ export default function AnalyticsPage() {
   ];
 
   // Fetch YouTube analytics data (watch time, audience, etc.)
-  const fetchYouTubeAnalytics = useCallback(async () => {
+  const fetchYouTubeAnalytics = useCallback(async (days: number) => {
     if (analyticsRef.current) return;
     const isYouTubeConnected = connections.some((c) => c.platform === 'youtube');
     if (!isYouTubeConnected) return;
     
     analyticsRef.current = true;
     try {
-      const response = await fetch('/api/analytics/youtube/analytics?refresh=true');
+      const response = await fetch(`/api/analytics/youtube/analytics?days=${days}&refresh=true`);
       const data = await response.json();
       console.log('YouTube Analytics response:', data);
       // Check if we have analytics data
@@ -632,7 +675,7 @@ export default function AnalyticsPage() {
   // Fetch on mount and when date range changes
   useEffect(() => {
     fetchYouTubeData(dateRange === 'all' ? null : parseInt(dateRange));
-    fetchYouTubeAnalytics();
+    fetchYouTubeAnalytics(dateRange === 'all' ? 365 : parseInt(dateRange));
   }, [dateRange, fetchYouTubeData, fetchYouTubeAnalytics]);
 
   const refreshPlatformAnalytics = useCallback(async (platform: string) => {
@@ -1002,10 +1045,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* YouTube Stats Card */}
-            <YouTubeStatsCard youtubeData={youtubeData} />
+            <YouTubeStatsCard youtubeData={youtubeData} dateRange={dateRange} />
 
             {/* YouTube Videos Section */}
-            <YouTubeVideosSection videos={youtubeData?.videos || []} />
+            <YouTubeVideosSection videos={youtubeData?.videos || []} dateRange={dateRange} />
           </div>
 
           {/* Sidebar */}
@@ -1014,13 +1057,29 @@ export default function AnalyticsPage() {
               <h2 className="text-lg font-semibold mb-4">Engagement Breakdown</h2>
               <div className="space-y-3">
                 {(() => {
-                  const ytLikes = youtubeData?.summary?.totalLikes || 0;
-                  const ytComments = youtubeData?.summary?.totalComments || 0;
-                  const ytShares = Math.round(ytComments * 0.3);
-                  const totalLikes = metrics.reduce((sum, m) => sum + m.likes, 0) + ytLikes;
-                  const totalComments = metrics.reduce((sum, m) => sum + m.comments, 0) + ytComments;
-                  const totalShares = metrics.reduce((sum, m) => sum + m.shares, 0) + ytShares;
+                  // Filter videos by date range
+                  const days = dateRange === 'all' ? 365 : parseInt(dateRange);
+                  const startDate = subDays(new Date(), days);
                   
+                  const filteredYtVideos = dateRange === 'all'
+                    ? (youtubeData?.videos || [])
+                    : (youtubeData?.videos || []).filter(v => {
+                        const publishedAt = new Date(v.publishedAt);
+                        return isAfter(publishedAt, startDate) || publishedAt.getTime() === startDate.getTime();
+                      });
+
+                  const ytLikes = filteredYtVideos.reduce((sum, v) => sum + (v.stats?.likes || 0), 0);
+                  const ytComments = filteredYtVideos.reduce((sum, v) => sum + (v.stats?.comments || 0), 0);
+                  const ytShares = Math.round(ytComments * 0.3);
+
+                  const filteredMetrics = dateRange === 'all'
+                    ? metrics
+                    : metrics.filter(m => isAfter(new Date(m.collectedAt), startDate) || new Date(m.collectedAt).getTime() === startDate.getTime());
+
+                  const totalLikes = filteredMetrics.reduce((sum, m) => sum + m.likes, 0) + ytLikes;
+                  const totalComments = filteredMetrics.reduce((sum, m) => sum + m.comments, 0) + ytComments;
+                  const totalShares = filteredMetrics.reduce((sum, m) => sum + m.shares, 0) + ytShares;
+
                   return [
                     { label: 'Likes', value: totalLikes, color: '#E4405F' },
                     { label: 'Comments', value: totalComments, color: '#2563EB' },
@@ -1028,7 +1087,7 @@ export default function AnalyticsPage() {
                   ].map(({ label, value, color }) => (
                     <div key={label} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: color }}
                         />
@@ -1040,9 +1099,6 @@ export default function AnalyticsPage() {
                 })()}
               </div>
             </Card>
-
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Platform Stats</h2>
               <div className="space-y-4">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const stats = platformStats[platform];

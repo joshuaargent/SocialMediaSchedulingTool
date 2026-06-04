@@ -94,9 +94,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    // Support custom date range from query parameter
+    const daysParam = request.nextUrl.searchParams.get('days');
+    const days = daysParam ? parseInt(daysParam) : 30;
+    const startDateObj = new Date(today);
+    startDateObj.setDate(today.getDate() - days);
+    const startDate = startDateObj.toISOString().split('T')[0];
     const endDate = today.toISOString().split('T')[0];
 
     const ytStatsCookie = request.cookies.get('yt_stats')?.value;
@@ -109,7 +113,7 @@ export async function GET(request: NextRequest) {
 
     const headers = { 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' };
 
-    console.log('YouTube Analytics request:', { channelId, startDate, endDate, hasToken: !!accessToken });
+    console.log('YouTube Analytics request:', { channelId, startDate, endDate, days, hasToken: !!accessToken });
     console.log('Token source:', {
       fromCookie: !!request.cookies.get('yt_access_token')?.value,
       fromDB: orgId ? 'checking' : 'no org'
