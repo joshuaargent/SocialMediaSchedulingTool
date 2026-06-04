@@ -67,51 +67,66 @@ interface DateRangeOption {
 }
 
 // ============================================
-// Line Chart Component
+// Line Chart Component (clean, no points)
 // ============================================
 
 interface LineChartProps {
   data: { label: string; value: number; color?: string }[];
   height?: number;
   showArea?: boolean;
+  smooth?: boolean;
+  gradient?: string;
 }
 
-function LineChart({ data, height = 200, showArea = true }: LineChartProps) {
+function LineChart({ data, height = 200, showArea = true, smooth = true, gradient = 'var(--color-accent)' }: LineChartProps) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
-  const minValue = 0;
-  const range = maxValue - minValue;
   
-  const padding = { top: 10, right: 10, bottom: 30, left: 10 };
+  const padding = { top: 15, right: 15, bottom: 25, left: 15 };
   const chartHeight = height - padding.top - padding.bottom;
-  const chartWidth = 100; // percentage based
   const pointCount = data.length;
   
-  const getX = (index: number) => {
-    return padding.left + (index / (pointCount - 1 || 1)) * (100 - padding.left - padding.right);
+  // Normalize points to SVG viewBox (0-100 width, 0-height height)
+  const getX = (index: number) => padding.left + (index / (pointCount - 1 || 1)) * (100 - padding.left - padding.right);
+  const getY = (value: number) => padding.top + chartHeight - ((value / maxValue) * chartHeight);
+  
+  // Generate smooth curve using cardinal spline or simple line
+  const generatePath = (points: { x: number; y: number }[], tension: number = 0.3): string => {
+    if (points.length < 2) return '';
+    
+    if (!smooth) {
+      // Simple straight lines
+      return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    }
+    
+    // Smooth curve using cardinal spline
+    let path = `M ${points[0].x} ${points[0].y}`;
+    
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2] || p2;
+      
+      const cp1x = p1.x + (p2.x - p0.x) * tension / 6;
+      const cp1y = p1.y + (p2.y - p0.y) * tension / 6;
+      const cp2x = p2.x - (p3.x - p1.x) * tension / 6;
+      const cp2y = p2.y - (p3.y - p1.y) * tension / 6;
+      
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+    
+    return path;
   };
   
-  const getY = (value: number) => {
-    return padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
-  };
-  
-  // Generate path for line
-  const linePath = data.map((item, idx) => {
-    const x = getX(idx);
-    const y = getY(item.value);
-    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
-  
-  // Generate path for area (closes the path to bottom)
-  const areaPath = showArea 
-    ? `${linePath} L ${getX(pointCount - 1)} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`
-    : linePath;
-  
-  // Generate points for interactive circles
   const points = data.map((item, idx) => ({
     x: getX(idx),
     y: getY(item.value),
-    ...item
   }));
+  
+  const linePath = generatePath(points);
+  const areaPath = showArea 
+    ? `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
+    : linePath;
   
   return (
     <div className="relative" style={{ height }}>
@@ -121,13 +136,13 @@ function LineChart({ data, height = 200, showArea = true }: LineChartProps) {
         preserveAspectRatio="none"
       >
         <defs>
-          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+          <linearGradient id="lineGradientFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={gradient} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={gradient} stopOpacity="0" />
           </linearGradient>
         </defs>
         
-        {/* Grid lines */}
+        {/* Subtle horizontal grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
           <line
             key={ratio}
@@ -136,62 +151,46 @@ function LineChart({ data, height = 200, showArea = true }: LineChartProps) {
             x2={100 - padding.right}
             y2={padding.top + chartHeight * (1 - ratio)}
             stroke="var(--color-border)"
-            strokeWidth="0.5"
-            strokeDasharray="2"
+            strokeWidth="0.3"
+            strokeDasharray="1"
           />
         ))}
         
-        {/* Area fill */}
+        {/* Gradient area fill */}
         {showArea && (
-          <path
-            d={areaPath}
-            fill="url(#lineGradient)"
-          />
+          <path d={areaPath} fill="url(#lineGradientFill)" />
         )}
         
-        {/* Line */}
+        {/* Smooth line */}
         <path
           d={linePath}
           fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth="2"
+          stroke={gradient}
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
-        
-        {/* Data points */}
-        {points.map((point, idx) => (
-          <g key={idx}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="3"
-              fill="var(--color-bg-card)"
-              stroke="var(--color-accent)"
-              strokeWidth="2"
-              className="hover:r-4 transition-all cursor-pointer"
-            />
-            {/* Tooltip on hover */}
-            <title>{point.label}: {point.value.toLocaleString()}</title>
-          </g>
-        ))}
       </svg>
       
-      {/* X-axis labels */}
+      {/* Labels */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
-        {data.map((item, idx) => (
-          <span 
-            key={idx} 
-            className="text-xs text-[var(--color-text-muted)] truncate"
-            style={{ 
-              width: `${100 / Math.min(data.length, 10)}%`,
-              textAlign: idx === 0 ? 'left' : idx === data.length - 1 ? 'right' : 'center'
-            }}
-          >
-            {item.label}
-          </span>
-        ))}
+        {data.map((item, idx) => {
+          const showLabel = pointCount <= 7 || idx % Math.ceil(pointCount / 7) === 0 || idx === pointCount - 1;
+          return (
+            <span 
+              key={idx} 
+              className="text-[10px] text-[var(--color-text-muted)] truncate"
+              style={{ 
+                width: `${100 / Math.min(pointCount, 7)}%`,
+                textAlign: idx === 0 ? 'left' : idx === pointCount - 1 ? 'right' : 'center',
+                opacity: showLabel ? 1 : 0,
+              }}
+            >
+              {item.label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
