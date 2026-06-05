@@ -5,13 +5,18 @@ import { useRouter } from 'next/navigation';
 import { 
   Calendar as CalendarIcon, 
   TrendingUp, 
+  TrendingDown,
   Clock, 
   CheckCircle, 
   Eye,
   Heart,
+  MessageCircle,
+  Share2,
   Video,
   Image,
-  Plus
+  Plus,
+  Users,
+  BarChart3
 } from 'lucide-react';
 import { format, isToday, isTomorrow, subDays, isAfter } from 'date-fns';
 import { clsx } from 'clsx';
@@ -362,6 +367,46 @@ function DashboardContent() {
                 </p>
               </div>
             </div>
+          </Card>
+        </div>
+
+        {/* Engagement Stats Row */}
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card className="p-4 text-center">
+            <Heart className="w-5 h-5 mx-auto text-red-500 mb-1" />
+            <p className="text-lg font-bold">{filteredYoutubeStats.totalLikes?.toLocaleString() || 0}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Likes</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <MessageCircle className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+            <p className="text-lg font-bold">{filteredYoutubeStats.totalComments?.toLocaleString() || 0}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Comments</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <Share2 className="w-5 h-5 mx-auto text-green-500 mb-1" />
+            <p className="text-lg font-bold">
+              {filteredYoutubeStats.totalVideos?.toLocaleString() || (platformStats.youtube?.posts || 0)}
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <Video className="w-5 h-5 mx-auto text-[#FF0000] mb-1" />
+            <p className="text-lg font-bold">{filteredYoutubeVideos.length}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Uploaded</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <TrendingUp className="w-5 h-5 mx-auto text-purple-500 mb-1" />
+            <p className="text-lg font-bold">
+              {filteredYoutubeStats.totalViews > 0 && filteredYoutubeVideos.length > 0
+                ? (filteredYoutubeStats.totalViews / filteredYoutubeVideos.length || 0).toFixed(0)
+                : 0}
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)]">Avg Views</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <Users className="w-5 h-5 mx-auto text-cyan-500 mb-1" />
+            <p className="text-lg font-bold">{platformConnections.length}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Connected</p>
           </Card>
         </div>
 
