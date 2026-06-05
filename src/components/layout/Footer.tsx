@@ -155,7 +155,10 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-border mt-12 border-t pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex flex-col items-center gap-2 md:items-start">
+            <p className="text-text-muted flex items-center gap-1 text-sm order-2 md:order-1">
+              Built with <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500" /> Next.js
+            </p>
+            <div className="flex flex-col items-center gap-2 md:items-end order-1 md:order-2">
               <p className="text-text-muted text-sm">
                 © {currentYear} {siteConfig.name}. All rights reserved.
               </p>
@@ -175,9 +178,6 @@ export function Footer() {
                 </Link>
               </div>
             </div>
-            <p className="text-text-muted flex items-center gap-1 text-sm">
-              Built with <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500" /> using Next.js
-            </p>
           </div>
         </div>
       </div>
