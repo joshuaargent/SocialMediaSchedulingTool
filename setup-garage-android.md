@@ -4,14 +4,31 @@ This guide will help you set up **Garage** - a free, open-source S3-compatible s
 
 ---
 
+## ⚠️ IMPORTANT: Deployment Mode
+
+**Before you start, decide how you'll deploy your app:**
+
+| Mode | Use Case | Setup Complexity |
+|------|----------|-----------------|
+| **Local Development** | Testing on your computer | Easy |
+| **Vercel/Production** | Live website | Requires tunnel (see below) |
+
+### For Local Development (npm run dev)
+Your tablet only needs to be on the same WiFi network.
+
+### For Vercel Deployment
+Your tablet must be accessible from the internet. You'll need to set up a **tunnel** (see Step 11).
+
+---
+
 ## 📋 Prerequisites Checklist
 
 | ✅ | Item | Notes |
 |---|------|-------|
 | ⬜ | Android tablet | ARM64 processor recommended |
-| ⬜ | SD card (32GB+) | Class 10 or UHS-3 for best speed |
+| ⬜ | SD card (32GB+) | Class 10 or UHS-3 for best speed (you have 256GB!) |
 | ⬜ | Termux app | Download from F-Droid (NOT Google Play!) |
-| ⬜ | WiFi network | Same network as your app |
+| ⬜ | WiFi network | Connected to internet |
 
 ---
 
@@ -462,8 +479,99 @@ Then save and restart Termux.
 - [ ] Created API key
 - [ ] Saved API credentials
 - [ ] Started Garage server
+
+### For Local Development:
 - [ ] Updated .env.local with credentials
 - [ ] Tested upload in app
+
+### For Vercel Deployment:
+- [ ] Set up Cloudflare Tunnel (Step 11)
+- [ ] Updated GARAGE_ENDPOINT with tunnel URL
+- [ ] Added environment variables to Vercel
+
+---
+
+## 🚀 STEP 11: Set Up Cloudflare Tunnel (For Vercel Deployment)
+
+**IMPORTANT:** If you're using Vercel or any hosting provider, your tablet must be accessible from the internet. Cloudflare Tunnel creates a secure connection without needing port forwarding.
+
+### 11.1 Install cloudflared
+
+```bash
+pkg install curl -y
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-arm64 -o cloudflared
+chmod +x cloudflared
+```
+
+### 11.2 Create a free Cloudflare account
+
+1. Go to https://dash.cloudflare.com/
+2. Sign up (it's free)
+3. No credit card required!
+
+### 11.3 Create a tunnel
+
+In Termux on your tablet:
+
+```bash
+# Login to Cloudflare (will open browser)
+./cloudflared tunnel login
+
+# Create a new tunnel
+./cloudflared tunnel create my-garage
+
+# Run the tunnel (this keeps Garage accessible from internet)
+./cloudflared tunnel run my-garage --url http://localhost:3900
+```
+
+### 11.4 Get your tunnel URL
+
+After running the tunnel, you'll see a URL like:
+```
+https://random-name.trycloudflare.com
+```
+
+**Copy this URL!**
+
+### 11.5 Update Your App
+
+**For Local Development (`.env.local`):**
+```bash
+STORAGE_PROVIDER=garage
+GARAGE_ENDPOINT=http://192.168.1.100:3900
+GARAGE_ACCESS_KEY=your_access_key
+GARAGE_SECRET_KEY=your_secret_key
+GARAGE_BUCKET=videos
+```
+
+**For Vercel Deployment:**
+
+Add these environment variables in Vercel Dashboard (Settings → Environment Variables):
+
+```bash
+STORAGE_PROVIDER=garage
+GARAGE_ENDPOINT=https://random-name.trycloudflare.com
+GARAGE_ACCESS_KEY=your_access_key
+GARAGE_SECRET_KEY=your_secret_key
+GARAGE_BUCKET=videos
+```
+
+### 11.6 Keep the tunnel running
+
+The tunnel must stay running on your tablet for uploads to work. You can:
+
+1. **Keep Termux open** while using the app
+2. **Use Termux Boot** (from F-Droid) to auto-start on tablet boot
+3. **Use a service manager** to keep it running
+
+### 11.7 Test the connection
+
+From any device, open:
+```
+https://random-name.trycloudflare.com/videos
+```
+
+You should see an XML error (means it's working!).
 
 ---
 
@@ -474,7 +582,21 @@ Your Android tablet is now a self-hosted video storage server!
 **What you can do now:**
 - Upload videos and images through the Media Library
 - Schedule posts that use your stored videos
-- Access files from multiple devices on your network
-- Store up to your SD card's capacity for free
+- Access files from anywhere via Cloudflare Tunnel
+- Store up to 256GB of videos for free
+
+**Storage capacity:**
+- ~476 videos (500MB each)
+- ~40,000 images
 
 **Need help?** Check the troubleshooting section above or review the Garage documentation.
+
+---
+
+## 🔒 Security Note for Cloudflare Tunnel
+
+When using Cloudflare Tunnel:
+- The connection is encrypted via HTTPS
+- Only people with the tunnel URL can access your storage
+- You can delete the tunnel anytime from Cloudflare dashboard
+- No port forwarding needed - firewall-friendly

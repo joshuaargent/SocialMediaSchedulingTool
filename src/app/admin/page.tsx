@@ -81,6 +81,7 @@ interface GarageStats {
     localNetworkOnly: boolean;
     authenticationRequired: boolean;
     credentialsConfigured: boolean;
+    tunnelMode?: boolean;
   };
   lastUpdated: string;
 }
@@ -474,6 +475,19 @@ export default function AdminPage() {
                     {garageStats?.security.credentialsConfigured ? 'Configured' : 'Missing'}
                   </span>
                 </div>
+                <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {garageStats?.security.tunnelMode ? (
+                      <CheckCircle className="w-5 h-5 text-blue-500" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                    )}
+                    <span>Cloudflare Tunnel</span>
+                  </div>
+                  <span className={`text-sm font-medium ${garageStats?.security.tunnelMode ? 'text-blue-600' : 'text-yellow-600'}`}>
+                    {garageStats?.security.tunnelMode ? 'Active (Internet)' : 'Local Network Only'}
+                  </span>
+                </div>
               </div>
             </Card>
 
@@ -486,7 +500,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-[var(--color-text-muted)] mb-1">Endpoint</p>
-                  <p className="font-mono text-sm bg-[var(--color-bg-secondary)] p-3 rounded">
+                  <p className="font-mono text-sm bg-[var(--color-bg-secondary)] p-3 rounded break-all">
                     {garageStats?.storage.endpoint || 'Not configured'}
                   </p>
                 </div>
@@ -499,6 +513,13 @@ export default function AdminPage() {
                   </p>
                 </div>
               </div>
+              {garageStats?.security.tunnelMode && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Cloudflare Tunnel Active:</strong> Your storage is accessible from the internet via secure tunnel. Keep the tunnel running on your tablet.
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
         )}

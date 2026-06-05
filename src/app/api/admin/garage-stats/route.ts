@@ -164,9 +164,10 @@ async function getGarageStats(): Promise<GarageStats> {
     },
     files: fileStats,
     security: {
-      localNetworkOnly: true,
+      localNetworkOnly: process.env.GARAGE_ENDPOINT?.startsWith('http://192.168') || false,
       authenticationRequired: true,
       credentialsConfigured: !!(accessKey && secretKey),
+      tunnelMode: !process.env.GARAGE_ENDPOINT?.startsWith('http://192.168'),
     },
     lastUpdated: new Date().toISOString(),
   };
