@@ -41,10 +41,11 @@ export function PageHeader({
             >
               {title}
             </h1>
+            <div className="mt-2 h-0.5 w-12 bg-[var(--color-accent)]" />
             {description && (
               <p
                 className={cn(
-                  'text-text-secondary mt-2 max-w-2xl text-base',
+                  'text-text-secondary mt-4 max-w-2xl text-base',
                   align === 'center' && 'mx-auto'
                 )}
               >

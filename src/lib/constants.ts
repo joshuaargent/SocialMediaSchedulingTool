@@ -52,6 +52,8 @@ export const mainNav = [
 
 export const footerNav = {
   main: [
+    { label: 'Home', href: '/' },
+    { label: 'About', href: '/about' },
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Queue', href: '/queue' },
     { label: 'Calendar', href: '/calendar' },
@@ -59,12 +61,13 @@ export const footerNav = {
     { label: 'Media Library', href: '/media-library' },
     { label: 'Pipeline', href: '/pipeline' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Settings', href: '/settings' },
   ],
   social: [
+    { label: 'Email', href: 'mailto:argentjackjoshua@outlook.com' },
     { label: 'YouTube', href: siteConfig.links.youtube },
-    { label: 'GitHub', href: siteConfig.links.github },
     { label: 'Instagram', href: siteConfig.links.instagram },
+    { label: 'Strava', href: siteConfig.links.strava },
+    { label: 'GitHub', href: siteConfig.links.github },
     { label: 'Facebook', href: siteConfig.links.facebook },
   ],
   legal: [
