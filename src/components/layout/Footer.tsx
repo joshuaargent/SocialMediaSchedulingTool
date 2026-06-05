@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { siteConfig, footerNav } from '@/lib/constants';
-import { Rss, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 // ============================================
 // Footer Component
@@ -154,22 +154,12 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-border mt-12 border-t pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-text-muted flex items-center gap-1 text-sm">
+            <p className="text-text-muted text-sm">
               © {currentYear} {siteConfig.author.name}. All rights reserved.
             </p>
-            <div className="flex flex-col items-center gap-2 md:flex-row md:items-end">
-              <a
-                href="/rss.xml"
-                className="text-text-muted hover:text-text-primary transition-colors text-sm flex items-center gap-1"
-              >
-                <Rss className="h-3.5 w-3.5" />
-                RSS Feed
-              </a>
-              <span className="text-text-muted mx-2 hidden md:inline">•</span>
-              <p className="text-text-muted text-sm">
-                Built with <Heart className="h-3.5 w-3.5 inline fill-red-500 text-red-500" /> using Next.js
-              </p>
-            </div>
+            <p className="text-text-muted text-sm">
+              Built with <Heart className="h-3.5 w-3.5 inline fill-red-500 text-red-500" /> using Next.js
+            </p>
           </div>
         </div>
       </div>

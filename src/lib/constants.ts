@@ -40,7 +40,6 @@ export const meta = {
 // ============================================
 
 export const mainNav = [
-  { label: 'About', href: '/about' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Queue', href: '/queue' },
   { label: 'Calendar', href: '/calendar' },

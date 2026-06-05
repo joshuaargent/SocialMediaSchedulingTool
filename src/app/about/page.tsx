@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { siteConfig } from '@/lib/constants';
 import { 
   Calendar,
@@ -15,64 +16,16 @@ import {
   Heart,
   Code,
   Users,
-  ExternalLink
+  ExternalLink,
+  Send,
+  CheckCircle
 } from 'lucide-react';
 
-const features = [
-  {
-    icon: Calendar,
-    title: 'Content Calendar',
-    description: 'Visualize your entire content schedule with an interactive calendar. Plan weeks ahead and never miss a post.',
-  },
-  {
-    icon: Clock,
-    title: 'Smart Scheduling',
-    description: 'Schedule posts at optimal times for each platform. Set it once, publish everywhere.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Analytics Dashboard',
-    description: 'Track performance across all platforms in one place. Monitor views, engagement, and growth.',
-  },
-  {
-    icon: Share2,
-    title: 'Multi-Platform',
-    description: 'Publish to YouTube, TikTok, Instagram, and Facebook from one central hub.',
-  },
-  {
-    icon: Image,
-    title: 'Media Library',
-    description: 'Organize your videos, thumbnails, and images. Access your media assets anywhere.',
-  },
-  {
-    icon: Zap,
-    title: 'Pipeline Workflow',
-    description: 'Manage content from ideation to publication with our production pipeline.',
-  },
-];
+const FORMSPREE_FORM_ID = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
 
-const values = [
-  {
-    number: '01',
-    title: 'Built for Creators',
-    description: 'SMST is designed by a content creator, for content creators. Every feature is built with real-world needs in mind.',
-  },
-  {
-    number: '02',
-    title: 'Privacy First',
-    description: 'Your data belongs to you. We never sell your information or share it with third parties without consent.',
-  },
-  {
-    number: '03',
-    title: 'Simple & Fast',
-    description: 'No complex setups or steep learning curves. Get started in minutes, not hours.',
-  },
-  {
-    number: '04',
-    title: 'Always Improving',
-    description: 'We continuously add new features and improvements based on user feedback and needs.',
-  },
-];
+// ============================================
+// About Page
+// ============================================
 
 export default function AboutPage() {
   return (
@@ -82,87 +35,20 @@ export default function AboutPage() {
         description="The social media scheduling tool built for content creators who want to streamline their workflow."
       />
 
-      {/* Story Section */}
+      {/* Hero Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
-                The Story Behind SMST
-              </h2>
-              <div className="mt-6 space-y-4 text-[var(--color-text-secondary)]">
-                <p>
-                  As a content creator managing multiple platforms, I found myself juggling between 
-                  different tools and dashboards just to schedule and track my content. The existing 
-                  solutions were either too expensive, too complex, or didn't support all the platforms I used.
-                </p>
-                <p>
-                  That's when I decided to build SMST - a tool that puts everything I need in one place. 
-                  From scheduling posts to analyzing performance, from managing media files to tracking 
-                  the entire content pipeline.
-                </p>
-                <p>
-                  SMST is now the central hub for all my content creation workflow, and I'm excited 
-                  to share it with other creators who face the same challenges.
-                </p>
-              </div>
-              <div className="mt-8">
-                <a
-                  href={siteConfig.links.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-[var(--color-accent)] hover:underline"
-                >
-                  <Code className="h-4 w-4" />
-                  View on GitHub
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-8">
-                <div className="text-center">
-                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
-                    <Heart className="h-8 w-8 text-[var(--color-accent)]" />
-                  </div>
-                  <h3 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
-                    {siteConfig.author.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                    {siteConfig.location}
-                  </p>
-                  <div className="mt-6 flex flex-wrap justify-center gap-3">
-                    <a
-                      href={siteConfig.links.youtube}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                    >
-                      YouTube
-                    </a>
-                    <span className="text-[var(--color-text-muted)]">•</span>
-                    <a
-                      href={siteConfig.links.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                    >
-                      Instagram
-                    </a>
-                    <span className="text-[var(--color-text-muted)]">•</span>
-                    <a
-                      href={siteConfig.links.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                    >
-                      GitHub
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] md:text-4xl">
+              Streamline Your Content.
+              <br />
+              <span className="text-[var(--color-accent)]">Simplify Your Life.</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)]">
+              SMST is a social media scheduling tool that helps content creators manage their 
+              presence across YouTube, TikTok, Instagram, and Facebook from one central hub. 
+              Built by a content creator, for content creators.
+            </p>
           </div>
         </div>
       </section>
@@ -174,25 +60,80 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
               What SMST Offers
             </h2>
-            <p className="mt-3 text-[var(--color-text-secondary)]">
-              Everything you need to manage your social media presence in one place.
-            </p>
           </div>
           
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <Card key={feature.title} className="p-6">
-                <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
-                  <feature.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {feature.description}
-                </p>
-              </Card>
-            ))}
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Content Calendar
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Visualize your entire content schedule with an interactive calendar. Plan weeks ahead.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <Clock className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Smart Scheduling
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Schedule posts at optimal times for each platform. Set it once, publish everywhere.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Analytics Dashboard
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Track performance across all platforms. Monitor views, engagement, and growth.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <Share2 className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Multi-Platform
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Publish to YouTube, TikTok, Instagram, and Facebook from one central hub.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <Image className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Media Library
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Organize your videos, thumbnails, and images. Access your media anywhere.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 inline-flex rounded-lg bg-[var(--color-accent)]/10 p-2.5 text-[var(--color-accent)]">
+                <Zap className="h-5 w-5" />
+              </div>
+              <h3 className="mb-2 font-semibold text-[var(--color-text-primary)]">
+                Pipeline Workflow
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Manage content from ideation to publication with our production pipeline.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
@@ -205,42 +146,106 @@ export default function AboutPage() {
           </h2>
           
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {values.map((value) => (
-              <div key={value.number} className="relative pl-12">
-                <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">
-                  {value.number}
-                </span>
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                  {value.title}
-                </h3>
-                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                  {value.description}
-                </p>
-              </div>
-            ))}
+            <div className="relative pl-12">
+              <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">01</span>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                Built for Creators
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                SMST is designed by a content creator, for content creators. Every feature is built with real-world needs in mind.
+              </p>
+            </div>
+
+            <div className="relative pl-12">
+              <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">02</span>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                Privacy First
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                Your data belongs to you. We never sell your information or share it with third parties without consent.
+              </p>
+            </div>
+
+            <div className="relative pl-12">
+              <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">03</span>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                Simple & Fast
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                No complex setups or steep learning curves. Get started in minutes, not hours.
+              </p>
+            </div>
+
+            <div className="relative pl-12">
+              <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">04</span>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                Always Improving
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                We continuously add new features and improvements based on user feedback and needs.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Newsletter Section */}
       <section className="bg-[var(--color-bg-secondary)] py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
             <Users className="mx-auto h-12 w-12 text-[var(--color-accent)]" />
             <h2 className="mt-4 text-2xl font-bold text-[var(--color-text-primary)]">
-              Ready to Get Started?
+              Stay Updated
             </h2>
             <p className="mt-3 text-[var(--color-text-secondary)]">
-              Join the growing community of content creators using SMST to streamline their workflow.
+              Get the latest features, tips, and updates for SMST delivered to your inbox. 
+              No spam, unsubscribe anytime.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/login">
-                <Button size="lg">Create Account</Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant="outline" size="lg">Get in Touch</Button>
-              </Link>
-            </div>
+            
+            {FORMSPREE_FORM_ID ? (
+              <form
+                action={`https://formspree.io/f/${FORMSPREE_FORM_ID}`}
+                method="POST"
+                className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
+              >
+                <input type="hidden" name="_subject" value="SMST Newsletter Signup" />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  className="w-full max-w-xs"
+                />
+                <Button type="submit">
+                  <Send className="mr-2 h-4 w-4" />
+                  Subscribe
+                </Button>
+              </form>
+            ) : (
+              <p className="mt-4 text-sm text-[var(--color-text-muted)]">
+                Newsletter coming soon.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container py-12 md:py-16">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+            Ready to Get Started?
+          </h2>
+          <p className="mt-3 text-[var(--color-text-secondary)]">
+            Join the growing community of content creators using SMST to streamline their workflow.
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link href="/login">
+              <Button size="lg">Create Account</Button>
+            </Link>
+            <Link href="/contact">
+              <Button variant="outline" size="lg">Get in Touch</Button>
+            </Link>
           </div>
         </div>
       </section>

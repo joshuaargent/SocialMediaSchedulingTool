@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { siteConfig } from '@/lib/constants';
 import { 
   Calendar, 
@@ -11,8 +12,12 @@ import {
   Image, 
   Globe,
   Zap,
-  Shield
+  Shield,
+  Send,
+  Users
 } from 'lucide-react';
+
+const FORMSPREE_FORM_ID = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
 
 // ============================================
 // Homepage
@@ -250,6 +255,49 @@ export default function HomePage() {
                 <p className="text-xs text-[var(--color-text-secondary)]">Available now</p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="bg-[var(--color-bg-secondary)] py-16 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-2xl text-center">
+            <Users className="mx-auto h-12 w-12 text-[var(--color-accent)]" />
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-3xl">
+              Stay in the loop
+            </h2>
+            <p className="mt-3 text-[var(--color-text-secondary)]">
+              Get the latest features, tips, and updates for SMST delivered to your inbox. 
+              No spam, unsubscribe anytime.
+            </p>
+            
+            {FORMSPREE_FORM_ID ? (
+              <form
+                action={`https://formspree.io/f/${FORMSPREE_FORM_ID}`}
+                method="POST"
+                className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
+              >
+                <input type="hidden" name="_subject" value="SMST Newsletter Signup" />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  className="w-full max-w-xs"
+                />
+                <Button type="submit">
+                  <Send className="mr-2 h-4 w-4" />
+                  Subscribe
+                </Button>
+              </form>
+            ) : (
+              <div className="mt-6">
+                <Link href="/login">
+                  <Button size="lg">Get Started Free</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
