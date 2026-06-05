@@ -556,15 +556,96 @@ GARAGE_SECRET_KEY=your_secret_key
 GARAGE_BUCKET=videos
 ```
 
-### 11.6 Keep the tunnel running
+### 11.6 Keep the tunnel running (CRITICAL!)
 
-The tunnel must stay running on your tablet for uploads to work. You can:
+**⚠️ IMPORTANT:** The tunnel MUST stay running on your tablet for uploads to work. If it stops, uploads will fail until you restart it.
 
-1. **Keep Termux open** while using the app
-2. **Use Termux Boot** (from F-Droid) to auto-start on tablet boot
-3. **Use a service manager** to keep it running
+**Options to keep it running:**
 
-### 11.7 Test the connection
+#### Option A: Termux Boot (Recommended - Auto-start on boot)
+
+1. **Install Termux Boot** from F-Droid (separate app)
+   - https://f-droid.org/en/packages/com.termux.boot/
+
+2. **Create auto-start script:**
+   ```bash
+   # Create the boot script
+   nano $HOME/.termux/boot/start-garage.sh
+   ```
+
+3. **Paste this content:**
+   ```bash
+   #!/data/data/com.termux/files/usr/bin/sh
+   cd /data/data/com.termux/files/home
+   
+   # Wait for network to be ready
+   sleep 30
+   
+   # Start Garage
+   ./garage server run &
+   
+   # Wait a bit more
+   sleep 10
+   
+   # Start Cloudflare Tunnel
+   ./cloudflared tunnel run my-garage --url http://localhost:3900
+   ```
+
+4. **Make it executable:**
+   ```bash
+   chmod +x $HOME/.termux/boot/start-garage.sh
+   ```
+
+Now whenever your tablet boots, both Garage and the tunnel will start automatically!
+
+#### Option B: Keep Termux in foreground
+
+Simply keep Termux app open (not minimized to background) while using your app.
+
+#### Option C: Use a notification to remind you
+
+Create a script that shows a notification if the tunnel stops:
+```bash
+# Check if tunnel is running, if not show notification
+pgrep cloudflared || termux-notification -t "Garage Tunnel Stopped" -c "Restart the tunnel to enable uploads"
+```
+
+---
+
+### 11.7 What Happens When Tablet Goes Offline?
+
+| Event | What Happens | Solution |
+|-------|--------------|----------|
+| Tablet sleeps | Tunnel stops → Uploads fail | Use Termux Boot to auto-restart |
+| Tablet reboots | Everything stops → Uploads fail | Termux Boot auto-starts services |
+| WiFi disconnects | Can't reach tablet → Uploads fail | Reconnect WiFi, tunnel auto-reconnects |
+| Termux closed | Tunnel stops → Uploads fail | Keep Termux open or use Boot |
+| Battery dies | Everything stops → Uploads fail | Keep tablet charged |
+
+**Best practice:** Keep your tablet plugged in and awake when expecting uploads.
+
+---
+
+### 11.8 Connection Health Monitoring
+
+Your admin dashboard at `/admin` already shows:
+- Connection status (Online/Offline)
+- Latency
+- Whether tunnel is active
+
+**Before scheduling posts, check:**
+1. Go to `/admin` → Storage Health tab
+2. Verify "Connection Status" shows "Online"
+3. Verify "Cloudflare Tunnel" shows "Active (Internet)"
+4. Check latency is reasonable (under 1000ms is fine)
+
+If you see "Offline" or high latency:
+1. Open Termux on your tablet
+2. Run: `./garage server run &`
+3. Run: `./cloudflared tunnel run my-garage --url http://localhost:3900`
+4. Wait 10 seconds, refresh admin page
+
+### 11.9 Test the connection
 
 From any device, open:
 ```

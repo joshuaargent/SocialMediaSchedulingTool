@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Upload, Image, Video, Folder, Search, Trash2, Grid, List, X, Play, ExternalLink, AlertCircle } from 'lucide-react';
+import { Upload, Image, Video, Folder, Search, Trash2, Grid, List, X, Play, ExternalLink, AlertCircle, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
 interface MediaFile {
@@ -20,6 +20,12 @@ interface StorageInfo {
   endpoint: string;
 }
 
+interface ConnectionStatus {
+  connected: boolean;
+  latency: number | null;
+  status: 'checking' | 'online' | 'offline';
+}
+
 export default function MediaLibrary() {
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +38,27 @@ export default function MediaLibrary() {
   const [selectedVideo, setSelectedVideo] = useState<MediaFile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({ connected: false, latency: null, status: 'checking' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check storage connection health
+  const checkConnection = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/storage');
+      if (res.ok) {
+        const data = await res.json();
+        setConnectionStatus({
+          connected: data.health?.connected || false,
+          latency: data.health?.latency || null,
+          status: data.health?.connected ? 'online' : 'offline',
+        });
+      } else {
+        setConnectionStatus({ connected: false, latency: null, status: 'offline' });
+      }
+    } catch {
+      setConnectionStatus({ connected: false, latency: null, status: 'offline' });
+    }
+  }, []);
 
   // Fetch files
   const fetchFiles = useCallback(async () => {
@@ -49,10 +75,13 @@ export default function MediaLibrary() {
       } else {
         const errorData = await res.json();
         setError(errorData.error || 'Failed to load files');
+        // Mark as offline if we can't reach the upload endpoint
+        setConnectionStatus({ connected: false, latency: null, status: 'offline' });
       }
     } catch (err) {
       console.error('Failed to fetch files:', err);
       setError('Failed to connect to server');
+      setConnectionStatus({ connected: false, latency: null, status: 'offline' });
     } finally {
       setLoading(false);
     }
@@ -60,11 +89,21 @@ export default function MediaLibrary() {
 
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
+    // Check connection status periodically (every 30 seconds)
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000);
+    return () => clearInterval(interval);
+  }, [fetchFiles, checkConnection]);
 
   // Handle file upload with progress
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList) return;
+
+    // Check connection before uploading
+    if (!connectionStatus.connected) {
+      setError('Storage is offline. Please check your tablet connection and refresh the page.');
+      return;
+    }
 
     setUploading(true);
     setError(null);
@@ -242,13 +281,39 @@ export default function MediaLibrary() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Media Library</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">
+          <p className="text-[var(--color-text-secondary)] mt-1 flex items-center gap-2 flex-wrap">
             Manage your images and videos
             {storageInfo && (
-              <span className="ml-2 text-xs px-2 py-0.5 bg-[var(--color-bg-secondary)] rounded">
-                {storageInfo.provider} • {storageInfo.endpoint}
+              <span className="text-xs px-2 py-0.5 bg-[var(--color-bg-secondary)] rounded">
+                {storageInfo.provider}
               </span>
             )}
+            {/* Connection Status Indicator */}
+            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded ${
+              connectionStatus.status === 'online' 
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : connectionStatus.status === 'checking'
+                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {connectionStatus.status === 'online' ? (
+                <>
+                  <Wifi className="w-3 h-3" />
+                  Online
+                  {connectionStatus.latency && ` • ${connectionStatus.latency}ms`}
+                </>
+              ) : connectionStatus.status === 'checking' ? (
+                <>
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3 h-3" />
+                  Offline
+                </>
+              )}
+            </span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -308,9 +373,46 @@ export default function MediaLibrary() {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] transition-colors relative"
+        onClick={() => {
+          if (!connectionStatus.connected) {
+            setError('Storage is offline. Please check your tablet and refresh the page.');
+            return;
+          }
+          fileInputRef.current?.click();
+        }}
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors relative ${
+          !connectionStatus.connected
+            ? 'border-red-300 bg-red-50 dark:bg-red-900/10 cursor-not-allowed'
+            : 'border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]'
+        }`}
       >
+        {/* Offline Warning Overlay */}
+        {!connectionStatus.connected && connectionStatus.status !== 'checking' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-bg-card)]/90 rounded-xl z-10">
+            <div className="text-center p-6">
+              <WifiOff className="w-12 h-12 mx-auto text-red-500 mb-3" />
+              <p className="text-lg font-semibold text-red-600 mb-2">Storage Offline</p>
+              <p className="text-sm text-[var(--color-text-muted)] mb-4">
+                Your tablet storage is not connected. Please:
+              </p>
+              <ul className="text-sm text-[var(--color-text-secondary)] text-left list-disc list-inside space-y-1">
+                <li>Make sure Garage is running on your tablet</li>
+                <li>Make sure Cloudflare Tunnel is active</li>
+                <li>Check that your tablet is connected to the internet</li>
+              </ul>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  checkConnection();
+                }}
+                className="mt-4 px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 flex items-center gap-2 mx-auto"
+              >
+                <RefreshCw className="w-4 h-4" /> Check Connection
+              </button>
+            </div>
+          </div>
+        )}
+
         <input
           ref={fileInputRef}
           type="file"
@@ -330,9 +432,9 @@ export default function MediaLibrary() {
           </div>
         ) : (
           <>
-            <Upload className="w-12 h-12 mx-auto text-[var(--color-text-muted)] mb-4" />
-            <p className="text-lg font-medium text-[var(--color-text-primary)]">
-              Drag files here or click to upload
+            <Upload className={`w-12 h-12 mx-auto mb-4 ${!connectionStatus.connected ? 'text-gray-400' : 'text-[var(--color-text-muted)]'}`} />
+            <p className={`text-lg font-medium ${!connectionStatus.connected ? 'text-gray-400' : 'text-[var(--color-text-primary)]'}`}>
+              {connectionStatus.connected ? 'Drag files here or click to upload' : 'Uploads disabled - Storage Offline'}
             </p>
             <p className="text-sm text-[var(--color-text-muted)] mt-2">
               Supports images (JPG, PNG, GIF, WebP) and videos (MP4, MOV, WebM)
