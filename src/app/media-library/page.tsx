@@ -1,36 +1,58 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Upload, Image, Video, Folder, Search, Trash2, Grid, List } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Upload, Image, Video, Folder, Search, Trash2, Grid, List, X, Play, ExternalLink, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 
 interface MediaFile {
+  id?: string;
   filename: string;
   url: string;
   originalName?: string;
   type?: string;
+  mimeType?: string;
   size?: number;
   createdAt?: string;
+}
+
+interface StorageInfo {
+  provider: string;
+  endpoint: string;
 }
 
 export default function MediaLibrary() {
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterType, setFilterType] = useState<'all' | 'image' | 'video'>('all');
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<MediaFile | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch files
   const fetchFiles = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/upload');
       if (res.ok) {
         const data = await res.json();
         setFiles(data.files || []);
+        if (data.storage) {
+          setStorageInfo(data.storage);
+        }
+      } else {
+        const errorData = await res.json();
+        setError(errorData.error || 'Failed to load files');
       }
-    } catch (error) {
-      console.error('Failed to fetch files:', error);
+    } catch (err) {
+      console.error('Failed to fetch files:', err);
+      setError('Failed to connect to server');
     } finally {
       setLoading(false);
     }
@@ -40,33 +62,92 @@ export default function MediaLibrary() {
     fetchFiles();
   }, [fetchFiles]);
 
-  // Handle file upload
+  // Handle file upload with progress
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList) return;
 
     setUploading(true);
-    const newFiles: MediaFile[] = [];
+    setError(null);
 
-    for (const file of Array.from(fileList)) {
+    const filesToUpload = Array.from(fileList);
+
+    for (const file of filesToUpload) {
+      // Set initial progress
+      setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
+
       const formData = new FormData();
       formData.append('file', file);
 
       try {
+        // Simulate progress (actual progress would need XMLHttpRequest)
+        const progressInterval = setInterval(() => {
+          setUploadProgress((prev) => {
+            const current = prev[file.name] || 0;
+            if (current < 90) {
+              return { ...prev, [file.name]: current + 10 };
+            }
+            return prev;
+          });
+        }, 200);
+
         const res = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
+
+        clearInterval(progressInterval);
+
         const data = await res.json();
+
         if (data.success) {
-          newFiles.push(data.file);
+          setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }));
+          
+          // Add to file list with delay for animation
+          setTimeout(() => {
+            setFiles((prev) => [{
+              url: data.file.url,
+              filename: data.file.key,
+              originalName: data.file.originalName,
+              type: data.file.type,
+              mimeType: data.file.type,
+              size: data.file.size,
+              id: data.file.mediaAssetId,
+            }, ...prev]);
+          }, 300);
+
+          // Remove progress indicator after animation
+          setTimeout(() => {
+            setUploadProgress((prev) => {
+              const newProgress = { ...prev };
+              delete newProgress[file.name];
+              return newProgress;
+            });
+          }, 600);
+        } else {
+          setError(data.error || 'Upload failed');
+          setUploadProgress((prev) => {
+            const newProgress = { ...prev };
+            delete newProgress[file.name];
+            return newProgress;
+          });
         }
-      } catch (error) {
-        console.error('Upload failed:', error);
+      } catch (err) {
+        console.error('Upload failed:', err);
+        setError('Upload failed. Please try again.');
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[file.name];
+          return newProgress;
+        });
       }
     }
 
-    setFiles((prev) => [...newFiles, ...prev]);
     setUploading(false);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Drag and drop handlers
@@ -85,22 +166,53 @@ export default function MediaLibrary() {
     handleUpload(e.dataTransfer.files);
   };
 
-  // Delete file
-  const handleDelete = async (filename: string) => {
-    if (!confirm('Delete this file?')) return;
-    setFiles((prev) => prev.filter((f) => f.filename !== filename));
+  // Delete file with confirmation
+  const handleDelete = async (file: MediaFile) => {
+    if (deleteConfirm !== file.url) {
+      setDeleteConfirm(file.url);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/upload?url=${encodeURIComponent(file.url)}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setFiles((prev) => prev.filter((f) => f.url !== file.url));
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to delete file');
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Failed to delete file');
+    }
+
+    setDeleteConfirm(null);
   };
 
   // Copy URL to clipboard
-  const copyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    alert('URL copied to clipboard!');
+  const copyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Open video in modal
+  const openVideoModal = (video: MediaFile) => {
+    setSelectedVideo(video);
   };
 
   // Filter files
-  const filteredFiles = files.filter((f) =>
-    f.filename.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredFiles = files.filter((f) => {
+    const matchesSearch = (f.originalName || f.filename).toLowerCase().includes(search.toLowerCase());
+    const matchesType = filterType === 'all' || f.type?.startsWith(filterType);
+    return matchesSearch && matchesType;
+  });
 
   // Get file type icon
   const getTypeIcon = (type: string | undefined) => {
@@ -113,58 +225,122 @@ export default function MediaLibrary() {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  };
+
+  // Format date
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className="container py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Media Library</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Manage your images and videos</p>
+          <p className="text-[var(--color-text-secondary)] mt-1">
+            Manage your images and videos
+            {storageInfo && (
+              <span className="ml-2 text-xs px-2 py-0.5 bg-[var(--color-bg-secondary)] rounded">
+                {storageInfo.provider} • {storageInfo.endpoint}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)]'}`}
-          >
-            <Grid className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)]'}`}
-          >
-            <List className="w-5 h-5" />
-          </button>
+          {/* Type filter */}
+          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg p-1">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`px-3 py-1 text-sm rounded ${filterType === 'all' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterType('image')}
+              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'image' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+            >
+              <Image className="w-4 h-4" /> Images
+            </button>
+            <button
+              onClick={() => setFilterType('video')}
+              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'video' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+            >
+              <Video className="w-4 h-4" /> Videos
+            </button>
+          </div>
+          
+          {/* View mode */}
+          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]'}`}
+            >
+              <Grid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]'}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 p-4 bg-[var(--color-error)]/10 border border-[var(--color-error)]/30 rounded-lg text-[var(--color-error)]">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="flex-1">{error}</p>
+          <button onClick={() => setError(null)} className="p-1 hover:bg-[var(--color-error)]/20 rounded">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Upload Zone */}
       <Card
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => document.getElementById('file-input')?.click()}
-        className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] transition-colors"
+        onClick={() => fileInputRef.current?.click()}
+        className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] transition-colors relative"
       >
         <input
-          id="file-input"
+          ref={fileInputRef}
           type="file"
           multiple
           accept="image/*,video/*"
           className="hidden"
           onChange={(e) => handleUpload(e.target.files)}
         />
-        <Upload className="w-12 h-12 mx-auto text-[var(--color-text-muted)] mb-4" />
-        <p className="text-lg font-medium text-[var(--color-text-primary)]">
-          Drag files here or click to upload
-        </p>
-        <p className="text-sm text-[var(--color-text-muted)] mt-2">
-          Supports images (JPG, PNG, GIF, WebP) and videos (MP4, MOV, WebM)
-        </p>
-        {uploading && (
-          <p className="text-sm text-[var(--color-accent)] mt-2">Uploading...</p>
+        
+        {uploading ? (
+          <div className="space-y-2">
+            <div className="w-12 h-12 mx-auto border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+            <p className="text-lg font-medium text-[var(--color-text-primary)]">Uploading...</p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              {Object.keys(uploadProgress).length} file(s) in progress
+            </p>
+          </div>
+        ) : (
+          <>
+            <Upload className="w-12 h-12 mx-auto text-[var(--color-text-muted)] mb-4" />
+            <p className="text-lg font-medium text-[var(--color-text-primary)]">
+              Drag files here or click to upload
+            </p>
+            <p className="text-sm text-[var(--color-text-muted)] mt-2">
+              Supports images (JPG, PNG, GIF, WebP) and videos (MP4, MOV, WebM)
+            </p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Max file size: 500MB for videos, 10MB for images
+            </p>
+          </>
         )}
       </Card>
 
@@ -180,54 +356,123 @@ export default function MediaLibrary() {
         />
       </div>
 
+      {/* File count */}
+      <div className="text-sm text-[var(--color-text-muted)]">
+        Showing {filteredFiles.length} of {files.length} files
+      </div>
+
       {/* File Grid/List */}
       {loading ? (
-        <div className="text-center py-12 text-[var(--color-text-secondary)]">Loading...</div>
+        <div className="text-center py-12 text-[var(--color-text-secondary)]">
+          <div className="w-12 h-12 mx-auto border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+          <p className="mt-4">Loading files...</p>
+        </div>
       ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12 text-[var(--color-text-secondary)]">
           <Folder className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No files yet. Upload your first file!</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {filteredFiles.map((file) => {
             const Icon = getTypeIcon(file.type);
             const isImage = file.type?.startsWith('image');
+            const isVideo = file.type?.startsWith('video');
+            const isUploading = file.originalName && uploadProgress[file.originalName] !== undefined;
+            const uploadProgressValue = file.originalName ? uploadProgress[file.originalName] : 0;
             
             return (
               <div
-                key={file.filename}
-                onClick={() => copyUrl(file.url)}
+                key={file.url}
                 className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
               >
+                {/* Thumbnail/Preview */}
                 {isImage ? (
                   <img
                     src={file.url}
-                    alt={file.filename}
+                    alt={file.originalName || file.filename}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
+                ) : isVideo ? (
+                  <div 
+                    className="w-full h-full flex items-center justify-center bg-[var(--color-bg-tertiary)]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openVideoModal(file);
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/30" />
+                    <Play className="w-12 h-12 text-white relative z-10" />
+                    {/* Video duration could be shown here */}
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Icon className="w-12 h-12 text-[var(--color-text-muted)]" />
                   </div>
                 )}
                 
-                {/* Overlay */}
+                {/* Upload progress overlay */}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                    <div className="w-3/4">
+                      <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[var(--color-accent)] transition-all duration-200"
+                          style={{ width: `${uploadProgressValue}%` }}
+                        />
+                      </div>
+                      <p className="text-white text-xs text-center mt-2">{uploadProgressValue}%</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  {isVideo && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openVideoModal(file);
+                      }}
+                      className="p-2 bg-white text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                      title="Play video"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(file.filename);
+                      copyUrl(file.url);
                     }}
-                    className="p-2 bg-[var(--color-error)] text-white rounded-full hover:opacity-90"
+                    className="p-2 bg-white text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    title="Copy URL"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file);
+                    }}
+                    className={`p-2 rounded-full transition-colors ${
+                      deleteConfirm === file.url 
+                        ? 'bg-[var(--color-error)] text-white' 
+                        : 'bg-white text-[var(--color-error)] hover:bg-[var(--color-error)] hover:text-white'
+                    }`}
+                    title={deleteConfirm === file.url ? 'Click again to confirm' : 'Delete'}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 
-                {/* Filename */}
-                <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-                  <p className="text-xs text-white truncate">{file.originalName || file.filename}</p>
+                {/* Filename & size */}
+                <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-xs text-white truncate" title={file.originalName || file.filename}>
+                    {file.originalName || file.filename}
+                  </p>
+                  <p className="text-xs text-white/70">{formatSize(file.size)}</p>
                 </div>
               </div>
             );
@@ -240,40 +485,82 @@ export default function MediaLibrary() {
               <tr>
                 <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Preview</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Type</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Size</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Date</th>
                 <th className="text-right px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredFiles.map((file) => {
                 const Icon = getTypeIcon(file.type);
+                const isImage = file.type?.startsWith('image');
+                const isVideo = file.type?.startsWith('video');
+                
                 return (
-                  <tr key={file.filename} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg-secondary)]">
+                  <tr key={file.url} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg-secondary)]">
                     <td className="px-4 py-3">
-                      <div className="w-10 h-10 rounded bg-[var(--color-bg-secondary)] flex items-center justify-center overflow-hidden">
-                        {file.type?.startsWith('image') ? (
+                      <div 
+                        className="w-12 h-12 rounded bg-[var(--color-bg-secondary)] flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80"
+                        onClick={() => isVideo && openVideoModal(file)}
+                      >
+                        {isImage ? (
                           <img src={file.url} alt="" className="w-full h-full object-cover" />
+                        ) : isVideo ? (
+                          <div className="relative w-full h-full flex items-center justify-center bg-[var(--color-bg-tertiary)]">
+                            <Play className="w-6 h-6 text-white" />
+                          </div>
                         ) : (
-                          <Icon className="w-5 h-5 text-[var(--color-text-muted)]" />
+                          <Icon className="w-6 h-6 text-[var(--color-text-muted)]" />
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[var(--color-text-primary)] truncate max-w-xs">{file.originalName || file.filename}</td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-[var(--color-text-primary)] truncate max-w-xs" title={file.originalName || file.filename}>
+                        {file.originalName || file.filename}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isVideo ? 'bg-purple-100 text-purple-700' : 
+                        isImage ? 'bg-green-100 text-green-700' : 
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {file.mimeType || file.type || 'unknown'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{formatSize(file.size)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => copyUrl(file.url)}
-                        className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-accent)] mr-2"
-                        title="Copy URL"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        onClick={() => handleDelete(file.filename)}
-                        className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-error)]"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{formatDate(file.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        {isVideo && (
+                          <button
+                            onClick={() => openVideoModal(file)}
+                            className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]"
+                            title="Play video"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => copyUrl(file.url)}
+                          className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]"
+                          title="Copy URL"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(file)}
+                          className={`p-2 ${
+                            deleteConfirm === file.url 
+                              ? 'text-white bg-[var(--color-error)]' 
+                              : 'text-[var(--color-text-muted)] hover:text-[var(--color-error)]'
+                          }`}
+                          title={deleteConfirm === file.url ? 'Click again to confirm' : 'Delete'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -281,6 +568,77 @@ export default function MediaLibrary() {
             </tbody>
           </table>
         </Card>
+      )}
+
+      {/* Video Modal */}
+      {selectedVideo && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedVideo(null)}
+        >
+          <div 
+            className="relative max-w-4xl w-full bg-[var(--color-bg-card)] rounded-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="absolute top-0 inset-x-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent z-10">
+              <h3 className="text-white font-medium truncate">{selectedVideo.originalName || selectedVideo.filename}</h3>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            
+            {/* Video Player */}
+            <video
+              src={selectedVideo.url}
+              controls
+              autoPlay
+              className="w-full max-h-[80vh] object-contain bg-black"
+            />
+            
+            {/* Footer */}
+            <div className="p-4 bg-[var(--color-bg-secondary)] flex items-center justify-between">
+              <div className="text-sm text-[var(--color-text-secondary)]">
+                {formatSize(selectedVideo.size)}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => copyUrl(selectedVideo.url)}
+                  className="px-4 py-2 text-sm bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" /> Copy URL
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation toast */}
+      {deleteConfirm && (
+        <div className="fixed bottom-4 right-4 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg shadow-lg p-4 z-40">
+          <p className="text-sm text-[var(--color-text-primary)] mb-2">Click delete again to confirm</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              className="px-4 py-2 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const file = files.find((f) => f.url === deleteConfirm);
+                if (file) handleDelete(file);
+              }}
+              className="px-4 py-2 text-sm bg-[var(--color-error)] text-white rounded-lg hover:opacity-90"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

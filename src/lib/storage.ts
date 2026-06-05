@@ -231,7 +231,7 @@ class LocalStorage implements StorageProvider {
   private basePath: string;
 
   constructor() {
-    this.basePath = './uploads';
+    this.basePath = process.env.LOCAL_STORAGE_PATH || './uploads';
   }
 
   async upload(file: File, path: string): Promise<{ url: string; key: string }> {
@@ -270,6 +270,89 @@ class LocalStorage implements StorageProvider {
 }
 
 // ============================================
+// GARAGE (Self-hosted S3 on Android Tablet + SD Card)
+// ============================================
+
+/**
+ * Garage is a self-hosted, S3-compatible object storage server.
+ * Perfect for running on Android tablets with SD cards!
+ * 
+ * Setup Guide:
+ * 1. Install Termux on your Android tablet
+ * 2. Download Garage: https://garagehq.deuxfleurs.fr/
+ * 3. Configure and run on your SD card
+ * 4. Set STORAGE_PROVIDER=garage in your .env.local
+ */
+class GarageStorage implements StorageProvider {
+  private endpoint: string;
+  private accessKeyId: string;
+  private secretAccessKey: string;
+  private bucketName: string;
+
+  constructor() {
+    this.endpoint = process.env.GARAGE_ENDPOINT || 'http://localhost:3900';
+    this.accessKeyId = process.env.GARAGE_ACCESS_KEY || '';
+    this.secretAccessKey = process.env.GARAGE_SECRET_KEY || '';
+    this.bucketName = process.env.GARAGE_BUCKET || 'videos-bucket';
+  }
+
+  async upload(file: File, path: string): Promise<{ url: string; key: string }> {
+    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
+    
+    const client = new S3Client({
+      region: 'garage',
+      endpoint: this.endpoint,
+      credentials: {
+        accessKeyId: this.accessKeyId,
+        secretAccessKey: this.secretAccessKey,
+      },
+      forcePathStyle: true, // Required for Garage (and MinIO)
+    });
+
+    const key = `${path}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    await client.send(new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+    }));
+
+    // Construct URL - use the endpoint directly for local access
+    // Or configure a public domain for remote access
+    const baseUrl = process.env.GARAGE_PUBLIC_URL || this.endpoint;
+    const url = `${baseUrl}/${this.bucketName}/${key}`;
+    
+    return { url, key };
+  }
+
+  async delete(key: string): Promise<void> {
+    const { S3Client, DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+    
+    const client = new S3Client({
+      region: 'garage',
+      endpoint: this.endpoint,
+      credentials: {
+        accessKeyId: this.accessKeyId,
+        secretAccessKey: this.secretAccessKey,
+      },
+      forcePathStyle: true,
+    });
+
+    await client.send(new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    }));
+  }
+
+  getUrl(key: string): string {
+    const baseUrl = process.env.GARAGE_PUBLIC_URL || this.endpoint;
+    return `${baseUrl}/${this.bucketName}/${key}`;
+  }
+}
+
+// ============================================
 // STORAGE FACTORY
 // ============================================
 
@@ -301,6 +384,13 @@ export function getStorageProvider(): StorageProvider {
         return new LocalStorage();
       }
       storageProvider = new B2Storage();
+      break;
+    case 'garage':
+      if (!process.env.GARAGE_ENDPOINT) {
+        console.warn('Garage not configured, falling back to local storage');
+        return new LocalStorage();
+      }
+      storageProvider = new GarageStorage();
       break;
     default:
       storageProvider = new LocalStorage();
