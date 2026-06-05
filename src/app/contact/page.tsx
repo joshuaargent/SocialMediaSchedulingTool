@@ -12,7 +12,8 @@ const FORMSPREE_FORM_ID = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: "Get in touch with me. I'd love to hear from you.",
+  description: 'Get in touch with SMST. Contact Joshua Argent for questions, collaborations, or support with the social media scheduling tool.',
+  keywords: ['contact', 'support', 'SMST', 'Joshua Argent', 'social media tool'],
 };
 
 export default function ContactPage() {

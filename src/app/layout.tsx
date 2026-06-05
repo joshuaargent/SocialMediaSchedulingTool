@@ -18,10 +18,68 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'SMST - Social Media Scheduling Tool',
-  description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube',
+  title: {
+    default: 'SMST - Social Media Scheduling Tool',
+    template: '%s | SMST',
+  },
+  description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube. Streamline your social media workflow with powerful scheduling and analytics tools.',
+  keywords: [
+    'social media scheduling',
+    'content scheduling',
+    'social media management',
+    'tiktok scheduling',
+    'youtube scheduling',
+    'instagram scheduling',
+    'facebook scheduling',
+    'content calendar',
+    'social media analytics',
+    'SMST'
+  ],
+  authors: [{ name: 'Joshua Argent', url: 'https://joshuaargent.co.uk' }],
+  creator: 'Joshua Argent',
+  publisher: 'SMST',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://smst.app'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_GB',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://smst.app',
+    siteName: 'SMST',
+    title: 'SMST - Social Media Scheduling Tool',
+    description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SMST - Social Media Scheduling Tool',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SMST - Social Media Scheduling Tool',
+    description: 'Schedule, publish, and analyze content across TikTok, Facebook, Instagram, and YouTube.',
+    images: ['/og-image.png'],
+    creator: '@joshua_argent',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 };
 
@@ -60,7 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <OAuthConnectionSync />
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen pb-24">{children}</main>
           <Footer />
           <Toaster />
         </ThemeProvider>
