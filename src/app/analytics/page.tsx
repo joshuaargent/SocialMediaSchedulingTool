@@ -182,7 +182,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
       )}
       
       <svg 
-        className="w-full h-full cursor-crosshair" 
+        className="w-full h-full" 
         viewBox={`0 0 100 ${height}`} 
         preserveAspectRatio="none"
         onMouseMove={handleMouseMove}

@@ -150,6 +150,32 @@ export function Footer() {
               ))}
             </ul>
           </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="text-text-primary text-sm font-semibold tracking-wider uppercase">
+              Contact
+            </h3>
+            <ul className="mt-4 space-y-2 text-sm text-text-secondary">
+              <li className="flex flex-col">
+                <span className="text-text-muted">Business:</span>
+                <span>SMST</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-text-muted">Location:</span>
+                <span>Surrey, United Kingdom</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-text-muted">Email:</span>
+                <a 
+                  href="mailto:argentjackjoshua@outlook.com" 
+                  className="hover:text-text-primary transition-colors"
+                >
+                  argentjackjoshua@outlook.com
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* Bottom Bar */}

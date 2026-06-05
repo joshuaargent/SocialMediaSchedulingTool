@@ -192,13 +192,17 @@ export default function PrivacyPolicyPage() {
               <li>UI customization options</li>
             </ul>
 
-            <h3>10.3 Analytics Cookies</h3>
-            <p>We may use analytics tools that set cookies to:</p>
+            <h3>10.3 Analytics and Website Performance</h3>
+            <p>We use Vercel Web Analytics to collect anonymous, aggregated statistics about page views, device types, browsers, and geographic location. This service:</p>
             <ul>
-              <li>Understand how users interact with our platform</li>
-              <li>Identify usage patterns and preferences</li>
-              <li>Improve our services</li>
+              <li>Does not set or read browser cookies</li>
+              <li>Uses a transient server-side hash that is discarded after 24 hours</li>
+              <li>Does not collect personal information or track individuals across sessions</li>
+              <li>Cannot be used to reconstruct browsing activity or identify users</li>
             </ul>
+            <p>
+              Under the UK Data Use and Access Act 2025, this analytics service qualifies for the statistical-purpose exemption as it does not store identifiers on your device and collects only aggregate, non-personal data. You may opt out of this analytics by contacting us at <a href="mailto:argentjackjoshua@outlook.com" className="text-[var(--color-accent)] hover:underline">argentjackjoshua@outlook.com</a> or by enabling &quot;Do Not Track&quot; in your browser settings.
+            </p>
 
             <h2>11. Your Rights Under GDPR/UK GDPR</h2>
             <p>If you are located in the UK or EEA, you have the following rights:</p>
