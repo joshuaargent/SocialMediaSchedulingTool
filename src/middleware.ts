@@ -29,12 +29,7 @@ export async function middleware(request: NextRequest) {
   // If user has session and is on auth route, we can't redirect here 
   // because we can't verify the session in edge runtime
   // Let the client-side handle this instead
-  
-  // Redirect root to login (safe for edge)
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  
+
   return NextResponse.next();
 }
 
