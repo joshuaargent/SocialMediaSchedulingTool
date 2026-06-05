@@ -33,13 +33,38 @@ export default function SettingsPage() {
   const connectedParam = searchParams.get('connected');
   const errorParam = searchParams.get('error');
 
-  // Fetch platform configs on mount
+  // Fetch platform configs and connections on mount
   useEffect(() => {
+    // Fetch platform configs
     fetch('/api/platforms/config')
       .then(res => res.json())
       .then(data => {
         if (data.configs) {
           setPlatformConfigs(data.configs);
+        }
+      })
+      .catch(console.error);
+
+    // Fetch connections from database (syncs tokens across devices)
+    fetch('/api/platforms/connections')
+      .then(res => res.json())
+      .then(data => {
+        if (data.connections?.length) {
+          const addConnection = usePlatformStore.getState().addConnection;
+          const currentPlatforms = usePlatformStore.getState().connections.map(c => c.platform);
+          
+          for (const conn of data.connections) {
+            if (!currentPlatforms.includes(conn.platform)) {
+              addConnection({
+                platform: conn.platform,
+                accessToken: conn.accessToken,
+                refreshToken: conn.refreshToken,
+                platformUserId: conn.platformUserId,
+                platformUsername: conn.displayName,
+                platformProfileImage: conn.profileImage,
+              });
+            }
+          }
         }
       })
       .catch(console.error);

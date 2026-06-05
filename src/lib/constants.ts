@@ -46,6 +46,7 @@ export const mainNav = [
   { label: 'Analytics', href: '/analytics' },
   { label: 'Media', href: '/media-library' },
   { label: 'Pipeline', href: '/pipeline' },
+  { label: 'Contact', href: '/contact' },
   { label: 'Settings', href: '/settings' },
 ];
 
@@ -56,6 +57,8 @@ export const footerNav = {
     { label: 'Calendar', href: '/calendar' },
     { label: 'Analytics', href: '/analytics' },
     { label: 'Media Library', href: '/media-library' },
+    { label: 'Pipeline', href: '/pipeline' },
+    { label: 'Contact', href: '/contact' },
     { label: 'Settings', href: '/settings' },
   ],
   social: [

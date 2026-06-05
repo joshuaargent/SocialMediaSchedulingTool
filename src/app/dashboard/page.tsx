@@ -41,8 +41,36 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetch('/api/auth/status')
       .then(res => res.json())
-      .then(data => {
+      .then(async (data) => {
         if (data.authenticated && data.approved) {
+          // Sync platform connections from database (cross-device support)
+          try {
+            const connResponse = await fetch('/api/platforms/connections');
+            if (connResponse.ok) {
+              const connData = await connResponse.json();
+              if (connData.connections?.length) {
+                const { usePlatformStore } = await import('@/stores');
+                const addConnection = usePlatformStore.getState().addConnection;
+                const currentPlatforms = usePlatformStore.getState().connections.map(c => c.platform);
+                
+                for (const conn of connData.connections) {
+                  if (!currentPlatforms.includes(conn.platform)) {
+                    addConnection({
+                      platform: conn.platform,
+                      accessToken: conn.accessToken,
+                      refreshToken: conn.refreshToken,
+                      platformUserId: conn.platformUserId,
+                      platformUsername: conn.displayName,
+                      platformProfileImage: conn.profileImage,
+                    });
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Failed to sync platform connections:', e);
+          }
+          
           setIsAuthenticated(true);
           setChecking(false);
         } else if (data.authenticated && !data.approved) {

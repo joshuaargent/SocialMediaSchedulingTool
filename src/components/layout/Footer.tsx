@@ -103,39 +103,38 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Quick Links */}
+          {/* Contact */}
           <div>
             <h3 className="text-text-primary text-sm font-semibold tracking-wider uppercase">
-              Quick Links
+              Contact
             </h3>
-            <ul className="mt-4 space-y-2">
-              {footerNav.main.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+            <ul className="mt-4 space-y-3 text-sm text-text-secondary">
+              <li className="flex flex-col">
+                <span className="text-text-muted text-xs uppercase tracking-wider">Business</span>
+                <span>SMST</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-text-muted text-xs uppercase tracking-wider">Location</span>
+                <span>Surrey, United Kingdom</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-text-muted text-xs uppercase tracking-wider">Email</span>
+                <a 
+                  href="mailto:argentjackjoshua@outlook.com" 
+                  className="hover:text-text-primary transition-colors"
+                >
+                  argentjackjoshua@outlook.com
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Connect */}
+          {/* Social */}
           <div>
             <h3 className="text-text-primary text-sm font-semibold tracking-wider uppercase">
               Connect
             </h3>
             <ul className="mt-4 space-y-2">
-              <li>
-                <a
-                  href={`mailto:${siteConfig.links.email}`}
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Email
-                </a>
-              </li>
               {footerNav.social.map((item) => (
                 <li key={item.href}>
                   <a
@@ -148,32 +147,6 @@ export function Footer() {
                   </a>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h3 className="text-text-primary text-sm font-semibold tracking-wider uppercase">
-              Contact
-            </h3>
-            <ul className="mt-4 space-y-2 text-sm text-text-secondary">
-              <li className="flex flex-col">
-                <span className="text-text-muted">Business:</span>
-                <span>SMST</span>
-              </li>
-              <li className="flex flex-col">
-                <span className="text-text-muted">Location:</span>
-                <span>Surrey, United Kingdom</span>
-              </li>
-              <li className="flex flex-col">
-                <span className="text-text-muted">Email:</span>
-                <a 
-                  href="mailto:argentjackjoshua@outlook.com" 
-                  className="hover:text-text-primary transition-colors"
-                >
-                  argentjackjoshua@outlook.com
-                </a>
-              </li>
             </ul>
           </div>
         </div>
