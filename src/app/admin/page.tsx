@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Check, X, Users, Calendar, Clock, Shield, 
@@ -221,7 +222,7 @@ export default function AdminPage() {
   }
 
   return (
-    <>
+    <Fragment>
       <PageHeader 
         title="Admin Dashboard" 
         description="Manage organizations, storage, and system health"
@@ -526,7 +527,7 @@ export default function AdminPage() {
 
         {/* Organizations Tab */}
         {activeTab === 'organizations' && (
-          <>
+          <Fragment>
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               <Card className="p-6">
@@ -619,12 +620,12 @@ export default function AdminPage() {
                     </Card>
                   ))}
                 </div>
-              </>
+              </div>
             )}
-          </>
+          </Fragment>
         )}
       </Container>
-    </>
+    </Fragment>
   );
 }
 

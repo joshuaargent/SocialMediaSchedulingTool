@@ -42,6 +42,7 @@ interface GarageStats {
     localNetworkOnly: boolean;
     authenticationRequired: boolean;
     credentialsConfigured: boolean;
+    tunnelMode: boolean;
   };
   lastUpdated: string;
 }
@@ -167,7 +168,7 @@ async function getGarageStats(): Promise<GarageStats> {
       localNetworkOnly: process.env.GARAGE_ENDPOINT?.startsWith('http://192.168') || false,
       authenticationRequired: true,
       credentialsConfigured: !!(accessKey && secretKey),
-      tunnelMode: !process.env.GARAGE_ENDPOINT?.startsWith('http://192.168'),
+      tunnelMode: Boolean(!process.env.GARAGE_ENDPOINT?.startsWith('http://192.168')),
     },
     lastUpdated: new Date().toISOString(),
   };

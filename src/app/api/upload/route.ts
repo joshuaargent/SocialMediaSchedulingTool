@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
             metadata: { storageKey: key },
           },
         });
-        response.file.mediaAssetId = mediaAsset.id;
+        (response as { file?: { mediaAssetId?: string } }).file!.mediaAssetId = mediaAsset.id;
       } catch (dbError) {
         console.warn('Failed to create MediaAsset record:', dbError);
       }
