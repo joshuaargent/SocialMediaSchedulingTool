@@ -30,13 +30,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const sizeStyles: Record<string, string> = {
   sm: 'h-9 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-6 text-base',
+  md: 'h-11 px-5 text-base',
+  lg: 'h-14 px-7 text-lg',
   icon: 'h-10 w-10',
 };
 
 const buttonBaseStyles =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-sm hover:shadow-md';
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -58,13 +58,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     switch (variant) {
       case 'primary':
-        variantStyles = 'bg-primary text-white hover:bg-primary-hover shadow-sm';
+        variantStyles = 'bg-gradient-primary text-white hover:opacity-90';
         break;
       case 'secondary':
-        variantStyles = 'bg-secondary text-white hover:bg-secondary-hover shadow-sm';
+        variantStyles = 'bg-bg-secondary text-text-primary hover:bg-border border border-border';
         break;
       case 'outline':
-        variantStyles = 'border border-border bg-transparent text-text-primary hover:bg-bg-secondary';
+        variantStyles = 'border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-white';
         break;
       case 'ghost':
         variantStyles = 'text-text-primary hover:bg-bg-secondary';
@@ -73,10 +73,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         variantStyles = 'text-primary hover:text-primary-hover underline-offset-4 hover:underline';
         break;
       case 'danger':
-        variantStyles = 'bg-error text-white hover:bg-error/90 shadow-sm';
+        variantStyles = 'bg-gradient-accent text-white hover:opacity-90';
         break;
       default:
-        variantStyles = 'bg-primary text-white hover:bg-primary-hover shadow-sm';
+        variantStyles = 'bg-gradient-primary text-white hover:opacity-90';
     }
 
     const buttonStyles = cn(buttonBaseStyles, variantStyles, sizeStyles[size], className);

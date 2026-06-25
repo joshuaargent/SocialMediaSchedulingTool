@@ -23,10 +23,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "bg-bg-card rounded-xl border border-border shadow-sm",
+          "bg-bg-card rounded-2xl border border-border shadow-sm",
           paddingClasses[padding],
           hover &&
-            "transition-all duration-200 hover:shadow-md hover:border-border-strong",
+            "card-interactive hover:-translate-y-1 hover:shadow-xl hover:border-primary/50",
           className,
         )}
         {...props}
@@ -68,7 +68,7 @@ export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
     <h3
       ref={ref}
       className={cn(
-        "text-lg font-semibold leading-none tracking-tight",
+        "text-xl font-bold leading-none tracking-tight",
         className,
       )}
       {...props}

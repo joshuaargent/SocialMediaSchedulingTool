@@ -115,6 +115,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen antialiased">
+        {/* Decorative Background Blobs - Matches PingElo style */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 h-[600px] w-[600px] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute top-1/3 right-1/4 h-[500px] w-[500px] rounded-full bg-secondary/[5%] blur-[100px]" />
+          <div className="absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full bg-primary/5 blur-[80px]" />
+        </div>
         <ThemeProvider>
           <OAuthConnectionSync />
           <Navbar />
