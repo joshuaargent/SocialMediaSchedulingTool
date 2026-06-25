@@ -341,37 +341,37 @@ function DashboardContent() {
       <Container>
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6">
+          <Card hover className="animate-slide-up stagger-1 p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary">
                 <CheckCircle className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Published</p>
+                <p className="text-sm text-text-muted">Published</p>
                 <p className="text-2xl font-bold">{publishedPosts.length}</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card hover className="animate-slide-up stagger-2 p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500">
                 <CalendarIcon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Scheduled</p>
+                <p className="text-sm text-text-muted">Scheduled</p>
                 <p className="text-2xl font-bold">{scheduledPosts.length}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card hover className="animate-slide-up stagger-3 p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
                 <Eye className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Views</p>
+                <p className="text-sm text-text-muted">Views</p>
                 <p className="text-2xl font-bold">
                   {youtubeStats?.totalViews 
                     ? filteredYoutubeStats.totalViews.toLocaleString() 
@@ -381,13 +381,13 @@ function DashboardContent() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card hover className="animate-slide-up stagger-4 p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400">
+              <div className="p-3 rounded-xl bg-pink-500/10 text-pink-500">
                 <Heart className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Subscribers</p>
+                <p className="text-sm text-text-muted">Subscribers</p>
                 <p className="text-2xl font-bold">
                   {youtubeStats?.subscribers 
                     ? youtubeStats.subscribers.toLocaleString() 
@@ -443,7 +443,7 @@ function DashboardContent() {
           <div className="lg:col-span-2 space-y-8">
             {/* Calendar */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Content Calendar</h2>
+              <h2 className="text-lg font-semibold mb-4 text-text-primary">Content Calendar</h2>
               <Calendar 
                 events={calendarEvents}
                 onDateClick={() => setShowComposer(true)}
@@ -452,14 +452,14 @@ function DashboardContent() {
 
             {/* Platform Performance */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Platform Performance</h2>
+              <h2 className="text-lg font-semibold mb-4 text-text-primary">Platform Performance</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const platformPosts = publishedPosts.filter(p => p.platforms.includes(platform));
                   return (
                     <div 
                       key={platform}
-                      className="p-4 rounded-lg bg-[var(--color-bg-secondary)] text-center"
+                      className="p-4 rounded-xl bg-bg-secondary/50 text-center hover:bg-bg-secondary transition-colors"
                     >
                       <div className={clsx(
                         'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-3',
@@ -484,7 +484,7 @@ function DashboardContent() {
           <div className="space-y-8">
             {/* Quick Actions */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-semibold mb-4 text-text-primary">Quick Actions</h2>
               <div className="space-y-3">
                 <Button
                   variant="primary"
@@ -506,7 +506,7 @@ function DashboardContent() {
 
             {/* Upcoming Posts */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Upcoming Posts</h2>
+              <h2 className="text-lg font-semibold mb-4 text-text-primary">Upcoming Posts</h2>
               <div className="space-y-3">
                 {todaysPosts.length > 0 && (
                   <div>
@@ -543,7 +543,7 @@ function DashboardContent() {
 
             {/* Platform Connections */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Platform Connections</h2>
+              <h2 className="text-lg font-semibold mb-4 text-text-primary">Platform Connections</h2>
               <div className="space-y-3">
                 {(['tiktok', 'facebook', 'instagram', 'youtube'] as const).map((platform) => {
                   const isConnected = connectedPlatforms.includes(platform);
