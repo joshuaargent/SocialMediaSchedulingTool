@@ -23,10 +23,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "bg-bg-card rounded-xl border border-border",
+          "bg-bg-card rounded-xl border border-border shadow-sm",
           paddingClasses[padding],
           hover &&
-            "transition-all duration-200 hover:shadow-md hover:border-border/80",
+            "transition-all duration-200 hover:shadow-md hover:border-border-strong",
           className,
         )}
         {...props}
@@ -49,7 +49,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex flex-col space-y-1.5", className)}
+      className={cn("flex flex-col space-y-1.5 pb-4", className)}
       {...props}
     />
   ),
@@ -68,7 +68,7 @@ export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
     <h3
       ref={ref}
       className={cn(
-        "text-xl font-semibold leading-none tracking-tight",
+        "text-lg font-semibold leading-none tracking-tight",
         className,
       )}
       {...props}
@@ -121,7 +121,7 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex items-center pt-0", className)}
+      className={cn("flex items-center pt-4 border-t border-border", className)}
       {...props}
     />
   ),

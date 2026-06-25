@@ -8,13 +8,17 @@ import { cn } from '@/lib/utils';
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?:
     | 'default'
-    | 'accent'
-    | 'faith'
-    | 'psychology'
-    | 'health'
-    | 'performance'
-    | 'code'
-    | 'outline';
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'info'
+    | 'outline'
+    | 'tiktok'
+    | 'facebook'
+    | 'instagram'
+    | 'youtube';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -24,13 +28,17 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<string, string> = {
   default: 'bg-bg-secondary text-text-secondary border border-border',
-  accent: 'bg-accent-light text-accent',
-  faith: 'bg-violet-100 text-violet-700',
-  psychology: 'bg-blue-100 text-blue-700',
-  health: 'bg-green-100 text-green-700',
-  performance: 'bg-orange-100 text-orange-700',
-  code: 'bg-cyan-100 text-cyan-700',
+  primary: 'bg-primary-light text-primary-dark dark:bg-primary/20 dark:text-white',
+  secondary: 'bg-secondary-light text-secondary-hover dark:bg-secondary/20 dark:text-white',
+  success: 'bg-success-light text-success dark:bg-success dark:text-white',
+  warning: 'bg-warning-light text-warning dark:bg-warning dark:text-white',
+  error: 'bg-error-light text-error dark:bg-error dark:text-white',
+  info: 'bg-info-light text-info dark:bg-info dark:text-white',
   outline: 'border border-border text-text-secondary',
+  tiktok: 'bg-black text-white',
+  facebook: 'bg-[#1877f2] text-white',
+  instagram: 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white',
+  youtube: 'bg-[#ff0000] text-white',
 };
 
 const sizeStyles: Record<string, string> = {
@@ -45,7 +53,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       <span
         ref={ref}
         className={cn(
-          'inline-flex items-center rounded-full font-medium transition-colors',
+          'inline-flex items-center rounded-full font-medium transition-all duration-200',
           variantStyles[variant],
           sizeStyles[size],
           className

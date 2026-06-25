@@ -1,5 +1,8 @@
 /* ============================================
-   Global Styles for Joshua's Portfolio
+   Global Styles for SMST
+   Social Media Scheduling Tool
+   PROFESSIONAL SAAS THEME: Slate + Indigo
+   Clean, minimal, lets content shine
    ============================================ */
 
 @import "tailwindcss";
@@ -9,27 +12,66 @@
    ------------------------------------------ */
 
 @theme {
-  /* Colors */
-  --color-accent: #0d9488;
-  --color-accent-hover: #0f766e;
-  --color-accent-light: #ccfbf1;
+  /* ============================================
+     PROFESSIONAL SAAS COLOR SCHEME
+     - Slate: Neutral base, lets colorful social content stand out
+     - Indigo: Modern accent for actions and focus
+     ============================================ */
+  
+  /* Primary: Indigo - Modern, trustworthy, action-oriented */
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-light: #e0e7ff;
+  --color-primary-dark: #4338ca;
+  
+  /* Secondary: Slate - Professional, neutral base */
+  --color-secondary: #64748b;
+  --color-secondary-hover: #475569;
+  --color-secondary-light: #f1f5f9;
+  
+  /* Accent: Indigo (same as primary for consistency) */
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-accent-light: #e0e7ff;
 
-  --color-bg-primary: #fafaf9;
-  --color-bg-secondary: #f5f5f4;
+  /* Success: Emerald - Published, complete, growth */
+  --color-success: #10b981;
+  --color-success-light: #d1fae5;
+  
+  /* Warning: Amber - Pending, draft, attention needed */
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+
+  /* Error: Rose - Failed, errors, destructive */
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+
+  /* Info: Blue - Scheduled, informational */
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+
+  /* Background Colors - Light Mode (Clean, minimal) */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
   --color-bg-card: #ffffff;
+  --color-bg-elevated: #ffffff;
+  
+  /* Text Colors - Light Mode */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
 
-  --color-text-primary: #1c1917;
-  --color-text-secondary: #57534e;
-  --color-text-muted: #a8a29e;
+  /* Border Colors */
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
 
-  --color-border: #e7e5e4;
-
-  /* Category Colors */
-  --color-faith: #7c3aed;
-  --color-psychology: #2563eb;
-  --color-health: #16a34a;
-  --color-performance: #ea580c;
-  --color-code: #0891b2;
+  /* Category Colors (kept for compatibility) */
+  --color-faith: #6366f1;
+  --color-psychology: #3b82f6;
+  --color-health: #10b981;
+  --color-performance: #f59e0b;
+  --color-code: #64748b;
 
   /* Social Platform Colors */
   --color-tiktok: #000000;
@@ -42,12 +84,6 @@
   --color-instagram-orange: #fcb045;
   --color-youtube: #ff0000;
 
-  /* Platform Status Colors */
-  --color-success: #16a34a;
-  --color-warning: #ca8a04;
-  --color-error: #dc2626;
-  --color-info: #2563eb;
-
   /* Font Families */
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-lora), Georgia, serif;
@@ -57,7 +93,7 @@
   --spacing-section: 6rem;
   --spacing-container: 80rem;
 
-  /* Border Radius */
+  /* Border Radius - Modern rounded */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -65,40 +101,75 @@
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  /* Shadows - Clean, subtle */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-glow-primary: 0 0 20px rgb(99 102 241 / 0.25);
 
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ------------------------------------------
-   Dark Mode Colors (CSS Custom Properties)
+   Dark Mode Colors
    ------------------------------------------ */
 
 html.dark {
-  --color-accent: #14b8a6;
-  --color-accent-hover: #2dd4bf;
-  --color-accent-light: #134e4a;
+  /* Primary: Brighter indigo for dark mode */
+  --color-primary: #818cf8;
+  --color-primary-hover: #6366f1;
+  --color-primary-light: #312e81;
+  --color-primary-dark: #4f46e5;
+  
+  /* Secondary: Lighter slate for dark mode */
+  --color-secondary: #94a3b8;
+  --color-secondary-hover: #cbd5e1;
+  --color-secondary-light: #1e293b;
+  
+  /* Accent: Same as primary */
+  --color-accent: #818cf8;
+  --color-accent-hover: #6366f1;
+  --color-accent-light: #312e81;
 
-  --color-bg-primary: #0c0a09;
-  --color-bg-secondary: #292524;
-  --color-bg-card: #1c1917;
+  /* Semantic colors adjusted for dark mode */
+  --color-success: #34d399;
+  --color-success-light: #064e3b;
+  --color-warning: #fbbf24;
+  --color-warning-light: #78350f;
+  --color-error: #f87171;
+  --color-error-light: #7f1d1d;
+  --color-info: #60a5fa;
+  --color-info-light: #1e3a8a;
 
-  --color-text-primary: #fafaf9;
-  --color-text-secondary: #a8a29e;
-  --color-text-muted: #78716c;
+  /* Background Colors - Dark Mode (Rich, not harsh) */
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-card: #1e293b;
+  --color-bg-elevated: #334155;
+  
+  /* Text Colors - Dark Mode */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #0f172a;
 
-  --color-border: #37352f;
+  /* Border Colors - Dark Mode */
+  --color-border: #334155;
+  --color-border-strong: #475569;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  /* Shadows - Darker for depth */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+  --shadow-glow-primary: 0 0 30px rgb(129 140 248 / 0.3);
 }
 
 /* ------------------------------------------
@@ -122,23 +193,21 @@ body {
    Typography
    ------------------------------------------ */
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
 h1 {
   font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 h2 {
   font-size: clamp(1.875rem, 4vw, 2.5rem);
+  font-weight: 700;
 }
 
 h3 {
@@ -147,6 +216,7 @@ h3 {
 
 h4 {
   font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 600;
 }
 
 p {
@@ -175,8 +245,7 @@ p {
   margin-bottom: 0.5em;
 }
 
-.prose ul,
-.prose ol {
+.prose ul, .prose ol {
   margin-bottom: 1.5em;
   padding-left: 1.5em;
 }
@@ -186,7 +255,7 @@ p {
 }
 
 .prose blockquote {
-  border-left: 3px solid var(--color-accent);
+  border-left: 3px solid var(--color-primary);
   padding-left: 1.5em;
   margin: 1.5em 0;
   font-style: italic;
@@ -202,21 +271,21 @@ p {
 }
 
 html.dark .prose code {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-bg-elevated);
 }
 
 .prose pre {
-  background-color: #1c1917;
-  color: #fafaf9;
+  background-color: #0f172a;
+  color: #f1f5f9;
   padding: 1.5em;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow-x: auto;
   margin: 1.5em 0;
 }
 
 html.dark .prose pre {
-  background-color: #292524;
-  color: #fafaf9;
+  background-color: var(--color-bg-card);
+  color: #f1f5f9;
 }
 
 .prose pre code {
@@ -230,13 +299,13 @@ html.dark .prose pre {
    ------------------------------------------ */
 
 a {
-  color: var(--color-accent);
+  color: var(--color-primary);
   text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--color-accent-hover);
+  color: var(--color-primary-hover);
 }
 
 /* ------------------------------------------
@@ -244,8 +313,13 @@ a:hover {
    ------------------------------------------ */
 
 ::selection {
-  background-color: var(--color-accent-light);
+  background-color: var(--color-primary-light);
   color: var(--color-text-primary);
+}
+
+html.dark ::selection {
+  background-color: var(--color-primary);
+  color: white;
 }
 
 /* ------------------------------------------
@@ -253,8 +327,9 @@ a:hover {
    ------------------------------------------ */
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ------------------------------------------
@@ -262,8 +337,8 @@ a:hover {
    ------------------------------------------ */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -271,12 +346,13 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-text-muted);
+  background: var(--color-border-strong);
   border-radius: var(--radius-full);
+  border: 2px solid var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: var(--color-text-muted);
 }
 
 /* ------------------------------------------
@@ -312,49 +388,130 @@ a:hover {
 }
 
 /* ------------------------------------------
+   Modern Gradient Utilities
+   ------------------------------------------ */
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-hover) 100%);
+}
+
+.bg-gradient-mesh {
+  background: var(--color-bg-primary);
+}
+
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.border-gradient-primary {
+  border: 1px solid transparent;
+  background: 
+    linear-gradient(var(--color-bg-card), var(--color-bg-card)) padding-box,
+    linear-gradient(135deg, var(--color-primary), #818cf8) border-box;
+}
+
+/* ------------------------------------------
+   Card Enhancements
+   ------------------------------------------ */
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+html.dark .card-glass {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-elevated {
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.card-interactive {
+  transition: all var(--transition-base);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-primary);
+}
+
+/* ------------------------------------------
    Animations
    ------------------------------------------ */
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgb(124 58 237 / 0.3); }
+  50% { box-shadow: 0 0 30px rgb(124 58 237 / 0.5); }
 }
 
 .animate-fade-in {
@@ -369,32 +526,56 @@ a:hover {
   animation: slideDown 0.4s ease forwards;
 }
 
+.animate-slide-left {
+  animation: slideLeft 0.4s ease forwards;
+}
+
+.animate-slide-right {
+  animation: slideRight 0.4s ease forwards;
+}
+
 .animate-scale-in {
   animation: scaleIn 0.3s ease forwards;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.5s ease forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-border) 50%, var(--color-bg-secondary) 75%);
+  background-size: 200% 100%;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
 }
 
 /* ------------------------------------------
    Stagger Animation Delays
    ------------------------------------------ */
 
-.stagger-1 {
-  animation-delay: 0.1s;
-}
-.stagger-2 {
-  animation-delay: 0.2s;
-}
-.stagger-3 {
-  animation-delay: 0.3s;
-}
-.stagger-4 {
-  animation-delay: 0.4s;
-}
-.stagger-5 {
-  animation-delay: 0.5s;
-}
-.stagger-6 {
-  animation-delay: 0.6s;
-}
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
 
 /* ------------------------------------------
    Video Embed
@@ -402,10 +583,10 @@ a:hover {
 
 .video-container {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 56.25%;
   height: 0;
   overflow: hidden;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background-color: var(--color-bg-secondary);
 }
 
@@ -435,12 +616,88 @@ a:hover {
 }
 
 @keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ------------------------------------------
+   Badge Styles
+   ------------------------------------------ */
+
+.badge-primary {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+html.dark .badge-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.badge-secondary {
+  background: var(--color-secondary-light);
+  color: var(--color-secondary-hover);
+  font-weight: 600;
+}
+
+html.dark .badge-secondary {
+  background: var(--color-secondary);
+  color: var(--color-text-inverse);
+}
+
+.badge-success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+html.dark .badge-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+html.dark .badge-warning {
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
+}
+
+.badge-error {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+html.dark .badge-error {
+  background: var(--color-error);
+  color: white;
+}
+
+/* ------------------------------------------
+   Platform Badge Colors
+   ------------------------------------------ */
+
+.badge-tiktok {
+  background: linear-gradient(135deg, #000000, #333333);
+  color: white;
+}
+
+.badge-facebook {
+  background: linear-gradient(135deg, #1877f2, #0d5fc3);
+  color: white;
+}
+
+.badge-instagram {
+  background: linear-gradient(135deg, #e4405f, #833ab4);
+  color: white;
+}
+
+.badge-youtube {
+  background: linear-gradient(135deg, #ff0000, #cc0000);
+  color: white;
 }
 
 /* ------------------------------------------

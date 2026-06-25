@@ -62,7 +62,7 @@ export function Navbar() {
             {/* Logo */}
             <Link
               href="/"
-              className="text-text-primary hover:text-accent text-xl font-semibold transition-colors"
+              className="text-text-primary hover:text-primary text-xl font-semibold transition-colors"
             >
               {siteConfig.name}
             </Link>
@@ -76,7 +76,7 @@ export function Navbar() {
                   className={cn(
                     'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     pathname === item.href
-                      ? 'text-accent bg-accent-light'
+                      ? 'text-primary bg-primary-light dark:bg-primary/20'
                       : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
                   )}
                 >
@@ -139,7 +139,7 @@ export function Navbar() {
                       className={cn(
                         'flex items-center rounded-lg px-4 py-3 text-base font-medium transition-colors',
                         pathname === item.href
-                          ? 'text-accent bg-accent-light'
+                          ? 'text-primary bg-primary-light dark:bg-primary/20'
                           : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
                       )}
                     >

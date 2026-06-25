@@ -14,7 +14,7 @@ import './globals.css';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0d9488',
+  themeColor: '#6366f1',
 };
 
 export const metadata: Metadata = {
@@ -95,8 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#134e4a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

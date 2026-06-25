@@ -30,13 +30,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const sizeStyles: Record<string, string> = {
   sm: 'h-9 px-3 text-sm',
-  md: 'h-11 px-5 text-base',
-  lg: 'h-14 px-7 text-lg',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-12 px-6 text-base',
   icon: 'h-10 w-10',
 };
 
 const buttonBaseStyles =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -54,15 +54,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    // Build variant styles with explicit text colors
     let variantStyles = '';
 
     switch (variant) {
       case 'primary':
-        variantStyles = 'bg-accent text-white hover:bg-accent-hover shadow-sm';
+        variantStyles = 'bg-primary text-white hover:bg-primary-hover shadow-sm';
         break;
       case 'secondary':
-        variantStyles = 'bg-bg-secondary text-text-primary hover:bg-border border border-border';
+        variantStyles = 'bg-secondary text-white hover:bg-secondary-hover shadow-sm';
         break;
       case 'outline':
         variantStyles = 'border border-border bg-transparent text-text-primary hover:bg-bg-secondary';
@@ -71,13 +70,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         variantStyles = 'text-text-primary hover:bg-bg-secondary';
         break;
       case 'link':
-        variantStyles = 'text-accent hover:text-accent-hover underline-offset-4 hover:underline';
+        variantStyles = 'text-primary hover:text-primary-hover underline-offset-4 hover:underline';
         break;
       case 'danger':
-        variantStyles = 'bg-red-600 text-white hover:bg-red-700';
+        variantStyles = 'bg-error text-white hover:bg-error/90 shadow-sm';
         break;
       default:
-        variantStyles = 'bg-accent text-white hover:bg-accent-hover';
+        variantStyles = 'bg-primary text-white hover:bg-primary-hover shadow-sm';
     }
 
     const buttonStyles = cn(buttonBaseStyles, variantStyles, sizeStyles[size], className);
