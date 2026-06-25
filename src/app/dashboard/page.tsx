@@ -311,7 +311,7 @@ function DashboardContent() {
         align="left"
         actions={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-bg-bg-card rounded-lg border border-border-border p-1">
+            <div className="flex items-center gap-1 bg-bg-card rounded-lg border border-border p-1">
               {dashboardDateRangeOptions.map((option) => (
                 <button
                   key={option.value}
@@ -320,7 +320,7 @@ function DashboardContent() {
                     'px-3 py-1.5 text-sm rounded-md transition-colors',
                     dashboardDateRange === option.value
                       ? 'bg-text-primary text-white'
-                      : 'hover:bg-bg-bg-secondary'
+                      : 'hover:bg-bg-secondary'
                   )}
                 >
                   {option.label}
@@ -403,24 +403,24 @@ function DashboardContent() {
           <Card className="p-4 text-center">
             <Heart className="w-5 h-5 mx-auto text-red-500 mb-1" />
             <p className="text-lg font-bold">{filteredYoutubeStats.totalLikes?.toLocaleString() || 0}</p>
-            <p className="text-xs text-text-text-muted">Likes</p>
+            <p className="text-xs text-text-muted">Likes</p>
           </Card>
           <Card className="p-4 text-center">
             <MessageCircle className="w-5 h-5 mx-auto text-blue-500 mb-1" />
             <p className="text-lg font-bold">{filteredYoutubeStats.totalComments?.toLocaleString() || 0}</p>
-            <p className="text-xs text-text-text-muted">Comments</p>
+            <p className="text-xs text-text-muted">Comments</p>
           </Card>
           <Card className="p-4 text-center">
             <Share2 className="w-5 h-5 mx-auto text-green-500 mb-1" />
             <p className="text-lg font-bold">
               {filteredYoutubeStats.totalVideos?.toLocaleString() || (platformStats.youtube?.posts || 0)}
             </p>
-            <p className="text-xs text-text-text-muted">Videos</p>
+            <p className="text-xs text-text-muted">Videos</p>
           </Card>
           <Card className="p-4 text-center">
             <Video className="w-5 h-5 mx-auto text-[#FF0000] mb-1" />
             <p className="text-lg font-bold">{filteredYoutubeVideos.length}</p>
-            <p className="text-xs text-text-text-muted">Uploaded</p>
+            <p className="text-xs text-text-muted">Uploaded</p>
           </Card>
           <Card className="p-4 text-center">
             <TrendingUp className="w-5 h-5 mx-auto text-purple-500 mb-1" />
@@ -429,12 +429,12 @@ function DashboardContent() {
                 ? (filteredYoutubeStats.totalViews / filteredYoutubeVideos.length || 0).toFixed(0)
                 : 0}
             </p>
-            <p className="text-xs text-text-text-muted">Avg Views</p>
+            <p className="text-xs text-text-muted">Avg Views</p>
           </Card>
           <Card className="p-4 text-center">
             <Users className="w-5 h-5 mx-auto text-cyan-500 mb-1" />
             <p className="text-lg font-bold">{platformConnections.length}</p>
-            <p className="text-xs text-text-text-muted">Connected</p>
+            <p className="text-xs text-text-muted">Connected</p>
           </Card>
         </div>
 
@@ -472,7 +472,7 @@ function DashboardContent() {
                       </div>
                       <p className="font-medium capitalize mb-1">{platform}</p>
                       <p className="text-2xl font-bold">{platformPosts.length}</p>
-                      <p className="text-xs text-text-text-muted">posts</p>
+                      <p className="text-xs text-text-muted">posts</p>
                     </div>
                   );
                 })}
@@ -510,7 +510,7 @@ function DashboardContent() {
               <div className="space-y-3">
                 {todaysPosts.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-text-text-muted uppercase mb-2">Today</p>
+                    <p className="text-xs font-medium text-text-muted uppercase mb-2">Today</p>
                     {todaysPosts.slice(0, 2).map((post) => (
                       <PostCard key={post.id} post={post} compact />
                     ))}
@@ -519,7 +519,7 @@ function DashboardContent() {
                 
                 {tomorrowsPosts.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium text-text-text-muted uppercase mb-2">Tomorrow</p>
+                    <p className="text-xs font-medium text-text-muted uppercase mb-2">Tomorrow</p>
                     {tomorrowsPosts.slice(0, 2).map((post) => (
                       <PostCard key={post.id} post={post} compact />
                     ))}
@@ -528,8 +528,8 @@ function DashboardContent() {
 
                 {scheduledPosts.length === 0 && (
                   <div className="text-center py-6">
-                    <Clock className="w-8 h-8 mx-auto mb-2 text-text-text-muted" />
-                    <p className="text-sm text-text-text-secondary">No scheduled posts</p>
+                    <Clock className="w-8 h-8 mx-auto mb-2 text-text-muted" />
+                    <p className="text-sm text-text-secondary">No scheduled posts</p>
                     <button
                       onClick={() => setShowComposer(true)}
                       className="mt-2 text-sm text-text-primary hover:underline"
@@ -552,7 +552,7 @@ function DashboardContent() {
                   return (
                     <div 
                       key={platform}
-                      className="flex items-center justify-between p-3 rounded-lg bg-bg-bg-secondary"
+                      className="flex items-center justify-between p-3 rounded-lg bg-bg-secondary"
                     >
                       <div className="flex items-center gap-3">
                         <div className={clsx(
@@ -566,7 +566,7 @@ function DashboardContent() {
                         </div>
                         <div>
                           <p className="font-medium capitalize">{platform}</p>
-                          <p className="text-xs text-text-text-muted">
+                          <p className="text-xs text-text-muted">
                             {isConnected ? 'Connected' : 'Not connected'}
                             {stats && (
                               <span className="ml-1">

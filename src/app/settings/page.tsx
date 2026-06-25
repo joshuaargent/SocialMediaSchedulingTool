@@ -110,7 +110,7 @@ export default function SettingsPage() {
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left',
                     activeTab === tab.id
                       ? 'bg-text-primary text-white'
-                      : 'hover:bg-bg-bg-secondary'
+                      : 'hover:bg-bg-secondary'
                   )}
                 >
                   {tab.icon}
@@ -181,7 +181,7 @@ function PlatformConnections({ platformConfigs }: PlatformConnectionsProps) {
           return (
             <div 
               key={platform.id}
-              className="p-4 rounded-lg bg-bg-bg-secondary"
+              className="p-4 rounded-lg bg-bg-secondary"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -193,7 +193,7 @@ function PlatformConnections({ platformConfigs }: PlatformConnectionsProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold">{platform.name}</h3>
-                    <p className="text-sm text-text-text-muted">{platform.description}</p>
+                    <p className="text-sm text-text-muted">{platform.description}</p>
                     {isConnected && stats?.followers && (
                       <p className="text-sm text-text-primary">
                         {stats.followers.toLocaleString()} followers
@@ -271,16 +271,16 @@ function SchedulingSettings() {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Cooldown Settings</h2>
-      <p className="text-sm text-text-text-muted mb-6">Configure minimum time between posts per platform</p>
+      <p className="text-sm text-text-muted mb-6">Configure minimum time between posts per platform</p>
       <div className="space-y-4">
         {platforms.map((platform) => (
           <div 
             key={platform}
-            className="flex items-center justify-between p-4 rounded-lg bg-bg-bg-secondary"
+            className="flex items-center justify-between p-4 rounded-lg bg-bg-secondary"
           >
             <div>
               <h3 className="font-medium">{platformNames[platform]}</h3>
-              <p className="text-sm text-text-text-muted">
+              <p className="text-sm text-text-muted">
                 Recommended: {platform === 'youtube' ? '2 hours' : platform === 'tiktok' || platform === 'instagram' ? '1 hour' : '30 min'}
               </p>
             </div>
@@ -291,9 +291,9 @@ function SchedulingSettings() {
                 max="480"
                 value={cooldowns[platform]}
                 onChange={(e) => updateCooldownSettings({ [platform]: parseInt(e.target.value) || 0 })}
-                className="w-20 px-3 py-2 rounded-lg border border-border-border text-center bg-bg-bg-card"
+                className="w-20 px-3 py-2 rounded-lg border border-border text-center bg-bg-card"
               />
-              <span className="text-text-text-muted">minutes</span>
+              <span className="text-text-muted">minutes</span>
             </div>
           </div>
         ))}
@@ -324,7 +324,7 @@ function NotificationSettings() {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
-      <p className="text-sm text-text-text-muted mb-6">Choose what notifications you want to receive</p>
+      <p className="text-sm text-text-muted mb-6">Choose what notifications you want to receive</p>
       <div className="space-y-4">
         {[
           { key: 'postPublished', label: 'Post Published', description: 'Get notified when a post is successfully published' },
@@ -335,11 +335,11 @@ function NotificationSettings() {
         ].map((item) => (
           <div 
             key={item.key}
-            className="flex items-center justify-between p-4 rounded-lg bg-bg-bg-secondary"
+            className="flex items-center justify-between p-4 rounded-lg bg-bg-secondary"
           >
             <div>
               <h3 className="font-medium">{item.label}</h3>
-              <p className="text-sm text-text-text-muted">{item.description}</p>
+              <p className="text-sm text-text-muted">{item.description}</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -373,7 +373,7 @@ function AppearanceSettings() {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Appearance</h2>
-      <p className="text-sm text-text-text-muted mb-6">Customize how SMST looks</p>
+      <p className="text-sm text-text-muted mb-6">Customize how SMST looks</p>
       <div className="space-y-6">
         <div>
           <h3 className="font-medium mb-3">Theme</h3>
@@ -390,7 +390,7 @@ function AppearanceSettings() {
                   'p-4 rounded-lg border-2 transition-all',
                   theme === option.value
                     ? 'border-text-primary ring-2 ring-text-primary/20'
-                    : 'border-border-border hover:border-text-text-muted'
+                    : 'border-border hover:border-text-text-muted'
                 )}
               >
                 <div className={clsx('w-full h-8 rounded mb-2', option.preview)} />
@@ -401,12 +401,12 @@ function AppearanceSettings() {
         </div>
       </div>
 
-      <div className="mt-6 p-4 rounded-lg bg-bg-bg-secondary">
+      <div className="mt-6 p-4 rounded-lg bg-bg-secondary">
         <h3 className="font-medium mb-2">About</h3>
-        <p className="text-sm text-text-text-secondary">
+        <p className="text-sm text-text-secondary">
           SMST v1.0.0 - Social Media Scheduling Tool
         </p>
-        <p className="text-xs text-text-text-muted mt-1">
+        <p className="text-xs text-text-muted mt-1">
           Built with Next.js, TypeScript, Tailwind CSS, and Zustand
         </p>
       </div>

@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
       <Container>
         <Card className="p-8">
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="text-sm text-text-text-muted mb-6">Last updated: June 4, 2026</p>
+            <p className="text-sm text-text-muted mb-6">Last updated: June 4, 2026</p>
 
             <h2>1. Introduction</h2>
             <p>

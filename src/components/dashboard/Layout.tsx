@@ -48,16 +48,16 @@ export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps)
   const connectedPlatforms = connections.map((c) => c.platform);
 
   return (
-    <aside className="w-64 h-screen bg-bg-bg-card border-r border-border-border flex flex-col">
+    <aside className="w-64 h-screen bg-bg-card border-r border-border flex flex-col">
       {/* Logo */}
-      <div className="p-4 border-b border-border-border">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-text-primary flex items-center justify-center">
             <span className="text-white font-bold text-lg">S</span>
           </div>
           <div>
             <h1 className="font-semibold">SMST</h1>
-            <p className="text-xs text-text-text-muted">Creator Studio</p>
+            <p className="text-xs text-text-muted">Creator Studio</p>
           </div>
         </div>
       </div>
@@ -72,7 +72,7 @@ export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps)
               'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
               activeItem === item.id
                 ? 'bg-text-primary text-white'
-                : 'hover:bg-bg-bg-secondary text-text-text-secondary'
+                : 'hover:bg-bg-secondary text-text-secondary'
             )}
           >
             {item.icon}
@@ -82,10 +82,10 @@ export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps)
       </nav>
 
       {/* Platform Connections */}
-      <div className="p-4 border-t border-border-border">
+      <div className="p-4 border-t border-border">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium">Connected</span>
-          <span className="text-xs text-text-text-muted">
+          <span className="text-xs text-text-muted">
             {connectedPlatforms.length}/4
           </span>
         </div>
@@ -110,7 +110,7 @@ export function Sidebar({ activeItem = 'dashboard', onItemClick }: SidebarProps)
             );
           })}
         </div>
-        <button className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border border-dashed border-border-border hover:border-text-primary hover:text-text-primary transition-colors">
+        <button className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border border-dashed border-border hover:border-text-primary hover:text-text-primary transition-colors">
           <Link2 className="w-4 h-4" />
           Connect Platform
         </button>
@@ -132,22 +132,22 @@ export function Header({ onMenuClick, onComposeClick }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="h-16 bg-bg-bg-card border-b border-border-border px-4 flex items-center justify-between">
+    <header className="h-16 bg-bg-card border-b border-border px-4 flex items-center justify-between">
       {/* Left */}
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg hover:bg-bg-bg-secondary"
+          className="lg:hidden p-2 rounded-lg hover:bg-bg-secondary"
         >
           <Menu className="w-5 h-5" />
         </button>
         
         <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
             placeholder="Search posts, analytics..."
-            className="w-64 pl-10 pr-4 py-2 rounded-lg border border-border-border bg-bg-bg-secondary focus:bg-bg-bg-card focus:ring-2 focus:ring-text-primary"
+            className="w-64 pl-10 pr-4 py-2 rounded-lg border border-border bg-bg-secondary focus:bg-bg-card focus:ring-2 focus:ring-text-primary"
           />
         </div>
       </div>
@@ -165,19 +165,19 @@ export function Header({ onMenuClick, onComposeClick }: HeaderProps) {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-lg hover:bg-bg-bg-secondary relative"
+            className="p-2 rounded-lg hover:bg-bg-secondary relative"
           >
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
           </button>
           
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-bg-bg-card rounded-lg shadow-lg border border-border-border z-50">
-              <div className="p-3 border-b border-border-border">
+            <div className="absolute right-0 mt-2 w-80 bg-bg-card rounded-lg shadow-lg border border-border z-50">
+              <div className="p-3 border-b border-border">
                 <h3 className="font-semibold">Notifications</h3>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                <div className="p-4 text-center text-sm text-text-text-muted">
+                <div className="p-4 text-center text-sm text-text-muted">
                   No new notifications
                 </div>
               </div>
@@ -209,12 +209,12 @@ export function MobileSidebar({ isOpen, onClose, activeItem, onItemClick }: Mobi
         className="fixed inset-0 bg-black/50 z-40 lg:hidden"
         onClick={onClose}
       />
-      <div className="fixed left-0 top-0 bottom-0 w-72 bg-bg-bg-card z-50 lg:hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border-border">
+      <div className="fixed left-0 top-0 bottom-0 w-72 bg-bg-card z-50 lg:hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <span className="font-semibold">Menu</span>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-bg-bg-secondary"
+            className="p-2 rounded-lg hover:bg-bg-secondary"
           >
             <X className="w-5 h-5" />
           </button>
@@ -231,7 +231,7 @@ export function MobileSidebar({ isOpen, onClose, activeItem, onItemClick }: Mobi
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
                 activeItem === item.id
                   ? 'bg-text-primary text-white'
-                  : 'hover:bg-bg-bg-secondary text-text-text-secondary'
+                  : 'hover:bg-bg-secondary text-text-secondary'
               )}
             >
               {item.icon}
@@ -260,7 +260,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
       <div>
         <h1 className="text-2xl font-bold">{title}</h1>
         {description && (
-          <p className="text-text-text-secondary mt-1">{description}</p>
+          <p className="text-text-secondary mt-1">{description}</p>
         )}
       </div>
       {actions && <div className="flex items-center gap-3">{actions}</div>}
@@ -283,12 +283,12 @@ interface StatsCardProps {
 export function StatsCard({ label, value, change, icon, className }: StatsCardProps) {
   return (
     <div className={clsx(
-      'bg-bg-bg-card rounded-xl border border-border-border p-5',
+      'bg-bg-card rounded-xl border border-border p-5',
       className
     )}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-text-text-secondary">{label}</p>
+          <p className="text-sm text-text-secondary">{label}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
           {change && (
             <p className={clsx(
@@ -328,7 +328,7 @@ export function Section({ title, description, children, className, noPadding }: 
         <div className="mb-4">
           <h2 className="text-lg font-semibold">{title}</h2>
           {description && (
-            <p className="text-sm text-text-text-secondary mt-1">{description}</p>
+            <p className="text-sm text-text-secondary mt-1">{description}</p>
           )}
         </div>
         {children}

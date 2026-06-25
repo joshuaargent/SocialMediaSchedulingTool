@@ -19,7 +19,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const statusConfig: Record<PostStatus, { label: string; className: string; icon: React.ReactElement }> = {
     draft: {
       label: 'Draft',
-      className: 'bg-bg-bg-secondary text-text-text-secondary',
+      className: 'bg-bg-secondary text-text-secondary',
       icon: <Edit3 className="w-3 h-3" />,
     },
     scheduled: {
@@ -134,7 +134,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
   return (
     <div
       className={clsx(
-        'bg-bg-bg-card rounded-lg border border-border-border p-4',
+        'bg-bg-card rounded-lg border border-border p-4',
         'hover:border-text-primary transition-colors',
         compact ? 'p-3' : 'p-4'
       )}
@@ -148,7 +148,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
           </div>
           
           {!compact && (
-            <p className="text-sm text-text-text-secondary line-clamp-2 mt-2">
+            <p className="text-sm text-text-secondary line-clamp-2 mt-2">
               {post.content || 'No content'}
             </p>
           )}
@@ -160,7 +160,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
             {onPublish && post.status === 'draft' && (
               <button
                 onClick={() => onPublish(post)}
-                className="p-1.5 rounded-md hover:bg-bg-bg-secondary text-green-600"
+                className="p-1.5 rounded-md hover:bg-bg-secondary text-green-600"
                 title="Publish now"
               >
                 <CheckCircle className="w-4 h-4" />
@@ -169,7 +169,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
             {onEdit && (
               <button
                 onClick={() => onEdit(post)}
-                className="p-1.5 rounded-md hover:bg-bg-bg-secondary text-text-text-secondary"
+                className="p-1.5 rounded-md hover:bg-bg-secondary text-text-secondary"
                 title="Edit post"
               >
                 <Edit3 className="w-4 h-4" />
@@ -190,12 +190,12 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
 
       {/* Media Preview */}
       {hasMedia && !compact && (
-        <div className="mb-3 rounded-lg overflow-hidden bg-bg-bg-secondary">
+        <div className="mb-3 rounded-lg overflow-hidden bg-bg-secondary">
           <div className="flex gap-1">
             {post.mediaUrls.slice(0, 4).map((url, idx) => (
               <div
                 key={idx}
-                className="relative aspect-video flex-1 bg-bg-bg-secondary"
+                className="relative aspect-video flex-1 bg-bg-secondary"
               >
                 <img
                   src={url}
@@ -214,7 +214,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-text-text-muted">
+      <div className="flex items-center justify-between text-xs text-text-muted">
         <div className="flex items-center gap-3">
           {post.scheduledAt && (
             <span className="flex items-center gap-1">
@@ -230,7 +230,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
           )}
         </div>
         
-        <span className="text-text-text-muted">
+        <span className="text-text-muted">
           {format(new Date(post.createdAt), 'MMM d')}
         </span>
       </div>
@@ -272,12 +272,12 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
     : `${cooldownMinutes}m`;
 
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg bg-bg-bg-secondary">
+    <div className="flex items-center gap-4 p-3 rounded-lg bg-bg-secondary">
       <PlatformPills platforms={post.platforms} />
       
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{post.content || 'No content'}</p>
-        <p className="text-xs text-text-text-muted">
+        <p className="text-xs text-text-muted">
           Scheduled: {post.scheduledAt ? format(new Date(post.scheduledAt), 'MMM d, h:mm a') : 'Not scheduled'}
         </p>
       </div>
@@ -289,7 +289,7 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
         )}>
           {cooldownMinutes > 0 ? (
             <>
-              <span className="text-text-text-muted">Cooldown:</span> {cooldownText}
+              <span className="text-text-muted">Cooldown:</span> {cooldownText}
             </>
           ) : (
             'Ready'
@@ -308,7 +308,7 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
           {onCancel && (
             <button
               onClick={onCancel}
-              className="text-xs px-2 py-1 rounded bg-bg-bg-card hover:bg-red-100 dark:hover:bg-red-900/30"
+              className="text-xs px-2 py-1 rounded bg-bg-card hover:bg-red-100 dark:hover:bg-red-900/30"
             >
               Cancel
             </button>

@@ -69,9 +69,9 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
   const goToToday = () => setCurrentMonth(new Date());
 
   return (
-    <div className="bg-bg-bg-card rounded-xl border border-border-border overflow-hidden">
+    <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <h2 className="text-lg font-semibold">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
@@ -79,19 +79,19 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
         <div className="flex items-center gap-2">
           <button
             onClick={goToToday}
-            className="px-3 py-1.5 text-sm rounded-md hover:bg-bg-bg-secondary transition-colors"
+            className="px-3 py-1.5 text-sm rounded-md hover:bg-bg-secondary transition-colors"
           >
             Today
           </button>
           <button
             onClick={previousMonth}
-            className="p-1.5 rounded-md hover:bg-bg-bg-secondary transition-colors"
+            className="p-1.5 rounded-md hover:bg-bg-secondary transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={nextMonth}
-            className="p-1.5 rounded-md hover:bg-bg-bg-secondary transition-colors"
+            className="p-1.5 rounded-md hover:bg-bg-secondary transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -99,11 +99,11 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 border-b border-border-border">
+      <div className="grid grid-cols-7 border-b border-border">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
           <div
             key={day}
-            className="py-2 text-center text-sm font-medium text-text-text-secondary"
+            className="py-2 text-center text-sm font-medium text-text-secondary"
           >
             {day}
           </div>
@@ -123,9 +123,9 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
             <div
               key={idx}
               className={clsx(
-                'min-h-[100px] p-1 border-b border-r border-border-border',
-                'hover:bg-bg-bg-secondary/50 transition-colors cursor-pointer',
-                !isCurrentMonth && 'bg-bg-bg-secondary/30',
+                'min-h-[100px] p-1 border-b border-r border-border',
+                'hover:bg-bg-secondary/50 transition-colors cursor-pointer',
+                !isCurrentMonth && 'bg-bg-secondary/30',
                 isSelected && 'ring-2 ring-inset ring-text-primary'
               )}
               onClick={() => onDateClick?.(day)}
@@ -135,8 +135,8 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
                   className={clsx(
                     'inline-flex items-center justify-center w-7 h-7 rounded-full text-sm',
                     isDayToday && 'bg-text-primary text-white font-semibold',
-                    !isDayToday && isCurrentMonth && 'text-text-text-primary',
-                    !isCurrentMonth && 'text-text-text-muted'
+                    !isDayToday && isCurrentMonth && 'text-text-primary',
+                    !isCurrentMonth && 'text-text-muted'
                   )}
                 >
                   {format(day, 'd')}
@@ -148,7 +148,7 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
                       e.stopPropagation();
                       onDateClick(day);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-bg-bg-secondary"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-bg-secondary"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
@@ -177,7 +177,7 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
                   </button>
                 ))}
                 {dayEvents.length > 3 && (
-                  <span className="text-xs text-text-text-muted px-1.5">
+                  <span className="text-xs text-text-muted px-1.5">
                     +{dayEvents.length - 3} more
                   </span>
                 )}
@@ -188,20 +188,20 @@ export function Calendar({ events, onDateClick, onEventClick, selectedDate }: Ca
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 p-3 border-t border-border-border bg-bg-bg-secondary/30">
-        <div className="flex items-center gap-1.5 text-xs text-text-text-secondary">
+      <div className="flex items-center gap-4 p-3 border-t border-border bg-bg-secondary/30">
+        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span className="w-3 h-3 rounded bg-blue-400" />
           Posts
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-text-secondary">
+        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span className="w-3 h-3 rounded bg-purple-400" />
           Filming
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-text-secondary">
+        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span className="w-3 h-3 rounded bg-amber-400" />
           Milestones
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-text-secondary">
+        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span className="w-3 h-3 rounded bg-red-400" />
           Deadlines
         </div>
@@ -240,7 +240,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
   }, [currentMonth]);
 
   return (
-    <div className="bg-bg-bg-card rounded-lg border border-border-border p-3">
+    <div className="bg-bg-card rounded-lg border border-border p-3">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium">
@@ -249,13 +249,13 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
         <div className="flex gap-1">
           <button
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="p-1 rounded hover:bg-bg-bg-secondary"
+            className="p-1 rounded hover:bg-bg-secondary"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="p-1 rounded hover:bg-bg-bg-secondary"
+            className="p-1 rounded hover:bg-bg-secondary"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -267,7 +267,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
           <div
             key={idx}
-            className="text-center text-xs font-medium text-text-text-muted py-1"
+            className="text-center text-xs font-medium text-text-muted py-1"
           >
             {day}
           </div>
@@ -287,10 +287,10 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
               onClick={() => onSelectDate?.(day)}
               className={clsx(
                 'text-xs p-1.5 rounded-full text-center',
-                'hover:bg-bg-bg-secondary transition-colors',
+                'hover:bg-bg-secondary transition-colors',
                 isDayToday && 'bg-text-primary text-white font-semibold',
                 !isDayToday && isSelected && 'bg-primary/10 text-text-primary',
-                !isCurrentMonth && 'text-text-text-muted opacity-50'
+                !isCurrentMonth && 'text-text-muted opacity-50'
               )}
             >
               {format(day, 'd')}
