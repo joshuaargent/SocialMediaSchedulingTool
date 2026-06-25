@@ -15,14 +15,12 @@ import {
   ExternalLink,
   Code,
   Video,
-  Mail,
-  MapPin
 } from 'lucide-react';
 
 const FORMSPREE_FORM_ID = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
 
 // ============================================
-// About Page
+// About Page Metadata
 // ============================================
 
 export const metadata: Metadata = {
@@ -93,6 +91,17 @@ const values = [
 ];
 
 // ============================================
+// Quick Links
+// ============================================
+
+const quickLinks = [
+  { href: '/dashboard', icon: Video, label: 'Dashboard' },
+  { href: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/queue', icon: Share2, label: 'Queue' },
+  { href: '/calendar', icon: Calendar, label: 'Calendar' },
+];
+
+// ============================================
 // About Page Component
 // ============================================
 
@@ -102,42 +111,46 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl font-bold text-text-text-primary md:text-4xl">
+          <h1 className="text-3xl font-bold text-text-primary md:text-4xl animate-fade-in">
             About {siteConfig.name}
           </h1>
-          <p className="mt-4 text-lg text-text-text-secondary max-w-2xl">
-            {siteConfig.description}. Built to help content creators manage their 
-            social media presence across YouTube, TikTok, Instagram, and Facebook from one 
+          <p className="mt-4 text-lg text-text-secondary max-w-2xl animate-slide-up stagger-1">
+            {siteConfig.description}. Built to help content creators manage their
+            social media presence across YouTube, TikTok, Instagram, and Facebook from one
             central hub.
           </p>
         </div>
       </section>
 
       {/* What I Do Section */}
-      <section className="bg-bg-bg-secondary py-12 md:py-16">
+      <section className="bg-bg-secondary/50 py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-text-text-primary">
+            <h2 className="text-2xl font-bold text-text-primary animate-slide-up">
               What {siteConfig.name} Offers
             </h2>
-            
+
             <div className="mt-8 space-y-6">
-              {whatIDo.map((item) => (
-                <Card key={item.title} className="p-6">
+              {whatIDo.map((item, index) => (
+                <Card 
+                  key={item.title} 
+                  hover 
+                  className={`p-6 animate-slide-up stagger-${index + 1}`}
+                >
                   <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-text-primary/10">
-                      <item.icon className="h-6 w-6 text-text-primary" />
+                    <div className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <item.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-text-text-primary">
+                      <h3 className="text-lg font-semibold text-text-primary">
                         {item.title}
                       </h3>
-                      <p className="mt-2 text-text-text-secondary">
+                      <p className="mt-2 text-text-secondary">
                         {item.description}
                       </p>
                       <Link
                         href={item.link}
-                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-text-primary hover:underline"
+                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                       >
                         {item.linkText}
                         <ArrowRight className="h-4 w-4" />
@@ -154,20 +167,23 @@ export default function AboutPage() {
       {/* Values Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-2xl font-bold text-text-text-primary">
+          <h2 className="text-2xl font-bold text-text-primary animate-slide-up">
             Our Values
           </h2>
-          
+
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {values.map((value) => (
-              <div key={value.number} className="relative pl-12">
-                <span className="absolute left-0 top-0 text-5xl font-bold text-text-primary/20">
+            {values.map((value, index) => (
+              <div 
+                key={value.number} 
+                className={`relative pl-12 animate-slide-up stagger-${index + 1}`}
+              >
+                <span className="absolute left-0 top-0 text-5xl font-bold text-primary/20">
                   {value.number}
                 </span>
-                <h3 className="text-lg font-semibold text-text-text-primary">
+                <h3 className="text-lg font-semibold text-text-primary">
                   {value.title}
                 </h3>
-                <p className="mt-2 text-sm text-text-text-secondary">
+                <p className="mt-2 text-sm text-text-secondary">
                   {value.description}
                 </p>
               </div>
@@ -176,28 +192,33 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Quick Links Section */}
-      <section className="bg-bg-bg-secondary py-12 md:py-16">
+      {/* Quick Links & Author Section */}
+      <section className="bg-bg-secondary/50 py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
               {/* Author Card */}
-              <div className="flex flex-col items-center text-center">
-                <div className="h-32 w-32 rounded-full bg-text-primary/10 flex items-center justify-center">
-                  <span className="text-4xl font-bold text-text-primary">
-                    {siteConfig.author.name[0]}
-                  </span>
+              <div className="flex flex-col items-center text-center animate-slide-up stagger-1">
+                <div className="relative">
+                  <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-white">
+                      {siteConfig.author.name[0]}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-success flex items-center justify-center">
+                    <Code className="h-4 w-4 text-white" />
+                  </div>
                 </div>
-                <h2 className="mt-4 text-xl font-semibold text-text-text-primary">
+                <h2 className="mt-6 text-xl font-semibold text-text-primary">
                   {siteConfig.author.name}
                 </h2>
-                <p className="mt-1 text-text-text-muted">
+                <p className="mt-1 text-text-muted">
                   {siteConfig.location}
                 </p>
-                
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <Link href="/contact">
-                    <Button>
+                    <Button variant="primary">
                       Get in Touch
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -207,37 +228,33 @@ export default function AboutPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button variant="outline">
+                    <Button variant="secondary">
                       <Code className="mr-2 h-4 w-4" />
-                      View on GitHub
+                      GitHub
                       <ExternalLink className="ml-2 h-3.5 w-3.5" />
                     </Button>
                   </a>
                 </div>
               </div>
-              
+
               {/* Quick Info */}
-              <div>
-                <h3 className="text-lg font-semibold text-text-text-primary mb-4">
+              <div className="animate-slide-up stagger-2">
+                <h3 className="text-lg font-semibold text-text-primary mb-4">
                   Quick Links
                 </h3>
-                <div className="space-y-3">
-                  <Link href="/dashboard" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
-                    <Video className="h-5 w-5" />
-                    <span>Dashboard</span>
-                  </Link>
-                  <Link href="/analytics" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
-                    <BarChart3 className="h-5 w-5" />
-                    <span>Analytics</span>
-                  </Link>
-                  <Link href="/queue" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
-                    <Share2 className="h-5 w-5" />
-                    <span>Queue</span>
-                  </Link>
-                  <Link href="/calendar" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
-                    <Calendar className="h-5 w-5" />
-                    <span>Calendar</span>
-                  </Link>
+                <div className="grid grid-cols-2 gap-3">
+                  {quickLinks.map((link) => (
+                    <Link 
+                      key={link.href} 
+                      href={link.href}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-bg-card border border-border hover:border-primary hover:bg-primary/5 transition-all group"
+                    >
+                      <link.icon className="h-5 w-5 text-text-muted group-hover:text-primary transition-colors" />
+                      <span className="text-text-secondary group-hover:text-text-primary transition-colors">
+                        {link.label}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
@@ -247,16 +264,17 @@ export default function AboutPage() {
 
       {/* Newsletter Section */}
       <section className="container py-12 md:py-16">
-        <div className="mx-auto max-w-2xl text-center">
-          <Users className="mx-auto h-12 w-12 text-text-primary" />
-          <h2 className="mt-4 text-2xl font-bold text-text-text-primary">
+        <Card className="mx-auto max-w-2xl text-center p-8 animate-scale-in">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-text-primary">
             Stay Updated
           </h2>
-          <p className="mt-3 text-text-text-secondary">
-            Get the latest features, tips, and updates for {siteConfig.name} delivered to your inbox. 
-            No spam, unsubscribe anytime.
+          <p className="mt-3 text-text-secondary max-w-md mx-auto">
+            Get the latest features, tips, and updates for {siteConfig.name} delivered to your inbox.
           </p>
-          
+
           {FORMSPREE_FORM_ID ? (
             <form
               action={`https://formspree.io/f/${FORMSPREE_FORM_ID}`}
@@ -279,11 +297,13 @@ export default function AboutPage() {
           ) : (
             <div className="mt-6">
               <Link href="/login">
-                <Button size="lg">Get Started Free</Button>
+                <Button size="lg" variant="primary">
+                  Get Started Free
+                </Button>
               </Link>
             </div>
           )}
-        </div>
+        </Card>
       </section>
     </div>
   );

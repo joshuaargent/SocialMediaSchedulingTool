@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { siteConfig } from '@/lib/constants';
-import { Mail, Youtube, Github, Instagram, Facebook, MapPin, Send } from 'lucide-react';
+import { Mail, Youtube, Github, Instagram, Facebook, MapPin, Send, Clock } from 'lucide-react';
 
 const FORMSPREE_FORM_ID = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID;
 
@@ -27,8 +27,9 @@ export default function ContactPage() {
       <section className="pb-12 md:pb-16">
         <div className="container max-w-4xl">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            {/* Contact Form */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card hover className="animate-slide-up">
                 <h2 className="text-text-primary mb-6 text-xl font-semibold">Send a Message</h2>
                 {FORMSPREE_FORM_ID ? (
                   <form
@@ -69,18 +70,18 @@ export default function ContactPage() {
                       required
                     />
 
-                    <Button type="submit" size="lg" className="w-full" style={{ color: '#ffffff' }}>
+                    <Button type="submit" size="lg" className="w-full">
                       <Send className="mr-2 h-4 w-4" />
                       Send Message
                     </Button>
                   </form>
                 ) : (
-                  <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
-                    <p className="font-medium">Contact form not configured</p>
-                    <p className="mt-1 text-sm">
+                  <div className="rounded-xl border border-warning/20 bg-warning/10 p-4">
+                    <p className="font-medium text-text-primary">Contact form not configured</p>
+                    <p className="mt-1 text-sm text-text-secondary">
                       To enable the contact form, add your Formspree form ID to the environment
                       variable{' '}
-                      <code className="rounded bg-yellow-100 px-1 py-0.5">
+                      <code className="rounded bg-bg-secondary px-1 py-0.5">
                         NEXT_PUBLIC_FORMSPREE_FORM_ID
                       </code>
                       .<br />
@@ -89,7 +90,7 @@ export default function ContactPage() {
                         href="https://formspree.io"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline"
+                        className="text-primary hover:underline"
                       >
                         formspree.io
                       </a>
@@ -97,7 +98,7 @@ export default function ContactPage() {
                     <div className="mt-4">
                       <a
                         href={siteConfig.links.email}
-                        className="text-accent hover:text-accent-hover inline-flex items-center gap-2"
+                        className="text-primary hover:text-primary-hover inline-flex items-center gap-2"
                       >
                         <Mail className="h-4 w-4" />
                         {siteConfig.links.email.replace('mailto:', '')}
@@ -108,39 +109,65 @@ export default function ContactPage() {
               </Card>
             </div>
 
+            {/* Sidebar Info */}
             <div className="space-y-6">
-              <Card>
-                <h3 className="text-text-primary mb-4 font-semibold">Email</h3>
+              {/* Email */}
+              <Card hover className="animate-slide-up stagger-1 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Mail className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-text-primary font-semibold">Email</h3>
+                </div>
                 <a
                   href={siteConfig.links.email}
-                  className="text-text-secondary hover:text-accent flex items-center gap-3 transition-colors"
+                  className="text-text-secondary hover:text-primary flex items-center gap-2 transition-colors"
                 >
-                  <Mail className="h-5 w-5" />
                   {siteConfig.links.email.replace('mailto:', '')}
                 </a>
               </Card>
 
-              <Card>
-                <h3 className="text-text-primary mb-4 font-semibold">Location</h3>
-                <div className="text-text-secondary flex items-center gap-3">
-                  <MapPin className="h-5 w-5" />
-                  {siteConfig.location}
+              {/* Location */}
+              <Card hover className="animate-slide-up stagger-2 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <MapPin className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <h3 className="text-text-primary font-semibold">Location</h3>
                 </div>
+                <p className="text-text-secondary">
+                  {siteConfig.location}
+                </p>
               </Card>
 
-              <Card>
-                <h3 className="text-text-primary mb-4 font-semibold">Connect</h3>
-                <div className="space-y-3">
+              {/* Response Time */}
+              <Card hover className="animate-slide-up stagger-3 p-5 bg-gradient-to-br from-primary/5 to-purple-500/5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/20">
+                    <Clock className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-text-primary font-semibold">Response Time</h3>
+                </div>
+                <p className="text-text-secondary text-sm">
+                  I typically respond within 24-48 hours. For urgent matters, reach out via
+                  Instagram DM.
+                </p>
+              </Card>
+
+              {/* Social Links */}
+              <Card hover className="animate-slide-up stagger-4 p-5">
+                <h3 className="text-text-primary font-semibold mb-4">Connect</h3>
+                <div className="space-y-2">
                   {siteConfig.links.youtube && (
                     <a
                       href={siteConfig.links.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:bg-bg-secondary flex items-center gap-3 rounded-lg p-2 transition-colors"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-bg-secondary transition-colors group"
                     >
                       <Youtube className="h-5 w-5 text-red-500" />
                       <div>
-                        <p className="text-text-primary text-sm font-medium">YouTube</p>
+                        <p className="text-text-primary text-sm font-medium group-hover:text-primary transition-colors">YouTube</p>
                         <p className="text-text-muted text-xs">@joshua_argent</p>
                       </div>
                     </a>
@@ -151,11 +178,11 @@ export default function ContactPage() {
                       href={siteConfig.links.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:bg-bg-secondary flex items-center gap-3 rounded-lg p-2 transition-colors"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-bg-secondary transition-colors group"
                     >
-                      <Github className="text-text-primary h-5 w-5" />
+                      <Github className="h-5 w-5 text-text-secondary group-hover:text-primary transition-colors" />
                       <div>
-                        <p className="text-text-primary text-sm font-medium">GitHub</p>
+                        <p className="text-text-primary text-sm font-medium group-hover:text-primary transition-colors">GitHub</p>
                         <p className="text-text-muted text-xs">@joshuaargent</p>
                       </div>
                     </a>
@@ -166,11 +193,11 @@ export default function ContactPage() {
                       href={siteConfig.links.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:bg-bg-secondary flex items-center gap-3 rounded-lg p-2 transition-colors"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-bg-secondary transition-colors group"
                     >
                       <Instagram className="h-5 w-5 text-pink-500" />
                       <div>
-                        <p className="text-text-primary text-sm font-medium">Instagram</p>
+                        <p className="text-text-primary text-sm font-medium group-hover:text-primary transition-colors">Instagram</p>
                         <p className="text-text-muted text-xs">@joshua_argent</p>
                       </div>
                     </a>
@@ -181,44 +208,16 @@ export default function ContactPage() {
                       href={siteConfig.links.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:bg-bg-secondary flex items-center gap-3 rounded-lg p-2 transition-colors"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-bg-secondary transition-colors group"
                     >
                       <Facebook className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="text-text-primary text-sm font-medium">Facebook</p>
+                        <p className="text-text-primary text-sm font-medium group-hover:text-primary transition-colors">Facebook</p>
                         <p className="text-text-muted text-xs">@joshua_argent</p>
                       </div>
                     </a>
                   )}
-
-                  {siteConfig.links.strava && (
-                    <a
-                      href={siteConfig.links.strava}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:bg-bg-secondary flex items-center gap-3 rounded-lg p-2 transition-colors"
-                    >
-                      <svg className="h-5 w-5 text-orange-500" viewBox="0 0 16 16">
-                        <path
-                          fill="currentColor"
-                          d="M6.731 0 2 9.125h2.788L6.73 5.497l1.93 3.628h2.766zm4.694 9.125-1.372 2.756L8.66 9.125H6.547L10.053 16l3.484-6.875z"
-                        />
-                      </svg>
-                      <div>
-                        <p className="text-text-primary text-sm font-medium">Strava</p>
-                        <p className="text-text-muted text-xs">@500534339</p>
-                      </div>
-                    </a>
-                  )}
                 </div>
-              </Card>
-
-              <Card className="bg-accent-light">
-                <h3 className="text-text-primary mb-2 font-semibold">Response Time</h3>
-                <p className="text-text-secondary text-sm">
-                  I typically respond within 24-48 hours. For urgent matters, reach out via
-                  Instagram DM.
-                </p>
               </Card>
             </div>
           </div>
