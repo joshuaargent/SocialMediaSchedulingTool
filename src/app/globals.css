@@ -843,6 +843,33 @@ html.dark .card-glass {
 .stagger-8 { animation-delay: 0.8s; opacity: 0; }
 
 /* ------------------------------------------
+   Additional Utility Classes
+   ------------------------------------------ */
+
+.text-text-primary { color: var(--color-text-primary); }
+.text-text-secondary { color: var(--color-text-secondary); }
+.text-text-muted { color: var(--color-text-muted); }
+.text-primary { color: var(--color-primary); }
+.text-primary-hover { color: var(--color-primary-hover); }
+.text-error { color: var(--color-error); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+
+.bg-bg-primary { background-color: var(--color-bg-primary); }
+.bg-bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-bg-card { background-color: var(--color-bg-card); }
+.bg-bg-tertiary { background-color: var(--color-bg-tertiary, var(--color-bg-secondary)); }
+.bg-bg-hover { background-color: var(--color-bg-hover, var(--color-bg-secondary)); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-primary-light { background-color: var(--color-primary-light); }
+.bg-primary-10 { background-color: rgba(99, 102, 241, 0.1); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-secondary-light { background-color: var(--color-secondary-light); }
+
+.border-border { border-color: var(--color-border); }
+.border-border-strong { border-color: var(--color-border-strong); }
+
+/* ------------------------------------------
    Print Styles
    ------------------------------------------ */
 

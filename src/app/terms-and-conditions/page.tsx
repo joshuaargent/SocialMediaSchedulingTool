@@ -16,7 +16,7 @@ export default function TermsAndConditionsPage() {
       <Container>
         <Card className="p-8">
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="text-sm text-[var(--color-text-muted)] mb-6">Last updated: June 4, 2026</p>
+            <p className="text-sm text-text-text-muted mb-6">Last updated: June 4, 2026</p>
 
             <h2>1. Acceptance of Terms</h2>
             <p>
@@ -107,7 +107,7 @@ export default function TermsAndConditionsPage() {
 
             <h2>16. Privacy and Data Protection</h2>
             <p>
-              Our Services comply with UK GDPR, EU GDPR, and the Data Protection Act 2018. Please review our <a href="/privacy-policy" className="text-[var(--color-accent)] hover:underline">Privacy Policy</a> for detailed information about how we collect, use, and protect your personal data.
+              Our Services comply with UK GDPR, EU GDPR, and the Data Protection Act 2018. Please review our <a href="/privacy-policy" className="text-text-primary hover:underline">Privacy Policy</a> for detailed information about how we collect, use, and protect your personal data.
             </p>
 
             <h2>17. Governing Law and Jurisdiction</h2>
@@ -117,7 +117,7 @@ export default function TermsAndConditionsPage() {
 
             <h2>18. Dispute Resolution</h2>
             <p>
-              Before initiating formal proceedings, you agree to contact us and attempt to resolve any dispute informally. For UK and EEA consumers, you may use the Online Dispute Resolution platform at <a href="https://ec.europa.eu/consumers/odr" className="text-[var(--color-accent)] hover:underline">https://ec.europa.eu/consumers/odr</a>.
+              Before initiating formal proceedings, you agree to contact us and attempt to resolve any dispute informally. For UK and EEA consumers, you may use the Online Dispute Resolution platform at <a href="https://ec.europa.eu/consumers/odr" className="text-text-primary hover:underline">https://ec.europa.eu/consumers/odr</a>.
             </p>
 
             <h2>19. Changes to These Terms</h2>

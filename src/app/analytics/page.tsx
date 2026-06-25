@@ -260,7 +260,7 @@ function LineChart({ data, height = 200, showArea = true, smooth = true, gradien
           return (
             <span 
               key={idx} 
-              className="text-[10px] text-[var(--color-text-muted)]"
+              className="text-[10px] text-text-text-muted"
             >
               {item.label}
             </span>
@@ -293,7 +293,7 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
           </div>
           <div>
             <h3 className="font-semibold capitalize">{platform}</h3>
-            <p className="text-xs text-[var(--color-text-muted)]">
+            <p className="text-xs text-text-text-muted">
               {isConnected ? 'Connected' : 'Not connected'}
             </p>
           </div>
@@ -301,7 +301,7 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
         <button
           onClick={onRefresh}
           disabled={!isConnected || isLoading}
-          className="p-2 rounded-lg hover:bg-[var(--color-bg-secondary)] disabled:opacity-50"
+          className="p-2 rounded-lg hover:bg-bg-bg-secondary disabled:opacity-50"
         >
           <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
         </button>
@@ -309,19 +309,19 @@ function PlatformAnalyticsCard({ platform, stats, isConnected, onRefresh, isLoad
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Posts</p>
+          <p className="text-xs text-text-text-muted">Posts</p>
           <p className="text-xl font-bold">{stats.posts}</p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Views</p>
+          <p className="text-xs text-text-text-muted">Views</p>
           <p className="text-xl font-bold">{stats.views.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Engagement</p>
+          <p className="text-xs text-text-text-muted">Engagement</p>
           <p className="text-xl font-bold">{stats.engagement.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Rate</p>
+          <p className="text-xs text-text-text-muted">Rate</p>
           <p className="text-xl font-bold">{(stats.engagementRate * 100).toFixed(2)}%</p>
         </div>
       </div>
@@ -390,12 +390,12 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
         <Video className="w-5 h-5 text-[#FF0000]" />
         YouTube Channel Stats
         {dateRange !== 'all' && (
-          <span className="text-xs font-normal text-[var(--color-text-muted)]">
+          <span className="text-xs font-normal text-text-text-muted">
             (Last {dateRange === '7' ? '7' : dateRange === '14' ? '14' : dateRange === '30' ? '30' : dateRange === '90' ? '90' : '365'} days)
           </span>
         )}
         {youtubeData.channelInfo?.title && (
-          <span className="text-sm font-normal text-[var(--color-text-muted)]">
+          <span className="text-sm font-normal text-text-text-muted">
             - {youtubeData.channelInfo.title}
           </span>
         )}
@@ -411,7 +411,7 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
             </div>
             <span className="text-lg font-bold">{stats.subscribers.toLocaleString()}</span>
           </div>
-          <div className="flex items-center justify-between mt-2 text-sm text-[var(--color-text-secondary)]">
+          <div className="flex items-center justify-between mt-2 text-sm text-text-text-secondary">
             <span>Channel views</span>
             <span>{stats.channelViews.toLocaleString()}</span>
           </div>
@@ -419,39 +419,39 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
       )}
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-bg-bg-secondary">
           <div className="p-2 rounded-full bg-[#FF0000]/10 text-[#FF0000]">
             <Video className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+            <p className="text-xs text-text-text-muted">Videos</p>
             <p className="text-lg font-bold">{stats.totalVideos.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-bg-bg-secondary">
           <div className="p-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
             <Eye className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)]">Total Views</p>
+            <p className="text-xs text-text-text-muted">Total Views</p>
             <p className="text-lg font-bold">{stats.totalViews.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-bg-bg-secondary">
           <div className="p-2 rounded-full bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400">
             <ThumbsUp className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)]">Likes</p>
+            <p className="text-xs text-text-text-muted">Likes</p>
             <p className="text-lg font-bold">{stats.totalLikes.toLocaleString()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-bg-bg-secondary">
           <div className="p-2 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
             <MessageSquare className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)]">Comments</p>
+            <p className="text-xs text-text-text-muted">Comments</p>
             <p className="text-lg font-bold">{stats.totalComments.toLocaleString()}</p>
           </div>
         </div>
@@ -459,20 +459,20 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
       
       {/* Averages and engagement rate */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">Avg Views/Video</p>
+        <div className="p-3 rounded-lg bg-bg-bg-secondary text-center">
+          <p className="text-xs text-text-text-muted">Avg Views/Video</p>
           <p className="text-lg font-bold">{stats.avgViews.toFixed(2)}</p>
         </div>
-        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">Avg Likes/Video</p>
+        <div className="p-3 rounded-lg bg-bg-bg-secondary text-center">
+          <p className="text-xs text-text-text-muted">Avg Likes/Video</p>
           <p className="text-lg font-bold">{stats.avgLikes.toFixed(2)}</p>
         </div>
-        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">Avg Comments/Video</p>
+        <div className="p-3 rounded-lg bg-bg-bg-secondary text-center">
+          <p className="text-xs text-text-text-muted">Avg Comments/Video</p>
           <p className="text-lg font-bold">{stats.avgComments.toFixed(2)}</p>
         </div>
-        <div className="p-3 rounded-lg bg-[var(--color-bg-secondary)] text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">Engagement Rate</p>
+        <div className="p-3 rounded-lg bg-bg-bg-secondary text-center">
+          <p className="text-xs text-text-text-muted">Engagement Rate</p>
           <p className="text-lg font-bold">{(stats.engagementRate * 100).toFixed(2)}%</p>
         </div>
       </div>
@@ -482,7 +482,7 @@ function YouTubeStatsCard({ youtubeData, dateRange }: { youtubeData: { videos: Y
         <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">🏆 Top Performing Video</p>
           <p className="font-medium text-sm truncate">{topVideo.title}</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+          <p className="text-xs text-text-text-muted mt-1">
             {topVideo.stats.views.toLocaleString()} views
           </p>
         </div>
@@ -520,19 +520,19 @@ function YouTubeVideosSection({ videos, dateRange }: { videos: YouTubeVideo[], d
         <Video className="w-5 h-5 text-[#FF0000]" />
         YouTube Videos
         {dateRange !== 'all' && (
-          <span className="text-xs font-normal text-[var(--color-text-muted)]">
+          <span className="text-xs font-normal text-text-text-muted">
             (Last {dateRange === '7' ? '7' : dateRange === '14' ? '14' : dateRange === '30' ? '30' : dateRange === '90' ? '90' : '365'} days)
           </span>
         )}
         {filteredVideos.length > 0 && (
-          <span className="text-sm font-normal text-[var(--color-text-muted)]">
+          <span className="text-sm font-normal text-text-text-muted">
             ({filteredVideos.length} videos)
           </span>
         )}
       </h2>
       
       {filteredVideos.length === 0 ? (
-        <div className="text-center py-8 text-[var(--color-text-muted)]">
+        <div className="text-center py-8 text-text-text-muted">
           <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">No videos found</p>
           <p className="text-sm mt-1">Your YouTube channel might not have any videos in this period.</p>
@@ -542,7 +542,7 @@ function YouTubeVideosSection({ videos, dateRange }: { videos: YouTubeVideo[], d
           {filteredVideos.slice(0, 20).map((video) => (
             <div 
               key={video.id} 
-              className="flex gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer"
+              className="flex gap-4 p-3 rounded-lg bg-bg-bg-secondary hover:bg-bg-bg-hover transition-colors cursor-pointer"
               onClick={() => window.open(`https://youtube.com/watch?v=${video.id}`, '_blank')}
             >
               <div className="relative w-32 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-800">
@@ -560,10 +560,10 @@ function YouTubeVideosSection({ videos, dateRange }: { videos: YouTubeVideo[], d
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-sm truncate">{video.title}</h3>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-text-muted mt-1">
                   {format(new Date(video.publishedAt), 'MMM d, yyyy')}
                 </p>
-                <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
+                <div className="flex gap-4 mt-2 text-xs text-text-text-secondary">
                   <span className="flex items-center gap-1">
                     <Eye className="w-3 h-3" />
                     {video.stats.views.toLocaleString()} views
@@ -897,7 +897,7 @@ export default function AnalyticsPage() {
         align="left"
         actions={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-1">
+            <div className="flex items-center gap-1 bg-bg-bg-card rounded-lg border border-border-border p-1">
               {dateRangeOptions.map((option) => (
                 <button
                   key={option.value}
@@ -905,8 +905,8 @@ export default function AnalyticsPage() {
                   className={clsx(
                     'px-3 py-1.5 text-sm rounded-md transition-colors',
                     dateRange === option.value
-                      ? 'bg-[var(--color-accent)] text-white'
-                      : 'hover:bg-[var(--color-bg-secondary)]'
+                      ? 'bg-text-primary text-white'
+                      : 'hover:bg-bg-bg-secondary'
                   )}
                 >
                   {option.label}
@@ -933,7 +933,7 @@ export default function AnalyticsPage() {
                 <Eye className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Total Views</p>
+                <p className="text-sm text-text-text-muted">Total Views</p>
                 <p className="text-2xl font-bold">{summary.totalViews.toLocaleString()}</p>
               </div>
             </div>
@@ -945,7 +945,7 @@ export default function AnalyticsPage() {
                 <Heart className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Total Engagement</p>
+                <p className="text-sm text-text-text-muted">Total Engagement</p>
                 <p className="text-2xl font-bold">{summary.totalEngagement.toLocaleString()}</p>
               </div>
             </div>
@@ -953,11 +953,11 @@ export default function AnalyticsPage() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+              <div className="p-3 rounded-lg bg-text-primary/10 text-text-primary">
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Avg. Engagement Rate</p>
+                <p className="text-sm text-text-text-muted">Avg. Engagement Rate</p>
                 <p className="text-2xl font-bold">{(summary.averageEngagementRate * 100).toFixed(2)}%</p>
               </div>
             </div>
@@ -969,7 +969,7 @@ export default function AnalyticsPage() {
                 <BarChart3 className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-[var(--color-text-muted)]">Posts Published</p>
+                <p className="text-sm text-text-text-muted">Posts Published</p>
                 <p className="text-2xl font-bold">{summary.totalPosts}</p>
               </div>
             </div>
@@ -983,18 +983,18 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Views Over Time</h2>
                 {isLoadingYoutube && (
-                  <span className="text-sm text-[var(--color-text-muted)] flex items-center gap-2">
+                  <span className="text-sm text-text-text-muted flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     Loading...
                   </span>
                 )}
               </div>
               <LineChart data={viewsOverTimeData} height={250} showArea={true} />
-              <div className="flex items-center justify-between mt-4 text-sm text-[var(--color-text-muted)]">
+              <div className="flex items-center justify-between mt-4 text-sm text-text-text-muted">
                 <span>Total: {totalViewsFromChart.toLocaleString()} views</span>
                 <span className={clsx(
                   'flex items-center gap-1',
-                  trend.isPositive ? 'text-green-600' : trend.value < 0 ? 'text-red-600' : 'text-[var(--color-text-muted)]'
+                  trend.isPositive ? 'text-green-600' : trend.value < 0 ? 'text-red-600' : 'text-text-text-muted'
                 )}>
                   {trend.isPositive ? <TrendingUp className="w-4 h-4" /> : trend.value < 0 ? <TrendingDown className="w-4 h-4" /> : null}
                   {trend.label}
@@ -1012,18 +1012,18 @@ export default function AnalyticsPage() {
                   return (
                     <div 
                       key={platform}
-                      className="p-4 rounded-lg bg-[var(--color-bg-secondary)]"
+                      className="p-4 rounded-lg bg-bg-bg-secondary"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium capitalize">{platform}</span>
                         <span className={clsx(
                           'text-sm font-semibold',
-                          Number(rate) > 6 ? 'text-green-600' : Number(rate) > 4 ? 'text-amber-600' : 'text-[var(--color-text-secondary)]'
+                          Number(rate) > 6 ? 'text-green-600' : Number(rate) > 4 ? 'text-amber-600' : 'text-text-text-secondary'
                         )}>
                           {rate}%
                         </span>
                       </div>
-                      <div className="h-2 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                      <div className="h-2 bg-bg-bg-primary rounded-full overflow-hidden">
                         <div 
                           className={clsx(
                             'h-full rounded-full transition-all',
@@ -1035,7 +1035,7 @@ export default function AnalyticsPage() {
                           style={{ width: `${Math.min(Number(rate) * 10, 100)}%` }}
                         />
                       </div>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                      <p className="text-xs text-text-text-muted mt-2">
                         {platformAnalytics.posts} posts • {platformAnalytics.views.toLocaleString()} views
                       </p>
                     </div>
@@ -1138,7 +1138,7 @@ export default function AnalyticsPage() {
                   valueLabel="minutes"
                   gradient="#FF0000"
                 />
-                <div className="mt-2 text-center text-xs text-[var(--color-text-muted)]">
+                <div className="mt-2 text-center text-xs text-text-text-muted">
                   Total: {Math.round(youtubeAnalytics.overview.totalMinutesWatched / 60).toLocaleString()} hours watched
                 </div>
               </Card>
@@ -1170,10 +1170,10 @@ export default function AnalyticsPage() {
                 {youtubeAnalytics.overview?.avgViewPercentage != null && (
                   <div className="mb-3">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-[var(--color-text-muted)]">Retention</span>
+                      <span className="text-text-text-muted">Retention</span>
                       <span className="font-bold">{youtubeAnalytics.overview.avgViewPercentage.toFixed(2)}%</span>
                     </div>
-                    <div className="h-1 bg-[var(--color-bg-primary)] rounded-full overflow-hidden">
+                    <div className="h-1 bg-bg-bg-primary rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-[#FF0000] rounded-full"
                         style={{ width: `${Math.min(youtubeAnalytics.overview.avgViewPercentage, 100)}%` }}
@@ -1185,11 +1185,11 @@ export default function AnalyticsPage() {
 
                 {youtubeAnalytics.trafficSources?.length > 0 && (
                   <div className="mb-2">
-                    <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1">TRAFFIC</p>
+                    <p className="text-[10px] font-medium text-text-text-muted mb-1">TRAFFIC</p>
                     <div className="space-y-0.5">
                       {youtubeAnalytics.trafficSources.slice(0, 4).map((item: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between text-xs">
-                          <span className="text-[var(--color-text-secondary)] capitalize truncate mr-1">
+                          <span className="text-text-text-secondary capitalize truncate mr-1">
                             {item.source.replace(/_/g, ' ').toLowerCase()}
                           </span>
                           <span className="font-medium shrink-0">{item.views?.toLocaleString() || 0}</span>
@@ -1202,10 +1202,10 @@ export default function AnalyticsPage() {
                 {/* Top Countries */}
                 {youtubeAnalytics.topCountries?.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-1">COUNTRIES</p>
+                    <p className="text-[10px] font-medium text-text-text-muted mb-1">COUNTRIES</p>
                     <div className="flex flex-wrap gap-1">
                       {youtubeAnalytics.topCountries.slice(0, 5).map((item: any, idx: number) => (
-                        <span key={idx} className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--color-bg-secondary)]">
+                        <span key={idx} className="px-1.5 py-0.5 text-[10px] rounded bg-bg-bg-secondary">
                           {item.country}
                         </span>
                       ))}

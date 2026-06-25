@@ -192,16 +192,16 @@ export default function MediaLibrary() {
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.add('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
+    e.currentTarget.classList.add('border-text-primary', 'bg-primary-10/50');
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
+    e.currentTarget.classList.remove('border-text-primary', 'bg-primary-10/50');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('border-[var(--color-accent)]', 'bg-[var(--color-accent-light)]/50');
+    e.currentTarget.classList.remove('border-text-primary', 'bg-primary-10/50');
     handleUpload(e.dataTransfer.files);
   };
 
@@ -280,11 +280,11 @@ export default function MediaLibrary() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Media Library</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1 flex items-center gap-2 flex-wrap">
+          <h1 className="text-2xl font-bold text-text-text-primary">Media Library</h1>
+          <p className="text-text-text-secondary mt-1 flex items-center gap-2 flex-wrap">
             Manage your images and videos
             {storageInfo && (
-              <span className="text-xs px-2 py-0.5 bg-[var(--color-bg-secondary)] rounded">
+              <span className="text-xs px-2 py-0.5 bg-bg-bg-secondary rounded">
                 {storageInfo.provider}
               </span>
             )}
@@ -318,38 +318,38 @@ export default function MediaLibrary() {
         </div>
         <div className="flex items-center gap-2">
           {/* Type filter */}
-          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg p-1">
+          <div className="flex items-center bg-bg-bg-secondary rounded-lg p-1">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-3 py-1 text-sm rounded ${filterType === 'all' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+              className={`px-3 py-1 text-sm rounded ${filterType === 'all' ? 'bg-text-primary text-white' : 'text-text-text-secondary'}`}
             >
               All
             </button>
             <button
               onClick={() => setFilterType('image')}
-              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'image' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'image' ? 'bg-text-primary text-white' : 'text-text-text-secondary'}`}
             >
               <Image className="w-4 h-4" /> Images
             </button>
             <button
               onClick={() => setFilterType('video')}
-              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'video' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)]'}`}
+              className={`px-3 py-1 text-sm rounded flex items-center gap-1 ${filterType === 'video' ? 'bg-text-primary text-white' : 'text-text-text-secondary'}`}
             >
               <Video className="w-4 h-4" /> Videos
             </button>
           </div>
           
           {/* View mode */}
-          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg p-1">
+          <div className="flex items-center bg-bg-bg-secondary rounded-lg p-1">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]'}`}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-text-primary text-white' : 'text-text-text-muted hover:bg-bg-bg-tertiary'}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]'}`}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-text-primary text-white' : 'text-text-text-muted hover:bg-bg-bg-tertiary'}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -359,10 +359,10 @@ export default function MediaLibrary() {
 
       {/* Error banner */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-[var(--color-error)]/10 border border-[var(--color-error)]/30 rounded-lg text-[var(--color-error)]">
+        <div className="flex items-center gap-2 p-4 bg-text-error/10 border border-text-error/30 rounded-lg text-text-error">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p className="flex-1">{error}</p>
-          <button onClick={() => setError(null)} className="p-1 hover:bg-[var(--color-error)]/20 rounded">
+          <button onClick={() => setError(null)} className="p-1 hover:bg-text-error/20 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -383,19 +383,19 @@ export default function MediaLibrary() {
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors relative ${
           !connectionStatus.connected
             ? 'border-red-300 bg-red-50 dark:bg-red-900/10 cursor-not-allowed'
-            : 'border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]'
+            : 'border-border-border cursor-pointer hover:border-text-primary'
         }`}
       >
         {/* Offline Warning Overlay */}
         {!connectionStatus.connected && connectionStatus.status !== 'checking' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-bg-card)]/90 rounded-xl z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-bg-bg-card/90 rounded-xl z-10">
             <div className="text-center p-6">
               <WifiOff className="w-12 h-12 mx-auto text-red-500 mb-3" />
               <p className="text-lg font-semibold text-red-600 mb-2">Storage Offline</p>
-              <p className="text-sm text-[var(--color-text-muted)] mb-4">
+              <p className="text-sm text-text-text-muted mb-4">
                 Your tablet storage is not connected. Please:
               </p>
-              <ul className="text-sm text-[var(--color-text-secondary)] text-left list-disc list-inside space-y-1">
+              <ul className="text-sm text-text-text-secondary text-left list-disc list-inside space-y-1">
                 <li>Make sure Garage is running on your tablet</li>
                 <li>Make sure Cloudflare Tunnel is active</li>
                 <li>Check that your tablet is connected to the internet</li>
@@ -405,7 +405,7 @@ export default function MediaLibrary() {
                   e.stopPropagation();
                   checkConnection();
                 }}
-                className="mt-4 px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 flex items-center gap-2 mx-auto"
+                className="mt-4 px-4 py-2 bg-text-primary text-white rounded-lg hover:opacity-90 flex items-center gap-2 mx-auto"
               >
                 <RefreshCw className="w-4 h-4" /> Check Connection
               </button>
@@ -424,22 +424,22 @@ export default function MediaLibrary() {
         
         {uploading ? (
           <div className="space-y-2">
-            <div className="w-12 h-12 mx-auto border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-lg font-medium text-[var(--color-text-primary)]">Uploading...</p>
-            <p className="text-sm text-[var(--color-text-muted)]">
+            <div className="w-12 h-12 mx-auto border-4 border-text-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-lg font-medium text-text-text-primary">Uploading...</p>
+            <p className="text-sm text-text-text-muted">
               {Object.keys(uploadProgress).length} file(s) in progress
             </p>
           </div>
         ) : (
           <>
-            <Upload className={`w-12 h-12 mx-auto mb-4 ${!connectionStatus.connected ? 'text-gray-400' : 'text-[var(--color-text-muted)]'}`} />
-            <p className={`text-lg font-medium ${!connectionStatus.connected ? 'text-gray-400' : 'text-[var(--color-text-primary)]'}`}>
+            <Upload className={`w-12 h-12 mx-auto mb-4 ${!connectionStatus.connected ? 'text-gray-400' : 'text-text-text-muted'}`} />
+            <p className={`text-lg font-medium ${!connectionStatus.connected ? 'text-gray-400' : 'text-text-text-primary'}`}>
               {connectionStatus.connected ? 'Drag files here or click to upload' : 'Uploads disabled - Storage Offline'}
             </p>
-            <p className="text-sm text-[var(--color-text-muted)] mt-2">
+            <p className="text-sm text-text-text-muted mt-2">
               Supports images (JPG, PNG, GIF, WebP) and videos (MP4, MOV, WebM)
             </p>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            <p className="text-xs text-text-text-muted mt-1">
               Max file size: 500MB for videos, 10MB for images
             </p>
           </>
@@ -448,29 +448,29 @@ export default function MediaLibrary() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-text-muted" />
         <input
           type="text"
           placeholder="Search files..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-card)] text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+          className="w-full pl-10 pr-4 py-2 border border-border-border rounded-lg bg-bg-bg-card text-text-text-primary focus:ring-2 focus:ring-text-primary focus:border-text-primary"
         />
       </div>
 
       {/* File count */}
-      <div className="text-sm text-[var(--color-text-muted)]">
+      <div className="text-sm text-text-text-muted">
         Showing {filteredFiles.length} of {files.length} files
       </div>
 
       {/* File Grid/List */}
       {loading ? (
-        <div className="text-center py-12 text-[var(--color-text-secondary)]">
-          <div className="w-12 h-12 mx-auto border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+        <div className="text-center py-12 text-text-text-secondary">
+          <div className="w-12 h-12 mx-auto border-4 border-text-primary border-t-transparent rounded-full animate-spin" />
           <p className="mt-4">Loading files...</p>
         </div>
       ) : filteredFiles.length === 0 ? (
-        <div className="text-center py-12 text-[var(--color-text-secondary)]">
+        <div className="text-center py-12 text-text-text-secondary">
           <Folder className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No files yet. Upload your first file!</p>
         </div>
@@ -486,7 +486,7 @@ export default function MediaLibrary() {
             return (
               <div
                 key={file.url}
-                className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
+                className="group relative aspect-square rounded-lg overflow-hidden bg-bg-bg-secondary border border-border-border hover:shadow-md transition-shadow cursor-pointer"
               >
                 {/* Thumbnail/Preview */}
                 {isImage ? (
@@ -498,7 +498,7 @@ export default function MediaLibrary() {
                   />
                 ) : isVideo ? (
                   <div 
-                    className="w-full h-full flex items-center justify-center bg-[var(--color-bg-tertiary)]"
+                    className="w-full h-full flex items-center justify-center bg-bg-bg-tertiary"
                     onClick={(e) => {
                       e.stopPropagation();
                       openVideoModal(file);
@@ -510,7 +510,7 @@ export default function MediaLibrary() {
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Icon className="w-12 h-12 text-[var(--color-text-muted)]" />
+                    <Icon className="w-12 h-12 text-text-text-muted" />
                   </div>
                 )}
                 
@@ -520,7 +520,7 @@ export default function MediaLibrary() {
                     <div className="w-3/4">
                       <div className="h-2 bg-white/30 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-[var(--color-accent)] transition-all duration-200"
+                          className="h-full bg-text-primary transition-all duration-200"
                           style={{ width: `${uploadProgressValue}%` }}
                         />
                       </div>
@@ -537,7 +537,7 @@ export default function MediaLibrary() {
                         e.stopPropagation();
                         openVideoModal(file);
                       }}
-                      className="p-2 bg-white text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                      className="p-2 bg-white text-text-text-primary rounded-full hover:bg-text-primary hover:text-white transition-colors"
                       title="Play video"
                     >
                       <Play className="w-4 h-4" />
@@ -548,7 +548,7 @@ export default function MediaLibrary() {
                       e.stopPropagation();
                       copyUrl(file.url);
                     }}
-                    className="p-2 bg-white text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    className="p-2 bg-white text-text-text-primary rounded-full hover:bg-text-primary hover:text-white transition-colors"
                     title="Copy URL"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -560,8 +560,8 @@ export default function MediaLibrary() {
                     }}
                     className={`p-2 rounded-full transition-colors ${
                       deleteConfirm === file.url 
-                        ? 'bg-[var(--color-error)] text-white' 
-                        : 'bg-white text-[var(--color-error)] hover:bg-[var(--color-error)] hover:text-white'
+                        ? 'bg-text-error text-white' 
+                        : 'bg-white text-text-error hover:bg-text-error hover:text-white'
                     }`}
                     title={deleteConfirm === file.url ? 'Click again to confirm' : 'Delete'}
                   >
@@ -583,14 +583,14 @@ export default function MediaLibrary() {
       ) : (
         <Card className="overflow-hidden">
           <table className="w-full">
-            <thead className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
+            <thead className="bg-bg-bg-secondary border-b border-border-border">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Preview</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Name</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Type</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Size</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Date</th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">Actions</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-text-text-secondary">Preview</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-text-text-secondary">Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-text-text-secondary">Type</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-text-text-secondary">Size</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-text-text-secondary">Date</th>
+                <th className="text-right px-4 py-3 text-sm font-medium text-text-text-secondary">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -600,25 +600,25 @@ export default function MediaLibrary() {
                 const isVideo = file.type?.startsWith('video');
                 
                 return (
-                  <tr key={file.url} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg-secondary)]">
+                  <tr key={file.url} className="border-b border-border-border last:border-0 hover:bg-bg-bg-secondary">
                     <td className="px-4 py-3">
                       <div 
-                        className="w-12 h-12 rounded bg-[var(--color-bg-secondary)] flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80"
+                        className="w-12 h-12 rounded bg-bg-bg-secondary flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80"
                         onClick={() => isVideo && openVideoModal(file)}
                       >
                         {isImage ? (
                           <img src={file.url} alt="" className="w-full h-full object-cover" />
                         ) : isVideo ? (
-                          <div className="relative w-full h-full flex items-center justify-center bg-[var(--color-bg-tertiary)]">
+                          <div className="relative w-full h-full flex items-center justify-center bg-bg-bg-tertiary">
                             <Play className="w-6 h-6 text-white" />
                           </div>
                         ) : (
-                          <Icon className="w-6 h-6 text-[var(--color-text-muted)]" />
+                          <Icon className="w-6 h-6 text-text-text-muted" />
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-[var(--color-text-primary)] truncate max-w-xs" title={file.originalName || file.filename}>
+                      <p className="text-sm text-text-text-primary truncate max-w-xs" title={file.originalName || file.filename}>
                         {file.originalName || file.filename}
                       </p>
                     </td>
@@ -631,14 +631,14 @@ export default function MediaLibrary() {
                         {file.mimeType || file.type || 'unknown'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{formatSize(file.size)}</td>
-                    <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{formatDate(file.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm text-text-text-secondary">{formatSize(file.size)}</td>
+                    <td className="px-4 py-3 text-sm text-text-text-secondary">{formatDate(file.createdAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         {isVideo && (
                           <button
                             onClick={() => openVideoModal(file)}
-                            className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]"
+                            className="p-2 text-text-text-muted hover:text-text-primary"
                             title="Play video"
                           >
                             <Play className="w-4 h-4" />
@@ -646,7 +646,7 @@ export default function MediaLibrary() {
                         )}
                         <button
                           onClick={() => copyUrl(file.url)}
-                          className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]"
+                          className="p-2 text-text-text-muted hover:text-text-primary"
                           title="Copy URL"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -655,8 +655,8 @@ export default function MediaLibrary() {
                           onClick={() => handleDelete(file)}
                           className={`p-2 ${
                             deleteConfirm === file.url 
-                              ? 'text-white bg-[var(--color-error)]' 
-                              : 'text-[var(--color-text-muted)] hover:text-[var(--color-error)]'
+                              ? 'text-white bg-text-error' 
+                              : 'text-text-text-muted hover:text-text-error'
                           }`}
                           title={deleteConfirm === file.url ? 'Click again to confirm' : 'Delete'}
                         >
@@ -679,7 +679,7 @@ export default function MediaLibrary() {
           onClick={() => setSelectedVideo(null)}
         >
           <div 
-            className="relative max-w-4xl w-full bg-[var(--color-bg-card)] rounded-xl overflow-hidden"
+            className="relative max-w-4xl w-full bg-bg-bg-card rounded-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -702,14 +702,14 @@ export default function MediaLibrary() {
             />
             
             {/* Footer */}
-            <div className="p-4 bg-[var(--color-bg-secondary)] flex items-center justify-between">
-              <div className="text-sm text-[var(--color-text-secondary)]">
+            <div className="p-4 bg-bg-bg-secondary flex items-center justify-between">
+              <div className="text-sm text-text-text-secondary">
                 {formatSize(selectedVideo.size)}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => copyUrl(selectedVideo.url)}
-                  className="px-4 py-2 text-sm bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 flex items-center gap-2"
+                  className="px-4 py-2 text-sm bg-text-primary text-white rounded-lg hover:opacity-90 flex items-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4" /> Copy URL
                 </button>
@@ -721,12 +721,12 @@ export default function MediaLibrary() {
 
       {/* Delete confirmation toast */}
       {deleteConfirm && (
-        <div className="fixed bottom-4 right-4 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg shadow-lg p-4 z-40">
-          <p className="text-sm text-[var(--color-text-primary)] mb-2">Click delete again to confirm</p>
+        <div className="fixed bottom-4 right-4 bg-bg-bg-card border border-border-border rounded-lg shadow-lg p-4 z-40">
+          <p className="text-sm text-text-text-primary mb-2">Click delete again to confirm</p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setDeleteConfirm(null)}
-              className="px-4 py-2 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)]"
+              className="px-4 py-2 text-sm border border-border-border rounded-lg hover:bg-bg-bg-secondary"
             >
               Cancel
             </button>
@@ -735,7 +735,7 @@ export default function MediaLibrary() {
                 const file = files.find((f) => f.url === deleteConfirm);
                 if (file) handleDelete(file);
               }}
-              className="px-4 py-2 text-sm bg-[var(--color-error)] text-white rounded-lg hover:opacity-90"
+              className="px-4 py-2 text-sm bg-text-error text-white rounded-lg hover:opacity-90"
             >
               Delete
             </button>

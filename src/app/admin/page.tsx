@@ -207,7 +207,7 @@ export default function AdminPage() {
         <Card className="p-8 text-center">
           <Shield className="w-12 h-12 mx-auto mb-4 text-red-500" />
           <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p className="text-[var(--color-text-muted)]">You don't have permission to access the admin panel.</p>
+          <p className="text-text-text-muted">You don't have permission to access the admin panel.</p>
         </Card>
       </div>
     );
@@ -230,13 +230,13 @@ export default function AdminPage() {
       
       <Container>
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-[var(--color-border)]">
+        <div className="flex gap-2 mb-6 border-b border-border-border">
           <button
             onClick={() => setActiveTab('storage')}
             className={`px-4 py-2 font-medium transition-colors relative ${
               activeTab === 'storage' 
-                ? 'text-[var(--color-accent)]' 
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                ? 'text-text-primary' 
+                : 'text-text-text-muted hover:text-text-text-primary'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -244,15 +244,15 @@ export default function AdminPage() {
               Storage Health
             </div>
             {activeTab === 'storage' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-primary" />
             )}
           </button>
           <button
             onClick={() => setActiveTab('organizations')}
             className={`px-4 py-2 font-medium transition-colors relative ${
               activeTab === 'organizations' 
-                ? 'text-[var(--color-accent)]' 
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                ? 'text-text-primary' 
+                : 'text-text-text-muted hover:text-text-text-primary'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function AdminPage() {
               Organizations
             </div>
             {activeTab === 'organizations' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-primary" />
             )}
           </button>
         </div>
@@ -287,17 +287,17 @@ export default function AdminPage() {
                   <button
                     onClick={fetchStorageHealth}
                     disabled={loadingStorage}
-                    className="p-2 hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors"
+                    className="p-2 hover:bg-bg-bg-secondary rounded-lg transition-colors"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingStorage ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
-                <p className="text-sm text-[var(--color-text-muted)]">Connection Status</p>
+                <p className="text-sm text-text-text-muted">Connection Status</p>
                 <p className={`text-xl font-bold ${storageHealth?.connected ? 'text-green-600' : 'text-red-600'}`}>
                   {storageHealth?.connected ? 'Online' : 'Offline'}
                 </p>
                 {storageHealth?.latency && (
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  <p className="text-xs text-text-text-muted mt-1">
                     Latency: {storageHealth.latency}ms
                   </p>
                 )}
@@ -310,13 +310,13 @@ export default function AdminPage() {
                     <HardDrive className="w-6 h-6" />
                   </div>
                 </div>
-                <p className="text-sm text-[var(--color-text-muted)]">Storage Used</p>
+                <p className="text-sm text-text-text-muted">Storage Used</p>
                 <p className="text-xl font-bold">
                   {garageStats?.files.totalSize 
                     ? formatBytes(garageStats.files.totalSize) 
                     : '0 B'}
                 </p>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-text-muted mt-1">
                   {garageStats?.files.total || 0} files total
                 </p>
               </Card>
@@ -328,13 +328,13 @@ export default function AdminPage() {
                     <Database className="w-6 h-6" />
                   </div>
                 </div>
-                <p className="text-sm text-[var(--color-text-muted)]">Capacity (256GB SD)</p>
+                <p className="text-sm text-text-text-muted">Capacity (256GB SD)</p>
                 <p className="text-xl font-bold">
                   {garageStats?.storage.capacity.free 
                     ? formatBytes(garageStats.storage.capacity.free)
                     : '238 GB'}
                 </p>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-text-muted mt-1">
                   {garageStats?.storage.capacity.usedPercent || 0}% used
                 </p>
               </Card>
@@ -346,9 +346,9 @@ export default function AdminPage() {
                     <Activity className="w-6 h-6" />
                   </div>
                 </div>
-                <p className="text-sm text-[var(--color-text-muted)]">Storage Provider</p>
+                <p className="text-sm text-text-text-muted">Storage Provider</p>
                 <p className="text-xl font-bold capitalize">{storageHealth?.provider || 'Unknown'}</p>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-text-muted mt-1">
                   {garageStats?.storage.bucket || 'videos'}
                 </p>
               </Card>
@@ -361,7 +361,7 @@ export default function AdminPage() {
                 Storage Capacity
               </h3>
               <div className="space-y-4">
-                <div className="relative h-8 bg-[var(--color-bg-secondary)] rounded-full overflow-hidden">
+                <div className="relative h-8 bg-bg-bg-secondary rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-500 ${
                       (garageStats?.storage.capacity.usedPercent || 0) > 80 
@@ -380,19 +380,19 @@ export default function AdminPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <div>
-                    <span className="text-[var(--color-text-muted)]">Used:</span>
+                    <span className="text-text-text-muted">Used:</span>
                     <span className="ml-1 font-medium">
                       {garageStats?.storage.capacity.used ? formatBytes(garageStats.storage.capacity.used) : '0 B'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[var(--color-text-muted)]">Free:</span>
+                    <span className="text-text-text-muted">Free:</span>
                     <span className="ml-1 font-medium">
                       {garageStats?.storage.capacity.free ? formatBytes(garageStats.storage.capacity.free) : '238 GB'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[var(--color-text-muted)]">Total:</span>
+                    <span className="text-text-text-muted">Total:</span>
                     <span className="ml-1 font-medium">256 GB</span>
                   </div>
                 </div>
@@ -406,26 +406,26 @@ export default function AdminPage() {
                 File Statistics
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg">
-                  <p className="text-3xl font-bold text-[var(--color-text-primary)]">
+                <div className="text-center p-4 bg-bg-bg-secondary rounded-lg">
+                  <p className="text-3xl font-bold text-text-text-primary">
                     {garageStats?.files.total || 0}
                   </p>
-                  <p className="text-sm text-[var(--color-text-muted)]">Total Files</p>
+                  <p className="text-sm text-text-text-muted">Total Files</p>
                 </div>
-                <div className="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="text-center p-4 bg-bg-bg-secondary rounded-lg">
                   <Image className="w-6 h-6 mx-auto mb-2 text-green-500" />
                   <p className="text-2xl font-bold">{garageStats?.files.images || 0}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">Images</p>
+                  <p className="text-xs text-text-text-muted">Images</p>
                 </div>
-                <div className="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="text-center p-4 bg-bg-bg-secondary rounded-lg">
                   <Video className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                   <p className="text-2xl font-bold">{garageStats?.files.videos || 0}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">Videos</p>
+                  <p className="text-xs text-text-text-muted">Videos</p>
                 </div>
-                <div className="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="text-center p-4 bg-bg-bg-secondary rounded-lg">
                   <FileText className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                   <p className="text-2xl font-bold">{garageStats?.files.documents || 0}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">Documents</p>
+                  <p className="text-xs text-text-text-muted">Documents</p>
                 </div>
               </div>
             </Card>
@@ -437,7 +437,7 @@ export default function AdminPage() {
                 Security Status
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-bg-bg-secondary rounded-lg">
                   <div className="flex items-center gap-3">
                     {garageStats?.security.localNetworkOnly ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -450,7 +450,7 @@ export default function AdminPage() {
                     {garageStats?.security.localNetworkOnly ? 'Enabled' : 'Disabled'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-bg-bg-secondary rounded-lg">
                   <div className="flex items-center gap-3">
                     {garageStats?.security.authenticationRequired ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -463,7 +463,7 @@ export default function AdminPage() {
                     {garageStats?.security.authenticationRequired ? 'Enabled' : 'Disabled'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-bg-bg-secondary rounded-lg">
                   <div className="flex items-center gap-3">
                     {garageStats?.security.credentialsConfigured ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -476,7 +476,7 @@ export default function AdminPage() {
                     {garageStats?.security.credentialsConfigured ? 'Configured' : 'Missing'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-bg-bg-secondary rounded-lg">
                   <div className="flex items-center gap-3">
                     {garageStats?.security.tunnelMode ? (
                       <CheckCircle className="w-5 h-5 text-blue-500" />
@@ -500,13 +500,13 @@ export default function AdminPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-[var(--color-text-muted)] mb-1">Endpoint</p>
-                  <p className="font-mono text-sm bg-[var(--color-bg-secondary)] p-3 rounded break-all">
+                  <p className="text-sm text-text-text-muted mb-1">Endpoint</p>
+                  <p className="font-mono text-sm bg-bg-bg-secondary p-3 rounded break-all">
                     {garageStats?.storage.endpoint || 'Not configured'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--color-text-muted)] mb-1">Latency</p>
+                  <p className="text-sm text-text-text-muted mb-1">Latency</p>
                   <p className="font-medium">
                     {garageStats?.network.latency 
                       ? `${garageStats.network.latency}ms` 
@@ -536,7 +536,7 @@ export default function AdminPage() {
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-[var(--color-text-muted)]">Pending Approval</p>
+                    <p className="text-sm text-text-text-muted">Pending Approval</p>
                     <p className="text-2xl font-bold">{pendingOrgs.length}</p>
                   </div>
                 </div>
@@ -548,7 +548,7 @@ export default function AdminPage() {
                     <Check className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-[var(--color-text-muted)]">Approved</p>
+                    <p className="text-sm text-text-text-muted">Approved</p>
                     <p className="text-2xl font-bold">{approvedOrgs.length}</p>
                   </div>
                 </div>
@@ -560,7 +560,7 @@ export default function AdminPage() {
                     <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-[var(--color-text-muted)]">Total Users</p>
+                    <p className="text-sm text-text-text-muted">Total Users</p>
                     <p className="text-2xl font-bold">{organizations.reduce((sum, o) => sum + o._count.users, 0)}</p>
                   </div>
                 </div>
@@ -581,7 +581,7 @@ export default function AdminPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{org.name}</h3>
-                          <p className="text-sm text-[var(--color-text-muted)]">
+                          <p className="text-sm text-text-text-muted">
                             Created {format(new Date(org.createdAt), 'MMM d, yyyy')}
                           </p>
                           <div className="mt-3 flex gap-4 text-sm">
@@ -595,10 +595,10 @@ export default function AdminPage() {
                             </span>
                           </div>
                           <div className="mt-3">
-                            <p className="text-xs text-[var(--color-text-muted)] mb-1">Users:</p>
+                            <p className="text-xs text-text-text-muted mb-1">Users:</p>
                             <div className="flex flex-wrap gap-2">
                               {org.users.map(user => (
-                                <span key={user.id} className="text-sm bg-[var(--color-bg-secondary)] px-2 py-1 rounded">
+                                <span key={user.id} className="text-sm bg-bg-bg-secondary px-2 py-1 rounded">
                                   {user.email}
                                 </span>
                               ))}

@@ -19,7 +19,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const statusConfig: Record<PostStatus, { label: string; className: string; icon: React.ReactElement }> = {
     draft: {
       label: 'Draft',
-      className: 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]',
+      className: 'bg-bg-bg-secondary text-text-text-secondary',
       icon: <Edit3 className="w-3 h-3" />,
     },
     scheduled: {
@@ -134,8 +134,8 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
   return (
     <div
       className={clsx(
-        'bg-[var(--color-bg-card)] rounded-lg border border-[var(--color-border)] p-4',
-        'hover:border-[var(--color-accent)] transition-colors',
+        'bg-bg-bg-card rounded-lg border border-border-border p-4',
+        'hover:border-text-primary transition-colors',
         compact ? 'p-3' : 'p-4'
       )}
     >
@@ -148,7 +148,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
           </div>
           
           {!compact && (
-            <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 mt-2">
+            <p className="text-sm text-text-text-secondary line-clamp-2 mt-2">
               {post.content || 'No content'}
             </p>
           )}
@@ -160,7 +160,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
             {onPublish && post.status === 'draft' && (
               <button
                 onClick={() => onPublish(post)}
-                className="p-1.5 rounded-md hover:bg-[var(--color-bg-secondary)] text-green-600"
+                className="p-1.5 rounded-md hover:bg-bg-bg-secondary text-green-600"
                 title="Publish now"
               >
                 <CheckCircle className="w-4 h-4" />
@@ -169,7 +169,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
             {onEdit && (
               <button
                 onClick={() => onEdit(post)}
-                className="p-1.5 rounded-md hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+                className="p-1.5 rounded-md hover:bg-bg-bg-secondary text-text-text-secondary"
                 title="Edit post"
               >
                 <Edit3 className="w-4 h-4" />
@@ -190,12 +190,12 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
 
       {/* Media Preview */}
       {hasMedia && !compact && (
-        <div className="mb-3 rounded-lg overflow-hidden bg-[var(--color-bg-secondary)]">
+        <div className="mb-3 rounded-lg overflow-hidden bg-bg-bg-secondary">
           <div className="flex gap-1">
             {post.mediaUrls.slice(0, 4).map((url, idx) => (
               <div
                 key={idx}
-                className="relative aspect-video flex-1 bg-[var(--color-bg-secondary)]"
+                className="relative aspect-video flex-1 bg-bg-bg-secondary"
               >
                 <img
                   src={url}
@@ -214,7 +214,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+      <div className="flex items-center justify-between text-xs text-text-text-muted">
         <div className="flex items-center gap-3">
           {post.scheduledAt && (
             <span className="flex items-center gap-1">
@@ -230,7 +230,7 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
           )}
         </div>
         
-        <span className="text-[var(--color-text-muted)]">
+        <span className="text-text-text-muted">
           {format(new Date(post.createdAt), 'MMM d')}
         </span>
       </div>
@@ -245,8 +245,8 @@ export function PostCard({ post, onEdit, onDelete, onPublish, compact = false }:
 
       {/* Evergreen indicator */}
       {post.isEvergreen && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-[var(--color-accent)]">
-          <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />
+        <div className="mt-2 flex items-center gap-1 text-xs text-text-primary">
+          <span className="w-2 h-2 rounded-full bg-text-primary" />
           Repeats every {post.evergreenIntervalDays} days
         </div>
       )}
@@ -272,12 +272,12 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
     : `${cooldownMinutes}m`;
 
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg bg-[var(--color-bg-secondary)]">
+    <div className="flex items-center gap-4 p-3 rounded-lg bg-bg-bg-secondary">
       <PlatformPills platforms={post.platforms} />
       
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{post.content || 'No content'}</p>
-        <p className="text-xs text-[var(--color-text-muted)]">
+        <p className="text-xs text-text-text-muted">
           Scheduled: {post.scheduledAt ? format(new Date(post.scheduledAt), 'MMM d, h:mm a') : 'Not scheduled'}
         </p>
       </div>
@@ -285,11 +285,11 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
       <div className="text-right">
         <div className={clsx(
           'text-sm font-medium',
-          cooldownMinutes > 0 ? 'text-[var(--color-warning)]' : 'text-green-500'
+          cooldownMinutes > 0 ? 'text-text-warning' : 'text-green-500'
         )}>
           {cooldownMinutes > 0 ? (
             <>
-              <span className="text-[var(--color-text-muted)]">Cooldown:</span> {cooldownText}
+              <span className="text-text-text-muted">Cooldown:</span> {cooldownText}
             </>
           ) : (
             'Ready'
@@ -300,7 +300,7 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
           {onPublish && cooldownMinutes === 0 && (
             <button
               onClick={onPublish}
-              className="text-xs px-2 py-1 rounded bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]"
+              className="text-xs px-2 py-1 rounded bg-text-primary text-white hover:bg-text-primary-hover"
             >
               Publish
             </button>
@@ -308,7 +308,7 @@ export function QueueItem({ post, cooldownRemaining, onPublish, onCancel }: Queu
           {onCancel && (
             <button
               onClick={onCancel}
-              className="text-xs px-2 py-1 rounded bg-[var(--color-bg-card)] hover:bg-red-100 dark:hover:bg-red-900/30"
+              className="text-xs px-2 py-1 rounded bg-bg-bg-card hover:bg-red-100 dark:hover:bg-red-900/30"
             >
               Cancel
             </button>

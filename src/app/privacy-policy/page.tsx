@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
       <Container>
         <Card className="p-8">
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="text-sm text-[var(--color-text-muted)] mb-6">Last updated: June 4, 2026</p>
+            <p className="text-sm text-text-text-muted mb-6">Last updated: June 4, 2026</p>
 
             <h2>1. Introduction</h2>
             <p>
@@ -201,7 +201,7 @@ export default function PrivacyPolicyPage() {
               <li>Cannot be used to reconstruct browsing activity or identify users</li>
             </ul>
             <p>
-              Under the UK Data Use and Access Act 2025, this analytics service qualifies for the statistical-purpose exemption as it does not store identifiers on your device and collects only aggregate, non-personal data. You may opt out of this analytics by contacting us at <a href="mailto:argentjackjoshua@outlook.com" className="text-[var(--color-accent)] hover:underline">argentjackjoshua@outlook.com</a> or by enabling &quot;Do Not Track&quot; in your browser settings.
+              Under the UK Data Use and Access Act 2025, this analytics service qualifies for the statistical-purpose exemption as it does not store identifiers on your device and collects only aggregate, non-personal data. You may opt out of this analytics by contacting us at <a href="mailto:argentjackjoshua@outlook.com" className="text-text-primary hover:underline">argentjackjoshua@outlook.com</a> or by enabling &quot;Do Not Track&quot; in your browser settings.
             </p>
 
             <h2>11. Your Rights Under GDPR/UK GDPR</h2>
@@ -284,7 +284,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Location:</strong> Surrey, United Kingdom</li>
             </ul>
             <p>
-              For data protection inquiries, we aim to respond within 30 days. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-[var(--color-accent)] hover:underline">https://ico.org.uk</a>.
+              For data protection inquiries, we aim to respond within 30 days. You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-text-primary hover:underline">https://ico.org.uk</a>.
             </p>
 
             <h2>18. UK Specific Provisions</h2>

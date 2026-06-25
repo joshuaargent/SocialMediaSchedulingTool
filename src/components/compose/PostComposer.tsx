@@ -215,13 +215,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-[var(--color-bg-card)] rounded-xl shadow-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-2xl bg-bg-bg-card rounded-xl shadow-lg max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+        <div className="flex items-center justify-between p-4 border-b border-border-border">
           <h2 className="text-lg font-semibold">Create Post</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[var(--color-bg-secondary)]"
+            className="p-1.5 rounded-lg hover:bg-bg-bg-secondary"
           >
             <X className="w-5 h-5" />
           </button>
@@ -234,12 +234,12 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <label className="block text-sm font-medium mb-3">Post to</label>
             
             {connectedPlatforms.length === 0 ? (
-              <div className="p-6 rounded-lg border-2 border-dashed border-[var(--color-border)] text-center">
-                <Link2 className="w-8 h-8 mx-auto mb-3 text-[var(--color-text-muted)]" />
-                <p className="text-[var(--color-text-secondary)] mb-3">No platforms connected</p>
-                <p className="text-sm text-[var(--color-text-muted)]">
+              <div className="p-6 rounded-lg border-2 border-dashed border-border-border text-center">
+                <Link2 className="w-8 h-8 mx-auto mb-3 text-text-text-muted" />
+                <p className="text-text-text-secondary mb-3">No platforms connected</p>
+                <p className="text-sm text-text-text-muted">
                   Connect a platform in{' '}
-                  <a href="/settings" className="text-[var(--color-accent)] hover:underline">
+                  <a href="/settings" className="text-text-primary hover:underline">
                     Settings
                   </a>{' '}
                   to start posting
@@ -263,8 +263,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                       className={clsx(
                         'flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all',
                         isSelected
-                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30'
-                          : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+                          ? 'border-text-primary bg-primary/10/30'
+                          : 'border-border-border hover:border-text-text-muted',
                         !isConnected && 'opacity-50 cursor-not-allowed'
                       )}
                       disabled={!isConnected}
@@ -278,12 +278,12 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                       <div className="text-left">
                         <div className="font-medium">{platformInfo[platform].name}</div>
                         {isSelected && (
-                          <div className="text-xs text-[var(--color-text-muted)]">
+                          <div className="text-xs text-text-text-muted">
                             Best: {optimalTimes[0]}
                           </div>
                         )}
                         {!isSelected && (
-                          <div className="text-xs text-[var(--color-text-muted)]">
+                          <div className="text-xs text-text-text-muted">
                             {platformInfo[platform].description}
                           </div>
                         )}
@@ -295,7 +295,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                         </div>
                       )}
                       {isSelected && (
-                        <Check className="w-5 h-5 text-[var(--color-accent)]" />
+                        <Check className="w-5 h-5 text-text-primary" />
                       )}
                     </button>
                   );
@@ -305,9 +305,9 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             
             {/* Show disconnected platforms info */}
             {connectedPlatforms.length > 0 && connectedPlatforms.length < ALL_PLATFORMS.length && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+              <div className="mt-3 flex items-center gap-2 text-xs text-text-text-muted">
                 <span>{connectedPlatforms.length} of {ALL_PLATFORMS.length} platforms connected</span>
-                <a href="/settings" className="text-[var(--color-accent)] hover:underline">
+                <a href="/settings" className="text-text-primary hover:underline">
                   Connect more →
                 </a>
               </div>
@@ -336,7 +336,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               <select
                 value={postType}
                 onChange={(e) => setPostType(e.target.value as PostType)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
+                className="w-full px-3 py-2 rounded-lg border border-border-border bg-bg-bg-card focus:ring-2 focus:ring-text-primary"
               >
                 {postTypes.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -348,7 +348,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               <select
                 value={contentType}
                 onChange={(e) => setContentType(e.target.value as ContentType)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
+                className="w-full px-3 py-2 rounded-lg border border-border-border bg-bg-bg-card focus:ring-2 focus:ring-text-primary"
               >
                 {contentTypes.map((type) => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -365,9 +365,9 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your caption..."
               rows={5}
-              className="w-full px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
+              className="w-full px-4 py-3 rounded-lg border border-border-border bg-bg-bg-card focus:ring-2 focus:ring-text-primary resize-none"
             />
-            <div className="flex justify-between mt-1 text-xs text-[var(--color-text-muted)]">
+            <div className="flex justify-between mt-1 text-xs text-text-text-muted">
               <span>{content.length} characters</span>
               <span>Recommended: 150-300 for captions</span>
             </div>
@@ -379,7 +379,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               <label className="text-sm font-medium">Media</label>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs text-[var(--color-accent)] hover:underline flex items-center gap-1"
+                className="text-xs text-text-primary hover:underline flex items-center gap-1"
               >
                 <Upload className="w-3 h-3" />
                 Upload Files
@@ -395,13 +395,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             </div>
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[var(--color-border)] rounded-lg p-8 text-center hover:border-[var(--color-accent)] transition-colors cursor-pointer"
+              className="border-2 border-dashed border-border-border rounded-lg p-8 text-center hover:border-text-primary transition-colors cursor-pointer"
             >
-              <Image className="w-10 h-10 mx-auto mb-3 text-[var(--color-text-muted)]" />
-              <p className="text-sm text-[var(--color-text-secondary)]">
+              <Image className="w-10 h-10 mx-auto mb-3 text-text-text-muted" />
+              <p className="text-sm text-text-text-secondary">
                 Drag and drop files or click to upload
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              <p className="text-xs text-text-text-muted mt-1">
                 Supports: JPG, PNG, GIF, MP4, MOV (max 100MB)
               </p>
             </div>
@@ -410,7 +410,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             {mediaUrls.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-3">
                 {mediaUrls.map((url, idx) => (
-                  <div key={idx} className="relative aspect-video rounded-lg overflow-hidden bg-[var(--color-bg-secondary)]">
+                  <div key={idx} className="relative aspect-video rounded-lg overflow-hidden bg-bg-bg-secondary">
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
                       onClick={() => removeMediaUrl(url)}
@@ -433,8 +433,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 className={clsx(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   !scheduledAt
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30 text-[var(--color-accent)]'
-                    : 'border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]'
+                    ? 'border-text-primary bg-primary/10/30 text-text-primary'
+                    : 'border-border-border hover:bg-bg-bg-secondary'
                 )}
               >
                 <Video className="w-4 h-4" />
@@ -450,8 +450,8 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 className={clsx(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   scheduledAt && scheduledAt > new Date()
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]/30 text-[var(--color-accent)]'
-                    : 'border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]'
+                    ? 'border-text-primary bg-primary/10/30 text-text-primary'
+                    : 'border-border-border hover:bg-bg-bg-secondary'
                 )}
               >
                 <Calendar className="w-4 h-4" />
@@ -463,14 +463,14 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
 
             {/* Quick Schedule Options */}
             <div className="flex flex-wrap gap-2 mt-3">
-              <span className="text-xs text-[var(--color-text-muted)]">Quick schedule:</span>
+              <span className="text-xs text-text-text-muted">Quick schedule:</span>
               {['Tomorrow 9 AM', 'Tomorrow 12 PM', 'Tomorrow 7 PM'].map((time) => (
                 <button
                   key={time}
                   onClick={() => {
                     // Parse and set quick schedule
                   }}
-                  className="text-xs px-2 py-1 rounded bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border)] transition-colors"
+                  className="text-xs px-2 py-1 rounded bg-bg-bg-secondary hover:bg-border-border transition-colors"
                 >
                   {time}
                 </button>
@@ -479,13 +479,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
           </div>
 
           {/* Evergreen Option */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-[var(--color-bg-secondary)]">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-bg-bg-secondary">
             <div>
               <div className="font-medium flex items-center gap-2">
                 <RefreshCw className="w-4 h-4" />
                 Evergreen Content
               </div>
-              <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+              <p className="text-sm text-text-text-secondary mt-1">
                 Automatically repost this content at regular intervals
               </p>
             </div>
@@ -496,7 +496,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 onChange={(e) => setIsEvergreen(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:ring-2 peer-focus:ring-[var(--color-accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-accent)]" />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:ring-2 peer-focus:ring-text-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-text-primary" />
             </label>
           </div>
 
@@ -509,7 +509,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 max="365"
                 value={evergreenIntervalDays}
                 onChange={(e) => setEvergreenIntervalDays(parseInt(e.target.value) || 7)}
-                className="w-20 px-3 py-2 rounded-lg border border-[var(--color-border)]"
+                className="w-20 px-3 py-2 rounded-lg border border-border-border"
               />
               <span className="text-sm">days</span>
             </div>
@@ -522,7 +522,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               <button
                 onClick={handleSuggestHashtags}
                 disabled={!content}
-                className="text-xs text-[var(--color-accent)] hover:underline flex items-center gap-1 disabled:opacity-50"
+                className="text-xs text-text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
               >
                 <Sparkles className="w-3 h-3" />
                 Suggest Hashtags
@@ -533,19 +533,19 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               value={tags.join(' ')}
               onChange={(e) => setTags(e.target.value.split(' ').filter(Boolean))}
               placeholder="Enter hashtags separated by spaces"
-              className="w-full px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] focus:ring-2 focus:ring-[var(--color-accent)]"
+              className="w-full px-4 py-3 rounded-lg border border-border-border bg-bg-bg-card focus:ring-2 focus:ring-text-primary"
             />
             
             {/* Suggested Hashtags */}
             {suggestedHashtags.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs text-[var(--color-text-muted)] mb-2">Suggested hashtags:</p>
+                <p className="text-xs text-text-text-muted mb-2">Suggested hashtags:</p>
                 <div className="flex flex-wrap gap-2">
                   {suggestedHashtags.map((tag) => (
                     <button
                       key={tag}
                       onClick={() => handleAddSuggestedHashtag(tag)}
-                      className="px-3 py-1 rounded-full bg-[var(--color-bg-secondary)] text-sm hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                      className="px-3 py-1 rounded-full bg-bg-bg-secondary text-sm hover:bg-text-primary hover:text-white transition-colors"
                     >
                       + {tag}
                     </button>
@@ -557,9 +557,9 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]/50">
+        <div className="flex items-center justify-between p-4 border-t border-border-border bg-bg-bg-secondary/50">
           <div className="flex items-center gap-4">
-            <div className="text-sm text-[var(--color-text-muted)]">
+            <div className="text-sm text-text-text-muted">
               {platforms.length > 0 ? (
                 <>Posting to {platforms.length} platform{platforms.length > 1 ? 's' : ''}</>
               ) : (
@@ -575,14 +575,14 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             <button
               onClick={() => setShowPreview(true)}
               disabled={!content && mediaUrls.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-bg-bg-secondary transition-colors disabled:opacity-50"
             >
               <Eye className="w-4 h-4" />
               Preview
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+              className="px-4 py-2 rounded-lg hover:bg-bg-bg-secondary transition-colors"
             >
               Cancel
             </button>
@@ -595,7 +595,7 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
               }
               className={clsx(
                 'px-6 py-2 rounded-lg font-medium transition-colors',
-                'bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]',
+                'bg-text-primary text-white hover:bg-text-primary-hover',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
@@ -609,10 +609,10 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
       {showPreview && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPreview(false)} />
-          <div className="relative w-full max-w-3xl bg-[var(--color-bg-card)] rounded-xl shadow-lg max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+          <div className="relative w-full max-w-3xl bg-bg-bg-card rounded-xl shadow-lg max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border-border">
               <h2 className="text-lg font-semibold">Post Preview</h2>
-              <button onClick={() => setShowPreview(false)} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-secondary)]">
+              <button onClick={() => setShowPreview(false)} className="p-1.5 rounded-lg hover:bg-bg-bg-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -622,13 +622,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                 {platforms.map((platform) => {
                   const preview = getPreviewContent(platform);
                   return (
-                    <div key={platform} className="rounded-lg border border-[var(--color-border)] overflow-hidden">
-                      <div className="flex items-center gap-3 p-3 bg-[var(--color-bg-secondary)]">
+                    <div key={platform} className="rounded-lg border border-border-border overflow-hidden">
+                      <div className="flex items-center gap-3 p-3 bg-bg-bg-secondary">
                         <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center', platformColors[platform].bg)}>
                           <PlatformIcon platform={platform} className="text-white" size={16} />
                         </div>
                         <span className="font-medium capitalize">{platform}</span>
-                        <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+                        <span className="text-xs text-text-text-muted ml-auto">
                           {preview.caption.length} chars
                         </span>
                       </div>
@@ -637,13 +637,13 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
                       {preview.hasMedia && (
                         <div className="grid grid-cols-2 gap-1 p-3 bg-black/5">
                           {mediaUrls.slice(0, 4).map((url, idx) => (
-                            <div key={idx} className="aspect-video rounded bg-[var(--color-bg-secondary)] overflow-hidden">
+                            <div key={idx} className="aspect-video rounded bg-bg-bg-secondary overflow-hidden">
                               <img src={url} alt="" className="w-full h-full object-cover" />
                             </div>
                           ))}
                           {mediaUrls.length > 4 && (
-                            <div className="aspect-video rounded bg-[var(--color-bg-secondary)] flex items-center justify-center">
-                              <span className="text-[var(--color-text-muted)]">+{mediaUrls.length - 4}</span>
+                            <div className="aspect-video rounded bg-bg-bg-secondary flex items-center justify-center">
+                              <span className="text-text-text-muted">+{mediaUrls.length - 4}</span>
                             </div>
                           )}
                         </div>

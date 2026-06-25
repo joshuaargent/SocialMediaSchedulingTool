@@ -102,10 +102,10 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl font-bold text-[var(--color-text-primary)] md:text-4xl">
+          <h1 className="text-3xl font-bold text-text-text-primary md:text-4xl">
             About {siteConfig.name}
           </h1>
-          <p className="mt-4 text-lg text-[var(--color-text-secondary)] max-w-2xl">
+          <p className="mt-4 text-lg text-text-text-secondary max-w-2xl">
             {siteConfig.description}. Built to help content creators manage their 
             social media presence across YouTube, TikTok, Instagram, and Facebook from one 
             central hub.
@@ -114,10 +114,10 @@ export default function AboutPage() {
       </section>
 
       {/* What I Do Section */}
-      <section className="bg-[var(--color-bg-secondary)] py-12 md:py-16">
+      <section className="bg-bg-bg-secondary py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+            <h2 className="text-2xl font-bold text-text-text-primary">
               What {siteConfig.name} Offers
             </h2>
             
@@ -125,19 +125,19 @@ export default function AboutPage() {
               {whatIDo.map((item) => (
                 <Card key={item.title} className="p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent)]/10">
-                      <item.icon className="h-6 w-6 text-[var(--color-accent)]" />
+                    <div className="inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-text-primary/10">
+                      <item.icon className="h-6 w-6 text-text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      <h3 className="text-lg font-semibold text-text-text-primary">
                         {item.title}
                       </h3>
-                      <p className="mt-2 text-[var(--color-text-secondary)]">
+                      <p className="mt-2 text-text-text-secondary">
                         {item.description}
                       </p>
                       <Link
                         href={item.link}
-                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent)] hover:underline"
+                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-text-primary hover:underline"
                       >
                         {item.linkText}
                         <ArrowRight className="h-4 w-4" />
@@ -154,20 +154,20 @@ export default function AboutPage() {
       {/* Values Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+          <h2 className="text-2xl font-bold text-text-text-primary">
             Our Values
           </h2>
           
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
             {values.map((value) => (
               <div key={value.number} className="relative pl-12">
-                <span className="absolute left-0 top-0 text-5xl font-bold text-[var(--color-accent)]/20">
+                <span className="absolute left-0 top-0 text-5xl font-bold text-text-primary/20">
                   {value.number}
                 </span>
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                <h3 className="text-lg font-semibold text-text-text-primary">
                   {value.title}
                 </h3>
-                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                <p className="mt-2 text-sm text-text-text-secondary">
                   {value.description}
                 </p>
               </div>
@@ -177,21 +177,21 @@ export default function AboutPage() {
       </section>
 
       {/* Quick Links Section */}
-      <section className="bg-[var(--color-bg-secondary)] py-12 md:py-16">
+      <section className="bg-bg-bg-secondary py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               {/* Author Card */}
               <div className="flex flex-col items-center text-center">
-                <div className="h-32 w-32 rounded-full bg-[var(--color-accent)]/10 flex items-center justify-center">
-                  <span className="text-4xl font-bold text-[var(--color-accent)]">
+                <div className="h-32 w-32 rounded-full bg-text-primary/10 flex items-center justify-center">
+                  <span className="text-4xl font-bold text-text-primary">
                     {siteConfig.author.name[0]}
                   </span>
                 </div>
-                <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
+                <h2 className="mt-4 text-xl font-semibold text-text-text-primary">
                   {siteConfig.author.name}
                 </h2>
-                <p className="mt-1 text-[var(--color-text-muted)]">
+                <p className="mt-1 text-text-text-muted">
                   {siteConfig.location}
                 </p>
                 
@@ -218,23 +218,23 @@ export default function AboutPage() {
               
               {/* Quick Info */}
               <div>
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+                <h3 className="text-lg font-semibold text-text-text-primary mb-4">
                   Quick Links
                 </h3>
                 <div className="space-y-3">
-                  <Link href="/dashboard" className="flex items-center gap-3 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors">
+                  <Link href="/dashboard" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
                     <Video className="h-5 w-5" />
                     <span>Dashboard</span>
                   </Link>
-                  <Link href="/analytics" className="flex items-center gap-3 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors">
+                  <Link href="/analytics" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
                     <BarChart3 className="h-5 w-5" />
                     <span>Analytics</span>
                   </Link>
-                  <Link href="/queue" className="flex items-center gap-3 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors">
+                  <Link href="/queue" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
                     <Share2 className="h-5 w-5" />
                     <span>Queue</span>
                   </Link>
-                  <Link href="/calendar" className="flex items-center gap-3 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors">
+                  <Link href="/calendar" className="flex items-center gap-3 text-text-text-secondary hover:text-text-primary transition-colors">
                     <Calendar className="h-5 w-5" />
                     <span>Calendar</span>
                   </Link>
@@ -248,11 +248,11 @@ export default function AboutPage() {
       {/* Newsletter Section */}
       <section className="container py-12 md:py-16">
         <div className="mx-auto max-w-2xl text-center">
-          <Users className="mx-auto h-12 w-12 text-[var(--color-accent)]" />
-          <h2 className="mt-4 text-2xl font-bold text-[var(--color-text-primary)]">
+          <Users className="mx-auto h-12 w-12 text-text-primary" />
+          <h2 className="mt-4 text-2xl font-bold text-text-text-primary">
             Stay Updated
           </h2>
-          <p className="mt-3 text-[var(--color-text-secondary)]">
+          <p className="mt-3 text-text-text-secondary">
             Get the latest features, tips, and updates for {siteConfig.name} delivered to your inbox. 
             No spam, unsubscribe anytime.
           </p>
