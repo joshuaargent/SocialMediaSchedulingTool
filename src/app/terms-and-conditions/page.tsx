@@ -86,14 +86,20 @@ export default function TermsAndConditionsPage() {
             </p>
 
             <h2>12. Disclaimer of Warranties</h2>
-            <p>
-              OUR SERVICES ARE PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO: IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT SERVICES WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE, OR THAT ANALYTICS DATA WILL BE ACCURATE OR COMPLETE.
-            </p>
+            <div className="p-4 my-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">Legal Notice</p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                Our services are provided "as is" and "as available" without warranties of any kind, either express or implied, including but not limited to: implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that services will be uninterrupted, secure, or error-free, or that analytics data will be accurate or complete.
+              </p>
+            </div>
 
             <h2>13. Limitation of Liability</h2>
-            <p>
-              TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SMST SHALL NOT BE LIABLE FOR: ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES; LOSS OF PROFITS, REVENUE, DATA, OR BUSINESS OPPORTUNITIES; DAMAGES ARISING FROM PUBLICATION FAILURES, THIRD-PARTY PLATFORM ACTIONS, OR TECHNICAL FAILURES. IN NO EVENT SHALL OUR TOTAL LIABILITY EXCEED &pound;100 OR THE AMOUNT YOU HAVE PAID US IN THE PRECEDING 12 MONTHS.
-            </p>
+            <div className="p-4 my-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">Legal Notice</p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                To the maximum extent permitted by applicable law, SMST shall not be liable for: any indirect, incidental, special, consequential, or punitive damages; loss of profits, revenue, data, or business opportunities; damages arising from publication failures, third-party platform actions, or technical failures. In no event shall our total liability exceed £100 or the amount you have paid us in the preceding 12 months.
+              </p>
+            </div>
 
             <h2>14. Indemnification</h2>
             <p>
