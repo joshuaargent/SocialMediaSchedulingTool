@@ -478,6 +478,57 @@ export function PostComposer({ onClose, onPublish, initialDate }: PostComposerPr
             </div>
           </div>
 
+          {/* Publish Method */}
+          <div className="p-4 rounded-lg bg-bg-secondary">
+            <label className="block text-sm font-medium mb-3">Publish Method</label>
+            <div className="space-y-3">
+              {/* Local Only (Free) */}
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-bg-primary/50 transition-colors has-[:checked]:border-success has-[:checked]:bg-success/5">
+                <input
+                  type="radio"
+                  name="publishMethod"
+                  value="local"
+                  defaultChecked
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Local Only</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-success/20 text-success">Free</span>
+                  </div>
+                  <p className="text-sm text-text-secondary mt-1">
+                    Your video stays on your computer. Requires desktop agent to be running.
+                  </p>
+                </div>
+              </label>
+
+              {/* Cloud (Paid) */}
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-bg-primary/50 transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/5">
+                <input
+                  type="radio"
+                  name="publishMethod"
+                  value="cloud"
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Guaranteed Posting</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-accent/20 text-accent">Cloud Backup</span>
+                  </div>
+                  <p className="text-sm text-text-secondary mt-1">
+                    Video uploaded to cloud, auto-deleted after posting. Posts even when offline.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Privacy notice */}
+            <div className="mt-3 flex items-start gap-2 text-xs text-text-muted">
+              <span className="text-success">🔒</span>
+              <span>Your videos never touch our servers unless you choose Cloud Backup.</span>
+            </div>
+          </div>
+
           {/* Evergreen Option */}
           <div className="flex items-center justify-between p-4 rounded-lg bg-bg-secondary">
             <div>

@@ -37,6 +37,8 @@ model Organization {
   series              Series[]
   campaigns           Campaign[]
   keywordTrackers     KeywordTracker[]
+  devices             Device[]
+  localVideos         LocalVideo[]
 }
 
 model User {
@@ -61,6 +63,7 @@ model User {
   organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   posts           Post[]
   contentProjects ContentProject[]
+  devices         Device[]
 
   @@index([organizationId])
 }
@@ -125,6 +128,8 @@ model Post {
   youtubeTags           String[]  @default([])
   youtubePrivacyStatus  String    @default("public")
   campaignId            String?
+  publishMethod         String    @default("local")  // local (free) or cloud (paid)
+  deviceId              String?   // Which device will handle local publishing
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -134,10 +139,13 @@ model Post {
   campaign       Campaign?            @relation(fields: [campaignId], references: [id])
   metrics        PerformanceMetrics[]
   postingHistory PostingHistory[]
+  device         Device?              @relation(fields: [deviceId], references: [id])
+  localVideos    LocalVideo[]
 
   @@index([organizationId])
   @@index([scheduledAt])
   @@index([status])
+  @@index([publishMethod])
 }
 
 model Campaign {
@@ -422,4 +430,80 @@ model ScheduledJob {
 
   @@index([scheduledFor])
   @@index([status])
+}
+
+// ============================================
+// DESKTOP AGENT (Tauri Desktop App)
+// ============================================
+
+model Device {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  deviceType     String   @default("desktop")  // desktop, laptop
+  platform       String   // windows, macos, linux
+  hostname       String?
+  lastHeartbeat  DateTime @default(now())
+  status         String   @default("offline")  // online, offline
+  isActive       Boolean  @default(true)
+  settings       Json     @default("{}")       // watch folders, etc.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watchFolders   WatchFolder[]
+  localVideos    LocalVideo[]
+  posts          Post[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([lastHeartbeat])
+}
+
+model WatchFolder {
+  id             String   @id @default(cuid())
+  deviceId       String
+  path           String
+  name           String?
+  isActive       Boolean  @default(true)
+  recursive      Boolean  @default(false)  // Watch subdirectories
+  filePatterns   String[] @default(["*.mp4", "*.mov", "*.avi", "*.mkv"])  // File patterns to watch
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId])
+}
+
+model LocalVideo {
+  id             String   @id @default(cuid())
+  deviceId       String
+  organizationId  String
+  postId         String?
+  path           String   // Local file path
+  filename       String
+  size           Int?
+  mimeType       String?
+  duration       Int?     // Duration in seconds
+  thumbnailPath  String?  // Path to generated thumbnail
+  hash           String?  // SHA256 hash for deduplication
+  lastModified   DateTime?
+  status         String   @default("pending")  // pending, scheduled, published, failed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  device      Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post        Post?        @relation(fields: [postId], references: [id])
+
+  @@index([deviceId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([hash])
 }
