@@ -1,79 +1,88 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+import { listen } from '@tauri-apps/api/event';
 
-interface WatchFolder {
+interface Video {
   id: string;
+  filename: string;
   path: string;
-  recursive: boolean;
+  size: number;
+  mimeType: string;
+  status: 'available' | 'scheduled' | 'published';
+  thumbnail?: string;
+  scheduledFor?: string;
 }
 
 interface ScheduledPost {
   id: string;
   content: string;
   platforms: string[];
-  scheduled_at: string;
-  local_video?: {
-    id: string;
-    path: string;
-    filename: string;
-  };
+  scheduledAt: string;
+  videoFilename?: string;
 }
 
-interface Status {
+interface AppStatus {
   online: boolean;
   deviceId: string | null;
-  watchFolders: WatchFolder[];
+  videos: Video[];
   nextPost: ScheduledPost | null;
+  folderPath: string;
+  lastSync: string;
 }
 
 function App() {
-  const [status, setStatus] = useState<Status>({
+  const [status, setStatus] = useState<AppStatus>({
     online: false,
     deviceId: null,
-    watchFolders: [],
+    videos: [],
     nextPost: null,
+    folderPath: '',
+    lastSync: '',
   });
   const [apiUrl, setApiUrl] = useState('http://localhost:3000');
   const [deviceName, setDeviceName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    // Load saved state
-    const savedApiUrl = localStorage.getItem('smst_api_url');
-    const savedDeviceId = localStorage.getItem('smst_device_id');
-    if (savedApiUrl) setApiUrl(savedApiUrl);
-    if (savedDeviceId) {
-      setStatus(prev => ({ ...prev, deviceId: savedDeviceId }));
-      startHeartbeat();
-    }
+    loadSavedState();
+    setupListeners();
+    
+    // Refresh status every 10 seconds
+    const interval = setInterval(() => {
+      refreshStatus();
+    }, 10000);
 
-    // Get initial status
-    loadStatus();
-
-    // Heartbeat every 30 seconds
-    const heartbeatInterval = setInterval(() => {
-      loadStatus();
-    }, 30000);
-
-    return () => clearInterval(heartbeatInterval);
+    return () => clearInterval(interval);
   }, []);
 
-  const loadStatus = async () => {
-    try {
-      const result = await invoke<Status>('get_status');
-      setStatus(result);
-    } catch (err) {
-      console.error('Failed to load status:', err);
+  const loadSavedState = async () => {
+    const savedApiUrl = localStorage.getItem('smst_api_url');
+    const savedDeviceId = localStorage.getItem('smst_device_id');
+    
+    if (savedApiUrl) setApiUrl(savedApiUrl);
+    
+    if (savedDeviceId) {
+      await refreshStatus();
     }
   };
 
-  const startHeartbeat = async () => {
+  const setupListeners = async () => {
+    // Listen for file changes from Rust backend
+    await listen('videos-changed', (event: any) => {
+      refreshStatus();
+    });
+  };
+
+  const refreshStatus = async () => {
     try {
-      await invoke('send_heartbeat');
-      await loadStatus();
+      const result = await invoke<AppStatus>('get_status');
+      setStatus(result);
     } catch (err) {
-      console.error('Failed to send heartbeat:', err);
+      console.error('Failed to load status:', err);
     }
   };
 
@@ -87,34 +96,15 @@ function App() {
     setError(null);
 
     try {
-      const hostname = await invoke<string>('get_host_name').catch(() => 'unknown');
-      const platform = await invoke<string>('get_platform').catch(() => 'unknown');
-
       const result = await invoke<{ device: { id: string } }>('register_device', {
         apiUrl,
         name: deviceName,
-        deviceType: 'desktop',
-        hostname,
-        platform,
       });
 
       localStorage.setItem('smst_api_url', apiUrl);
       localStorage.setItem('smst_device_id', result.device.id);
       
-      setStatus(prev => ({ ...prev, deviceId: result.device.id }));
-      await loadStatus();
-      
-      // Start heartbeat interval
-      setInterval(async () => {
-        try {
-          await invoke('send_heartbeat');
-          await invoke<ScheduledPost[]>('get_scheduled_posts');
-          await loadStatus();
-        } catch (err) {
-          console.error('Heartbeat failed:', err);
-        }
-      }, 30000);
-
+      await refreshStatus();
     } catch (err) {
       setError(String(err));
     } finally {
@@ -122,24 +112,76 @@ function App() {
     }
   };
 
-  const addWatchFolder = async () => {
+  const openFolder = async () => {
     try {
-      const folder = await invoke<WatchFolder>('add_watch_folder', {
-        path: '/Videos',
-        recursive: false,
+      await invoke('open_videos_folder');
+    } catch (err) {
+      console.error('Failed to open folder:', err);
+    }
+  };
+
+  const addFiles = async () => {
+    try {
+      const selected = await open({
+        multiple: true,
+        filters: [{
+          name: 'Videos',
+          extensions: ['mp4', 'mov', 'avi', 'mkv', 'webm']
+        }]
       });
-      await loadStatus();
+      
+      if (selected) {
+        const files = Array.isArray(selected) ? selected : [selected];
+        setSyncing(true);
+        for (const file of files) {
+          await invoke('add_video_file', { path: file });
+        }
+        await refreshStatus();
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const deleteVideo = async (video: Video) => {
+    if (!confirm(`Delete "${video.filename}"? This cannot be undone.`)) return;
+    
+    try {
+      await invoke('delete_video', { videoId: video.id });
+      await refreshStatus();
     } catch (err) {
       setError(String(err));
     }
   };
 
-  const formatNextPost = (scheduledAt: string) => {
-    const date = new Date(scheduledAt);
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
+
+  const formatScheduled = (dateStr: string) => {
+    const date = new Date(dateStr);
     const now = new Date();
     const diff = date.getTime() - now.getTime();
     
-    if (diff < 0) return 'Due now';
+    if (diff < 0) return 'Overdue';
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -153,6 +195,124 @@ function App() {
     return `in ${minutes}m`;
   };
 
+  const getVideoIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'mp4': return '📹';
+      case 'mov': return '🎬';
+      case 'avi': return '🎥';
+      case 'mkv': return '🎬';
+      default: return '📁';
+    }
+  };
+
+  const getStatusBadge = (video: Video) => {
+    switch (video.status) {
+      case 'scheduled':
+        return <span className="status-badge scheduled">📅 Scheduled</span>;
+      case 'published':
+        return <span className="status-badge published">✅ Posted</span>;
+      default:
+        return <span className="status-badge available">🟢 Ready</span>;
+    }
+  };
+
+  // Setup drag and drop handlers
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+    
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+    };
+    
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      
+      setSyncing(true);
+      for (const file of Array.from(files)) {
+        // In Tauri, we need the path - this is simplified
+        // Real implementation would use the file path
+        console.log('Dropped file:', file.name);
+      }
+      await refreshStatus();
+      setSyncing(false);
+    };
+
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
+  // Setup page
+  if (!status.deviceId) {
+    return (
+      <div className="container">
+        <header className="header">
+          <div className="logo">
+            <span className="logo-icon">🎬</span>
+            <span className="logo-text">SMST Agent</span>
+          </div>
+        </header>
+
+        <div className="setup-card">
+          <h2>Connect to Dashboard</h2>
+          <p className="setup-desc">
+            Link this device to your SMST dashboard to enable local video publishing.
+          </p>
+          
+          <div className="form-group">
+            <label>Dashboard URL</label>
+            <input
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="https://your-app.vercel.app"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Device Name</label>
+            <input
+              type="text"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+              placeholder="My Desktop PC"
+            />
+          </div>
+
+          {error && <div className="error-msg">{error}</div>}
+
+          <button 
+            className="btn-primary"
+            onClick={registerDevice}
+            disabled={isRegistering}
+          >
+            {isRegistering ? 'Connecting...' : 'Connect Device'}
+          </button>
+        </div>
+
+        <div className="privacy-note">
+          <span>🔒</span>
+          <span>Your videos never leave this computer</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <header className="header">
@@ -160,115 +320,109 @@ function App() {
           <span className="logo-icon">🎬</span>
           <span className="logo-text">SMST Agent</span>
         </div>
-        <div className={`status-badge ${status.online ? 'online' : 'offline'}`}>
-          <span className="status-dot"></span>
-          {status.online ? 'Connected' : 'Disconnected'}
+        <div className="header-right">
+          <div className={`connection-status ${status.online ? 'online' : 'offline'}`}>
+            <span className="status-dot"></span>
+            {status.online ? 'Connected' : 'Offline'}
+          </div>
         </div>
       </header>
 
-      {error && (
-        <div className="error-banner">
-          {error}
-        </div>
-      )}
+      {error && <div className="error-banner">{error}</div>}
 
-      {!status.deviceId ? (
-        <div className="setup-section">
-          <h2>Connect to Dashboard</h2>
-          <p className="setup-description">
-            Enter your SMST dashboard URL to link this device
-          </p>
-          <div className="form-group">
-            <label>Dashboard URL</label>
-            <input
-              type="text"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              placeholder="https://your-dashboard.com"
-            />
+      {/* Video Library Section */}
+      <section className="section">
+        <div className="section-header">
+          <h3>📁 Your Videos</h3>
+          <div className="header-actions">
+            <button className="btn-icon" onClick={openFolder} title="Open folder">
+              📂
+            </button>
+            <button className="btn-secondary" onClick={addFiles} disabled={syncing}>
+              {syncing ? 'Syncing...' : '+ Add Videos'}
+            </button>
           </div>
-          <div className="form-group">
-            <label>Device Name</label>
-            <input
-              type="text"
-              value={deviceName}
-              onChange={(e) => setDeviceName(e.target.value)}
-              placeholder="My MacBook Pro"
-            />
+        </div>
+
+        {/* Drop Zone */}
+        <div 
+          className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            // Handle drop - would need Tauri file handling
+          }}
+        >
+          <span className="drop-icon">📥</span>
+          <span className="drop-text">Drop videos here</span>
+          <span className="drop-hint">or click "+ Add Videos"</span>
+        </div>
+
+        {/* Video Grid */}
+        {status.videos.length === 0 ? (
+          <div className="empty-videos">
+            <span className="empty-icon">🎬</span>
+            <p>No videos yet</p>
+            <p className="empty-hint">Add videos to schedule posts</p>
           </div>
-          <button 
-            className="primary-btn"
-            onClick={registerDevice}
-            disabled={isRegistering}
-          >
-            {isRegistering ? 'Connecting...' : 'Connect Device'}
+        ) : (
+          <div className="video-grid">
+            {status.videos.map((video) => (
+              <div key={video.id} className="video-card">
+                <div className="video-preview">
+                  <span className="video-icon">{getVideoIcon(video.filename)}</span>
+                  <button 
+                    className="delete-btn"
+                    onClick={() => deleteVideo(video)}
+                    title="Delete video"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="video-info">
+                  <p className="video-name" title={video.filename}>
+                    {video.filename.length > 20 
+                      ? video.filename.slice(0, 17) + '...' 
+                      : video.filename}
+                  </p>
+                  <p className="video-size">{formatFileSize(video.size)}</p>
+                  {getStatusBadge(video)}
+                  {video.scheduledFor && (
+                    <p className="video-scheduled">
+                      📅 {formatScheduled(video.scheduledFor)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="cta-card">
+          <h3>Ready to schedule?</h3>
+          <p>Go to your dashboard to create posts with these videos</p>
+          <button className="btn-primary" onClick={() => window.open(apiUrl, '_blank')}>
+            Open Dashboard →
           </button>
         </div>
-      ) : (
-        <>
-          <div className="device-info">
-            <div className="info-row">
-              <span className="info-label">Device ID</span>
-              <span className="info-value mono">{status.deviceId?.slice(0, 12)}...</span>
-            </div>
-          </div>
+      </section>
 
-          <div className="section">
-            <div className="section-header">
-              <h3>Watching</h3>
-              <button className="add-btn" onClick={addWatchFolder}>+ Add Folder</button>
-            </div>
-            {status.watchFolders.length === 0 ? (
-              <div className="empty-state">
-                No folders configured. Click "+ Add Folder" to start watching for videos.
-              </div>
-            ) : (
-              <div className="folder-list">
-                {status.watchFolders.map((folder) => (
-                  <div key={folder.id} className="folder-item">
-                    <span className="folder-icon">📁</span>
-                    <span className="folder-path">{folder.path}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="section">
-            <div className="section-header">
-              <h3>Next Post</h3>
-            </div>
-            {status.nextPost ? (
-              <div className="next-post-card">
-                <div className="post-time">
-                  {formatNextPost(status.nextPost.scheduled_at)}
-                </div>
-                <div className="post-content">
-                  {status.nextPost.content.slice(0, 80)}
-                  {status.nextPost.content.length > 80 ? '...' : ''}
-                </div>
-                <div className="post-platforms">
-                  {status.nextPost.platforms.map((p) => (
-                    <span key={p} className="platform-badge">{p}</span>
-                  ))}
-                </div>
-                {status.nextPost.local_video && (
-                  <div className="video-file">
-                    📹 {status.nextPost.local_video.filename}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="empty-state">
-                No scheduled posts for this device
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      <footer className="footer">
-        <span>Your videos stay on your computer</span>
+      {/* Status Bar */}
+      <footer className="status-bar">
+        <div className="status-left">
+          <span className={`status-indicator ${status.online ? 'online' : 'offline'}`}>
+            ●
+          </span>
+          <span>{status.videos.filter(v => v.status === 'available').length} videos ready</span>
+        </div>
+        <div className="status-right">
+          {status.lastSync && <span>Synced {formatTime(status.lastSync)}</span>}
+        </div>
       </footer>
     </div>
   );

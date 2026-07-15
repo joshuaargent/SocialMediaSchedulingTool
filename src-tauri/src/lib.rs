@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
+use std::path::PathBuf;
+use std::fs;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager, State,
+    AppHandle, Manager, State,
 };
-use chrono::{DateTime, Utc};
-use sha2::{Sha256, Digest};
+use uuid::Uuid;
 
 // Agent state
 #[derive(Default)]
@@ -15,15 +16,20 @@ pub struct AgentState {
     pub api_url: Mutex<Option<String>>,
     pub device_token: Mutex<Option<String>>,
     pub is_online: Mutex<bool>,
-    pub watch_folders: Mutex<Vec<WatchFolder>>,
-    pub next_scheduled_post: Mutex<Option<ScheduledPost>>,
+    pub videos: Mutex<Vec<Video>>,
+    pub folder_path: Mutex<Option<String>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct WatchFolder {
+pub struct Video {
     pub id: String,
+    pub filename: String,
     pub path: String,
-    pub recursive: bool,
+    pub size: u64,
+    pub mime_type: String,
+    pub status: String,
+    pub thumbnail: Option<String>,
+    pub scheduled_for: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -32,22 +38,48 @@ pub struct ScheduledPost {
     pub content: String,
     pub platforms: Vec<String>,
     pub scheduled_at: String,
-    pub local_video: Option<LocalVideo>,
+    pub video_filename: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct LocalVideo {
-    pub id: String,
-    pub path: String,
-    pub filename: String,
+pub struct AppStatus {
+    pub online: bool,
+    pub device_id: Option<String>,
+    pub videos: Vec<Video>,
+    pub next_post: Option<ScheduledPost>,
+    pub folder_path: String,
+    pub last_sync: String,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct DeviceInfo {
-    pub name: String,
-    pub platform: String,
-    pub hostname: String,
-    pub device_type: String,
+// Get the default SMST videos folder
+fn get_default_folder() -> PathBuf {
+    let home = dirs::video_dir().unwrap_or_else(|| PathBuf::from("."));
+    home.join("SMST")
+}
+
+fn ensure_folder_exists() -> PathBuf {
+    let folder = get_default_folder();
+    if !folder.exists() {
+        let _ = fs::create_dir_all(&folder);
+    }
+    folder
+}
+
+fn get_file_mime_type(path: &str) -> String {
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    
+    match ext.as_str() {
+        "mp4" => "video/mp4",
+        "mov" => "video/quicktime",
+        "avi" => "video/x-msvideo",
+        "mkv" => "video/x-matroska",
+        "webm" => "video/webm",
+        _ => "video/*",
+    }.to_string()
 }
 
 // Tauri commands
@@ -55,22 +87,30 @@ pub struct DeviceInfo {
 async fn register_device(
     api_url: String,
     name: String,
-    device_type: String,
-    hostname: String,
-    platform: String,
     state: State<'_, AgentState>,
 ) -> Result<serde_json::Value, String> {
     let client = reqwest::Client::new();
     
+    // Get platform info
+    let platform = if cfg!(target_os = "windows") {
+        "windows"
+    } else if cfg!(target_os = "macos") {
+        "macos"
+    } else {
+        "linux"
+    };
+    
+    let hostname = hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_else(|_| "unknown".to_string());
+
     let response = client
         .post(format!("{}/api/agent", api_url))
         .json(&serde_json::json!({
-            "organizationId": "demo-org",
-            "userId": "demo-user",
             "name": name,
             "platform": platform,
             "hostname": hostname,
-            "deviceType": device_type
+            "deviceType": "desktop"
         }))
         .send()
         .await
@@ -89,7 +129,53 @@ async fn register_device(
         *state.is_online.lock().unwrap() = true;
     }
 
+    // Initialize folder
+    let folder = ensure_folder_exists();
+    *state.folder_path.lock().unwrap() = Some(folder.to_string_lossy().to_string());
+    
+    // Scan videos in folder
+    scan_folder(&state);
+
     Ok(result)
+}
+
+fn scan_folder(state: &State<'_, AgentState>) {
+    let folder = ensure_folder_exists();
+    let mut videos = Vec::new();
+    
+    if let Ok(entries) = fs::read_dir(&folder) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                let ext = path.extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_lowercase();
+                
+                if ["mp4", "mov", "avi", "mkv", "webm"].contains(&ext.as_str()) {
+                    let filename = path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    
+                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+                    
+                    videos.push(Video {
+                        id: Uuid::new_v4().to_string(),
+                        filename,
+                        path: path.to_string_lossy().to_string(),
+                        size,
+                        mime_type: get_file_mime_type(&path.to_string_lossy()),
+                        status: "available".to_string(),
+                        thumbnail: None,
+                        scheduled_for: None,
+                    });
+                }
+            }
+        }
+    }
+    
+    *state.videos.lock().unwrap() = videos;
 }
 
 #[tauri::command]
@@ -114,6 +200,8 @@ async fn send_heartbeat(state: State<'_, AgentState>) -> Result<bool, String> {
     match response {
         Ok(resp) if resp.status().is_success() => {
             *state.is_online.lock().unwrap() = true;
+            // Refresh videos
+            scan_folder(&state);
             Ok(true)
         }
         _ => {
@@ -124,123 +212,117 @@ async fn send_heartbeat(state: State<'_, AgentState>) -> Result<bool, String> {
 }
 
 #[tauri::command]
-async fn get_scheduled_posts(state: State<'_, AgentState>) -> Result<Vec<ScheduledPost>, String> {
-    let device_id = state.device_id.lock().unwrap().clone();
-    let api_url = state.api_url.lock().unwrap().clone();
-    
-    if device_id.is_none() || api_url.is_none() {
-        return Ok(vec![]);
-    }
-
-    let client = reqwest::Client::new();
-    let response = client
-        .get(format!(
-            "{}/api/agent/scheduled?deviceId={}",
-            api_url.as_ref().unwrap(),
-            device_id.as_ref().unwrap()
-        ))
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !response.status().is_success() {
-        return Ok(vec![]);
-    }
-
-    let result: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-    
-    let posts: Vec<ScheduledPost> = result
-        .get("posts")
-        .and_then(|p| p.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|p| {
-                    Some(ScheduledPost {
-                        id: p.get("id")?.as_str()?.to_string(),
-                        content: p.get("content")?.as_str()?.to_string(),
-                        platforms: p.get("platforms")?.as_array()?.iter().filter_map(|s| s.as_str().map(String::from)).collect(),
-                        scheduled_at: p.get("scheduledAt")?.as_str()?.to_string(),
-                        local_video: p.get("localVideo").and_then(|v| {
-                            Some(LocalVideo {
-                                id: v.get("id")?.as_str()?.to_string(),
-                                path: v.get("path")?.as_str()?.to_string(),
-                                filename: v.get("filename")?.as_str()?.to_string(),
-                            })
-                        }),
-                    })
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-
-    *state.next_scheduled_post.lock().unwrap() = posts.first().cloned();
-
-    Ok(posts)
-}
-
-#[tauri::command]
-async fn mark_post_published(
-    post_id: String,
-    success: bool,
-    error: Option<String>,
-    state: State<'_, AgentState>,
-) -> Result<bool, String> {
-    let device_id = state.device_id.lock().unwrap().clone();
-    let api_url = state.api_url.lock().unwrap().clone();
-    
-    if device_id.is_none() || api_url.is_none() {
-        return Ok(false);
-    }
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(format!("{}/api/agent/scheduled", api_url.as_ref().unwrap()))
-        .json(&serde_json::json!({
-            "postId": post_id,
-            "status": if success { "published" } else { "failed" },
-            "errorMessage": error,
-            "deviceId": device_id.as_ref().unwrap()
-        }))
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(response.status().is_success())
-}
-
-#[tauri::command]
-fn get_status(state: State<'_, AgentState>) -> serde_json::Value {
+fn get_status(state: State<'_, AgentState>) -> AppStatus {
     let is_online = *state.is_online.lock().unwrap();
     let device_id = state.device_id.lock().unwrap().clone();
-    let watch_folders = state.watch_folders.lock().unwrap().clone();
-    let next_post = state.next_scheduled_post.lock().unwrap().clone();
+    let videos = state.videos.lock().unwrap().clone();
+    let folder_path = state.folder_path.lock().unwrap().clone()
+        .unwrap_or_else(|| get_default_folder().to_string_lossy().to_string());
+    
+    // Get next scheduled post (would come from API in real implementation)
+    let next_post = None;
 
-    serde_json::json!({
-        "online": is_online,
-        "deviceId": device_id,
-        "watchFolders": watch_folders,
-        "nextPost": next_post
-    })
+    AppStatus {
+        online: is_online,
+        device_id,
+        videos,
+        next_post,
+        folder_path,
+        last_sync: chrono::Utc::now().to_rfc3339(),
+    }
 }
 
 #[tauri::command]
-fn add_watch_folder(path: String, recursive: bool, state: State<'_, AgentState>) -> Result<WatchFolder, String> {
-    let folder = WatchFolder {
-        id: uuid::Uuid::new_v4().to_string(),
-        path,
-        recursive,
+fn open_videos_folder() -> Result<String, String> {
+    let folder = ensure_folder_exists();
+    let path = folder.to_string_lossy().to_string();
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(path)
+}
+
+#[tauri::command]
+fn add_video_file(path: String, state: State<'_, AgentState>) -> Result<Video, String> {
+    let source = PathBuf::from(&path);
+    
+    if !source.exists() {
+        return Err("File not found".to_string());
+    }
+    
+    let folder = ensure_folder_exists();
+    let filename = source.file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid filename")?;
+    
+    let dest = folder.join(filename);
+    
+    // Copy file to SMST folder
+    fs::copy(&source, &dest).map_err(|e| e.to_string())?;
+    
+    let size = fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
+    
+    let video = Video {
+        id: Uuid::new_v4().to_string(),
+        filename: filename.to_string(),
+        path: dest.to_string_lossy().to_string(),
+        size,
+        mime_type: get_file_mime_type(&path),
+        status: "available".to_string(),
+        thumbnail: None,
+        scheduled_for: None,
     };
     
-    state.watch_folders.lock().unwrap().push(folder.clone());
-    Ok(folder)
+    state.videos.lock().unwrap().push(video.clone());
+    
+    Ok(video)
 }
 
 #[tauri::command]
-fn remove_watch_folder(id: String, state: State<'_, AgentState>) -> Result<bool, String> {
-    let mut folders = state.watch_folders.lock().unwrap();
-    let initial_len = folders.len();
-    folders.retain(|f| f.id != id);
-    Ok(folders.len() < initial_len)
+fn delete_video(video_id: String, state: State<'_, AgentState>) -> Result<bool, String> {
+    let mut videos = state.videos.lock().unwrap();
+    let video = videos.iter().find(|v| v.id == video_id);
+    
+    if let Some(v) = video {
+        // Delete file from disk
+        let _ = fs::remove_file(&v.path);
+    }
+    
+    videos.retain(|v| v.id != video_id);
+    Ok(true)
+}
+
+#[tauri::command]
+fn get_videos(state: State<'_, AgentState>) -> Vec<Video> {
+    state.videos.lock().unwrap().clone()
+}
+
+#[tauri::command]
+async fn sync_videos(state: State<'_, AgentState>) -> Result<Vec<Video>, String> {
+    scan_folder(&state);
+    Ok(state.videos.lock().unwrap().clone())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -258,14 +340,19 @@ pub fn run() {
         )
         .manage(AgentState::default())
         .setup(|app| {
+            // Ensure SMST folder exists
+            let folder = ensure_folder_exists();
+            log::info!("SMST folder: {:?}", folder);
+            
             // Create system tray
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_item = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+            let open_folder = MenuItem::with_id(app, "open_folder", "Open Videos Folder", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show_item, &open_folder, &quit_item])?;
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("SMST Agent - Desktop Publishing")
+                .tooltip("SMST Agent - Local Video Publishing")
                 .on_menu_event(|app, event| {
                     match event.id.as_ref() {
                         "quit" => {
@@ -276,6 +363,9 @@ pub fn run() {
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             }
+                        }
+                        "open_folder" => {
+                            let _ = open_videos_folder();
                         }
                         _ => {}
                     }
@@ -288,11 +378,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             register_device,
             send_heartbeat,
-            get_scheduled_posts,
-            mark_post_published,
             get_status,
-            add_watch_folder,
-            remove_watch_folder
+            open_videos_folder,
+            add_video_file,
+            delete_video,
+            get_videos,
+            sync_videos
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
